@@ -7,12 +7,12 @@ import {
   addDoc,
   updateDoc,
   doc,
-  getDocs,
   writeBatch,
   query,
   orderBy,
   where,
   Timestamp,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type {
@@ -51,13 +51,6 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    setIsClient(true);
-    if (!isAuthenticated()) {
-      router.replace("/login");
-    }
-  }, [router]);
-
   const [products, setProducts] = useState<Product[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -66,41 +59,47 @@ export default function Home() {
   const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingData, setIsLoadingData] = useState(true);
 
+  useEffect(() => {
+    setIsClient(true);
+    if (!isAuthenticated()) {
+      router.replace("/login");
+    }
+  }, [router]);
 
-  const fetchData = useCallback(async () => {
+  useEffect(() => {
     if (!isAuthenticated()) return;
-    setIsLoadingData(true);
-    try {
-      // Fetch Products
-      const productsCollection = collection(db, 'products');
-      const productSnapshot = await getDocs(query(productsCollection, orderBy("name")));
-      const productsList = productSnapshot.docs.map(
-        doc => ({ id: doc.id, ...doc.data() } as Product)
-      );
+
+    setIsLoading(true);
+
+    const productsCollection = collection(db, 'products');
+    const productsQuery = query(productsCollection, orderBy("name"));
+    const unsubscribeProducts = onSnapshot(productsQuery, snapshot => {
+      const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(productsList);
+      setIsLoading(false);
+    }, error => {
+      console.error("Error fetching products: ", error);
+      toast({ variant: "destructive", title: "Erro ao buscar produtos" });
+    });
 
-      // Fetch Clients
-      const clientsCollection = collection(db, 'clients');
-      const clientSnapshot = await getDocs(query(clientsCollection, orderBy("name")));
-      const clientsList = clientSnapshot.docs.map(
-        doc => ({ id: doc.id, ...doc.data() } as Client)
-      );
+    const clientsCollection = collection(db, 'clients');
+    const clientsQuery = query(clientsCollection, orderBy("name"));
+    const unsubscribeClients = onSnapshot(clientsQuery, snapshot => {
+      const clientsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
       setClients(clientsList);
+    }, error => {
+      console.error("Error fetching clients: ", error);
+      toast({ variant: "destructive", title: "Erro ao buscar clientes" });
+    });
 
-      // Fetch daily data (Sales and Transactions)
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const startOfToday = Timestamp.fromDate(today);
-      
-      const salesQuery = query(
-        collection(db, "sales"), 
-        where("date", ">=", startOfToday),
-        orderBy("date", "desc")
-      );
-      const salesSnapshot = await getDocs(salesQuery);
-      const salesList = salesSnapshot.docs.map(doc => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startOfToday = Timestamp.fromDate(today);
+
+    const salesQuery = query(collection(db, "sales"), where("date", ">=", startOfToday), orderBy("date", "desc"));
+    const unsubscribeSales = onSnapshot(salesQuery, snapshot => {
+      const salesList = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -109,24 +108,22 @@ export default function Home() {
         } as Sale;
       });
       setSalesHistory(salesList);
-      
-      const transactionsQuery = query(
-        collection(db, "transactions"),
-        where("date", ">=", startOfToday),
-        orderBy("date", "desc")
-      );
-      const transactionsSnapshot = await getDocs(transactionsQuery);
+    }, error => {
+      console.error("Error fetching sales: ", error);
+      toast({ variant: "destructive", title: "Erro ao buscar vendas" });
+    });
+
+    const transactionsQuery = query(collection(db, "transactions"), where("date", ">=", startOfToday), orderBy("date", "desc"));
+    const unsubscribeTransactions = onSnapshot(transactionsQuery, snapshot => {
       const expensesList: CashTransaction[] = [];
       const cashEntriesList: CashTransaction[] = [];
-
-      transactionsSnapshot.forEach(doc => {
+      snapshot.forEach(doc => {
         const data = doc.data();
         const transaction = {
           id: doc.id,
           ...data,
           date: (data.date as Timestamp).toDate(),
         } as CashTransaction;
-
         if (data.type === 'expense') {
           expensesList.push(transaction);
         } else if (data.type === 'cashEntry') {
@@ -135,23 +132,20 @@ export default function Home() {
       });
       setExpenses(expensesList);
       setCashEntries(cashEntriesList);
+    }, error => {
+      console.error("Error fetching transactions: ", error);
+      toast({ variant: "destructive", title: "Erro ao buscar transações" });
+    });
 
-    } catch (error) {
-      console.error("Error fetching data: ", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao buscar dados",
-        description: "Não foi possível carregar os dados do banco de dados.",
-      });
-    } finally {
-      setIsLoadingData(false);
-      setIsLoading(false);
-    }
+    // Cleanup function
+    return () => {
+      unsubscribeProducts();
+      unsubscribeClients();
+      unsubscribeSales();
+      unsubscribeTransactions();
+    };
+
   }, [toast]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
 
   const handleLogout = () => {
@@ -311,9 +305,7 @@ export default function Home() {
       
       await batch.commit();
   
-      setSalesHistory((prev) => [{...newSale, id: saleDocRef.id, date: newSale.date}, ...prev]);
       setCartItems([]);
-      fetchData(); 
   
       toast({
         title: "Venda Finalizada!",
@@ -330,13 +322,13 @@ export default function Home() {
         description: "Não foi possível salvar a venda ou atualizar o estoque.",
       });
     }
-  }, [cartItems, toast, fetchData, clients]);
+  }, [cartItems, toast, clients]);
 
   const handleAddProduct = useCallback(
     async (values: ProductFormValues): Promise<void> => {
       try {
-        const docRef = await addDoc(collection(db, "products"), values);
-        setProducts((prev) => [{ id: docRef.id, ...values }, ...prev].sort((a,b) => a.name.localeCompare(b.name)));
+        await addDoc(collection(db, "products"), values);
+        // State will update via onSnapshot
       } catch (error) {
         console.error("Error adding product: ", error);
         toast({
@@ -355,11 +347,7 @@ export default function Home() {
       try {
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, values);
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.id === productId ? { ...p, ...values } : p
-          ).sort((a,b) => a.name.localeCompare(b.name))
-        );
+        // State will update via onSnapshot
       } catch (error) {
         console.error("Error updating product: ", error);
         toast({
@@ -378,9 +366,7 @@ export default function Home() {
       try {
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, { stock: newStock });
-        setProducts((prev) =>
-          prev.map((p) => (p.id === productId ? { ...p, stock: newStock } : p))
-        );
+        // State will update via onSnapshot
         toast({
           title: "Estoque atualizado!",
         });
@@ -398,12 +384,8 @@ export default function Home() {
   const handleAddClient = useCallback(
     async (values: ClientFormValues): Promise<void> => {
       try {
-        const docRef = await addDoc(collection(db, "clients"), values);
-        setClients((prev) =>
-          [...prev, { id: docRef.id, ...values }].sort((a, b) =>
-            a.name.localeCompare(b.name)
-          )
-        );
+        await addDoc(collection(db, "clients"), values);
+        // State will update via onSnapshot
       } catch (error) {
         console.error("Error adding client: ", error);
         toast({
@@ -429,20 +411,11 @@ export default function Home() {
       };
 
       try {
-        const docRef = await addDoc(collection(db, 'transactions'), newTransaction);
-        
-        const addedTransaction: CashTransaction = {
-          id: docRef.id,
-          date: newTransaction.date,
-          type: type,
-          ...values
-        };
-
+        await addDoc(collection(db, 'transactions'), newTransaction);
+        // State will update via onSnapshot
         if (type === "expense") {
-          setExpenses((prev) => [addedTransaction, ...prev]);
           toast({ title: "Despesa registrada com sucesso!" });
         } else {
-          setCashEntries((prev) => [addedTransaction, ...prev]);
           toast({ title: "Entrada de caixa registrada com sucesso!" });
         }
       } catch(error) {
@@ -507,7 +480,7 @@ export default function Home() {
                 <ProductList
                   products={products}
                   onAddProductToCart={handleAddProductToCart}
-                  isLoading={isLoadingData}
+                  isLoading={isLoading}
                   showAddProductButton={false}
                 />
               </div>
@@ -530,14 +503,14 @@ export default function Home() {
               onUpdateStock={handleUpdateStock}
               onAddProduct={handleAddProduct}
               onUpdateProduct={handleUpdateProduct}
-              isLoading={isLoadingData}
+              isLoading={isLoading}
             />
           </TabsContent>
            <TabsContent value="clientes">
             <ClientList
               clients={clients}
               onAddClient={handleAddClient}
-              isLoading={isLoadingData}
+              isLoading={isLoading}
             />
           </TabsContent>
           <TabsContent value="vendas">
@@ -556,5 +529,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
