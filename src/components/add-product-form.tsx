@@ -58,6 +58,7 @@ export function AddProductForm({
 
   const buttonText = initialData ? "Salvar Alterações" : "Salvar Produto";
   const submittingButtonText = initialData ? "Salvando..." : "Adicionando...";
+  const isEditing = !!initialData;
 
   return (
     <Form {...form}>
@@ -109,7 +110,7 @@ export function AddProductForm({
               <FormItem>
                 <FormLabel>Estoque</FormLabel>
                 <FormControl>
-                  <Input type="number" step="1" {...field} />
+                  <Input type="number" step="1" {...field} disabled={isEditing} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
