@@ -73,6 +73,7 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [shiftStart, setShiftStart] = useState<Date>(getStartOfToday);
 
+  const allSalesForHistory = useMemo(() => [...salesHistory, ...fiadoSales].sort((a,b) => b.date.getTime() - a.date.getTime()), [salesHistory, fiadoSales]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -135,7 +136,6 @@ export default function Home() {
     const fiadoSalesQuery = query(
         collection(db, "sales"),
         where("date", ">=", startOfTodayTimestamp),
-        where("paymentMethod", "==", "Fiado"),
         orderBy("date", "desc")
     );
     const unsubscribeFiadoSales = onSnapshot(fiadoSalesQuery, (snapshot) => {
@@ -146,7 +146,7 @@ export default function Home() {
                 ...data,
                 date: (data.date as Timestamp).toDate(),
             } as Sale;
-        });
+        }).filter(sale => sale.paymentMethod === 'Fiado');
         setFiadoSales(fiadoList);
     }, (error) => {
         console.error("Error fetching fiado sales: ", error);
@@ -578,8 +578,6 @@ export default function Home() {
     }
   }, [toast]);
   
-  const allSalesForHistory = useMemo(() => [...salesHistory, ...fiadoSales].sort((a,b) => b.date.getTime() - a.date.getTime()), [salesHistory, fiadoSales]);
-
   if (!isClient) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
