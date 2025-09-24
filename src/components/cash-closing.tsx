@@ -141,14 +141,6 @@ export function CashClosing({
     };
   }, [sales, expenses, cashEntries]);
 
-  const handleFormSubmit =
-    (type: "expense" | "cashEntry") => async (values: TransactionFormValues) => {
-      setIsSubmitting(true);
-      await onAddTransaction(type, values);
-      form.reset();
-      setIsSubmitting(false);
-    };
-
   const handleConfirmCloseDay = async () => {
     setIsClosingDay(true);
     try {
@@ -159,7 +151,7 @@ export function CashClosing({
         totalCashEntries: dailyData.totalCashEntries,
         expectedInCash: dailyData.expectedInCash,
         countedAmount,
-        difference: countedAmount - dailyData.expectedInCash,
+        difference: countedAmount - dailyData.finalBalance,
       });
       setIsConferenceOpen(false);
       setCountedAmount(0);
@@ -170,7 +162,7 @@ export function CashClosing({
     }
   }
 
-  const difference = countedAmount - dailyData.expectedInCash;
+  const difference = countedAmount - dailyData.finalBalance;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -281,16 +273,25 @@ export function CashClosing({
                   <DialogHeader>
                     <DialogTitle>Conferência de Fechamento</DialogTitle>
                     <DialogDescription>
-                      Insira o valor conferido em dinheiro para registrar o fechamento do dia.
+                      Confira os valores com base no faturamento total do turno.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4 space-y-4">
                     <div className="flex justify-between items-center bg-muted p-3 rounded-md">
-                      <span className="font-medium">Valor Esperado (Dinheiro)</span>
-                      <span className="font-bold text-lg">{formatCurrency(dailyData.expectedInCash)}</span>
+                      <span className="font-medium">Faturamento Total do Turno</span>
+                      <span className="font-bold text-lg">{formatCurrency(dailyData.finalBalance)}</span>
                     </div>
+
+                     <div className="grid grid-cols-2 gap-2 text-sm">
+                        <p>Dinheiro: {formatCurrency(dailyData.totalByPaymentMethod['Dinheiro'] || 0)}</p>
+                        <p>Pix: {formatCurrency(dailyData.totalByPaymentMethod['Pix'] || 0)}</p>
+                        <p>Cartão: {formatCurrency(dailyData.totalByPaymentMethod['Cartão'] || 0)}</p>
+                        <p>Fiado: {formatCurrency(dailyData.totalByPaymentMethod['Fiado'] || 0)}</p>
+                    </div>
+                    <Separator/>
+
                      <div className="space-y-2">
-                       <Label htmlFor="counted-amount">Valor Contado em Caixa (R$)</Label>
+                       <Label htmlFor="counted-amount">Valor para Conferência (R$)</Label>
                        <Input
                          id="counted-amount"
                          type="number"
@@ -308,15 +309,12 @@ export function CashClosing({
                         <span className="font-medium">Diferença</span>
                         <span className="font-bold text-lg">{formatCurrency(difference)}</span>
                      </div>
-                     {countedAmount > 0 && difference > 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é maior que o esperado (Sobra).</p>}
-                     {countedAmount > 0 && difference < 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é menor que o esperado (Falta).</p>}
-                     {countedAmount > 0 && difference === 0 && <p className="text-sm text-center text-green-600">O caixa bate com o esperado!</p>}
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button type="button" variant="outline" disabled={isClosingDay}>Fechar</Button>
                     </DialogClose>
-                     <Button type="button" onClick={handleConfirmCloseDay} disabled={isClosingDay}>
+                     <Button type="button" onClick={handleConfirmCloseDay} disabled={isClosingDay || countedAmount <= 0}>
                       {isClosingDay ? "Finalizando..." : "Confirmar e Fechar Dia"}
                     </Button>
                   </DialogFooter>
@@ -367,7 +365,7 @@ export function CashClosing({
           <CardFooter className="flex gap-2">
             <Button
               onClick={form.handleSubmit(handleFormSubmit("cashEntry"))}
-              disabled={isSubmitting}
+              disabled={!form.formState.isValid || isSubmitting}
               className="flex-1"
               variant="secondary"
             >
@@ -376,7 +374,7 @@ export function CashClosing({
             </Button>
             <Button
               onClick={form.handleSubmit(handleFormSubmit("expense"))}
-              disabled={isSubmitting}
+              disabled={!form.formState.isValid || isSubmitting}
               className="flex-1"
               variant="destructive"
             >
@@ -433,3 +431,5 @@ const FinancialCard = ({ title, value, icon: Icon, color, bgColor }: {
         </p>
     </div>
 );
+
+    
