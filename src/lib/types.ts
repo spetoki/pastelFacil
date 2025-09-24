@@ -5,6 +5,7 @@ export type Product = {
   price: number;
   barcode: string;
   imageId: string;
+  stock: number;
 };
 
 export type CartItem = {

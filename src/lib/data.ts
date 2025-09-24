@@ -8,6 +8,7 @@ export const initialProducts: Product[] = [
     price: 6.5,
     barcode: "7890001",
     imageId: "pastel_carne",
+    stock: 50,
   },
   {
     id: "prod_002",
@@ -16,6 +17,7 @@ export const initialProducts: Product[] = [
     price: 6.0,
     barcode: "7890002",
     imageId: "pastel_queijo",
+    stock: 45,
   },
   {
     id: "prod_003",
@@ -24,6 +26,7 @@ export const initialProducts: Product[] = [
     price: 7.0,
     barcode: "7890003",
     imageId: "coxinha",
+    stock: 60,
   },
   {
     id: "prod_004",
@@ -32,6 +35,7 @@ export const initialProducts: Product[] = [
     price: 5.0,
     barcode: "7890004",
     imageId: "pao_de_queijo",
+    stock: 30,
   },
   {
     id: "prod_005",
@@ -40,6 +44,7 @@ export const initialProducts: Product[] = [
     price: 3.5,
     barcode: "7890005",
     imageId: "brigadeiro",
+    stock: 100,
   },
   {
     id: "prod_006",
@@ -48,6 +53,7 @@ export const initialProducts: Product[] = [
     price: 5.5,
     barcode: "7890006",
     imageId: "guarana",
+    stock: 80,
   },
   {
     id: "prod_007",
@@ -56,6 +62,7 @@ export const initialProducts: Product[] = [
     price: 8.0,
     barcode: "7890007",
     imageId: "caldo_de_cana",
+    stock: 40,
   },
   {
     id: "prod_008",
@@ -64,5 +71,6 @@ export const initialProducts: Product[] = [
     price: 7.0,
     barcode: "7890008",
     imageId: "kibe",
+    stock: 35,
   },
 ];

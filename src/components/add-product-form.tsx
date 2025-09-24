@@ -19,6 +19,7 @@ const formSchema = z.object({
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
   description: z.string().optional(),
   price: z.coerce.number().min(0, { message: "O preço não pode ser negativo." }),
+  stock: z.coerce.number().min(0, { message: "O estoque não pode ser negativo." }),
   barcode: z.string().min(1, { message: "O código de barras é obrigatório." }),
 });
 
@@ -37,6 +38,7 @@ export function AddProductForm({ onSubmit, onCancel, isSubmitting }: AddProductF
       name: "",
       description: "",
       price: 0,
+      stock: 0,
       barcode: "",
     },
   });
@@ -84,20 +86,33 @@ export function AddProductForm({ onSubmit, onCancel, isSubmitting }: AddProductF
               </FormItem>
             )}
           />
-          <FormField
+           <FormField
             control={form.control}
-            name="barcode"
+            name="stock"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Código de Barras</FormLabel>
+                <FormLabel>Estoque Inicial</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: 7890123" {...field} />
+                  <Input type="number" step="1" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+        <FormField
+          control={form.control}
+          name="barcode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Código de Barras</FormLabel>
+              <FormControl>
+                <Input placeholder="Ex: 7890123" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
             Cancelar

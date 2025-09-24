@@ -10,6 +10,10 @@ import { SalesCart } from "@/components/sales-cart";
 import { AiSuggestions } from "@/components/ai-suggestions";
 import { useToast } from "@/hooks/use-toast";
 import type { ProductFormValues } from "@/components/add-product-form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Inventory } from "@/components/inventory";
+import { SalesHistory as SalesHistoryComponent } from "@/components/sales-history";
+import { DollarSign, Package, ShoppingCart } from "lucide-react";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -24,20 +28,41 @@ export default function Home() {
           (item) => item.product.id === product.id
         );
         if (existingItem) {
+          if (existingItem.quantity >= product.stock) {
+            toast({
+              variant: "destructive",
+              title: "Estoque insuficiente",
+              description: `Não há mais ${product.name} em estoque.`,
+            });
+            return prevItems;
+          }
           return prevItems.map((item) =>
             item.product.id === product.id
               ? { ...item, quantity: item.quantity + 1 }
               : item
           );
         }
+        if (product.stock < 1) {
+          toast({
+            variant: "destructive",
+            title: "Estoque insuficiente",
+            description: `Não há mais ${product.name} em estoque.`,
+          });
+          return prevItems;
+        }
         return [...prevItems, { product, quantity: 1 }];
       });
-      toast({
-        title: `${product.name} adicionado!`,
-        description: "O item foi adicionado ao carrinho.",
-      });
+      const existingItem = cartItems.find(
+        (item) => item.product.id === product.id
+      );
+      if (!existingItem || existingItem.quantity < product.stock) {
+        toast({
+          title: `${product.name} adicionado!`,
+          description: "O item foi adicionado ao carrinho.",
+        });
+      }
     },
-    [toast]
+    [toast, cartItems]
   );
 
   const handleAddByBarcode = useCallback(
@@ -60,6 +85,16 @@ export default function Home() {
 
   const handleUpdateQuantity = useCallback(
     (productId: string, newQuantity: number) => {
+      const product = products.find((p) => p.id === productId);
+      if (product && newQuantity > product.stock) {
+        toast({
+          variant: "destructive",
+          title: "Estoque insuficiente",
+          description: `Apenas ${product.stock} unidades de ${product.name} disponíveis.`,
+        });
+        return;
+      }
+
       setCartItems(
         (prevItems) =>
           prevItems
@@ -71,7 +106,7 @@ export default function Home() {
             .filter((item) => item.quantity > 0)
       );
     },
-    []
+    [products, toast]
   );
 
   const handleRemoveItem = useCallback((productId: string) => {
@@ -94,7 +129,17 @@ export default function Home() {
       date: new Date(),
     };
 
-    setSalesHistory((prev) => [...prev, newSale]);
+    setProducts((prevProducts) =>
+      prevProducts.map((p) => {
+        const cartItem = cartItems.find((item) => item.product.id === p.id);
+        if (cartItem) {
+          return { ...p, stock: p.stock - cartItem.quantity };
+        }
+        return p;
+      })
+    );
+
+    setSalesHistory((prev) => [newSale, ...prev]);
     setCartItems([]);
     toast({
       title: "Venda Finalizada!",
@@ -109,16 +154,28 @@ export default function Home() {
     async (values: ProductFormValues): Promise<void> => {
       return new Promise((resolve) => {
         setTimeout(() => {
-          // Simulate API call
           const newProduct: Product = {
             id: `prod_${Date.now()}`,
-            ...values,
-            imageId: "pao_de_queijo", // Using a default image for new products
+            name: values.name,
+            description: values.description || "",
+            price: values.price,
+            barcode: values.barcode,
+            stock: values.stock,
+            imageId: "pao_de_queijo",
           };
           setProducts((prev) => [newProduct, ...prev]);
           resolve();
         }, 500);
       });
+    },
+    []
+  );
+
+  const handleUpdateStock = useCallback(
+    (productId: string, newStock: number) => {
+      setProducts((prev) =>
+        prev.map((p) => (p.id === productId ? { ...p, stock: newStock } : p))
+      );
     },
     []
   );
@@ -136,27 +193,42 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start">
-          <div className="lg:col-span-2 space-y-6">
-            <DailySummary summary={dailySummary} />
-            <ProductList
-              products={products}
-              onAddProductToCart={handleAddProductToCart}
-              onAddProduct={handleAddProduct}
-            />
-          </div>
-          <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6">
-            <SalesCart
-              items={cartItems}
-              products={products}
-              onUpdateQuantity={handleUpdateQuantity}
-              onRemoveItem={handleRemoveItem}
-              onFinalizeSale={handleFinalizeSale}
-              onAddByBarcode={handleAddByBarcode}
-            />
-            <AiSuggestions cartItems={cartItems} />
-          </div>
-        </div>
+        <Tabs defaultValue="caixa">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="caixa"><ShoppingCart className="mr-2" />Caixa</TabsTrigger>
+            <TabsTrigger value="estoque"><Package className="mr-2" />Estoque</TabsTrigger>
+            <TabsTrigger value="vendas"><DollarSign className="mr-2" />Vendas</TabsTrigger>
+          </TabsList>
+          <TabsContent value="caixa">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start">
+              <div className="lg:col-span-2 space-y-6">
+                <DailySummary summary={dailySummary} />
+                <ProductList
+                  products={products}
+                  onAddProductToCart={handleAddProductToCart}
+                  onAddProduct={handleAddProduct}
+                />
+              </div>
+              <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6">
+                <SalesCart
+                  items={cartItems}
+                  products={products}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onRemoveItem={handleRemoveItem}
+                  onFinalizeSale={handleFinalizeSale}
+                  onAddByBarcode={handleAddByBarcode}
+                />
+                <AiSuggestions cartItems={cartItems} />
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="estoque">
+            <Inventory products={products} onUpdateStock={handleUpdateStock} />
+          </TabsContent>
+          <TabsContent value="vendas">
+            <SalesHistoryComponent sales={salesHistory} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

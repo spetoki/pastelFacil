@@ -17,6 +17,7 @@ import { Plus, Search } from "lucide-react";
 import Image from "next/image";
 import { AddProductDialog } from "./add-product-dialog";
 import type { ProductFormValues } from "./add-product-form";
+import { Badge } from "@/components/ui/badge";
 
 type ProductListProps = {
   products: Product[];
@@ -67,13 +68,14 @@ export function ProductList({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredProducts.map((product) => {
           const placeholder = imageMap.get(product.imageId);
+          const outOfStock = product.stock <= 0;
           return (
             <Card
               key={product.id}
-              className="flex flex-col overflow-hidden transition-shadow hover:shadow-lg"
+              className={`flex flex-col overflow-hidden transition-shadow hover:shadow-lg ${outOfStock ? 'opacity-50' : ''}`}
             >
-              <CardHeader className="p-0">
-                {placeholder && (
+              <CardHeader className="p-0 relative">
+                 {placeholder && (
                   <div className="aspect-[4/3] relative w-full">
                     <Image
                       src={placeholder.imageUrl}
@@ -84,6 +86,10 @@ export function ProductList({
                     />
                   </div>
                 )}
+                {outOfStock && (
+                  <Badge variant="destructive" className="absolute top-2 right-2">Esgotado</Badge>
+                )}
+                 <Badge className="absolute bottom-2 right-2">{product.stock} em estoque</Badge>
               </CardHeader>
               <CardContent className="p-4 flex-1">
                 <CardTitle className="text-lg font-headline">
@@ -101,6 +107,7 @@ export function ProductList({
                   size="icon"
                   aria-label={`Adicionar ${product.name} ao carrinho`}
                   onClick={() => onAddProductToCart(product)}
+                  disabled={outOfStock}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
