@@ -225,13 +225,6 @@ export function CashClosing({
               color="text-black"
               bgColor="bg-red-50 dark:bg-red-900/20"
             />
-            <FinancialCard
-              title="Total de Vendas em Fiado"
-              value={dailyData.totalByPaymentMethod["Fiado"] || 0}
-              icon={User}
-              color="text-black"
-              bgColor="bg-yellow-50 dark:bg-yellow-900/20"
-            />
             
              <div className="col-span-2 lg:col-span-3">
               <Separator className="my-4"/>
