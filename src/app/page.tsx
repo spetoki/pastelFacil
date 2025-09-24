@@ -48,8 +48,8 @@ import { ClientList } from "@/components/client-list";
 import type { ClientFormValues } from "@/components/add-client-form";
 
 export default function Home() {
-  const [isClient, setIsClient] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -57,19 +57,18 @@ export default function Home() {
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<CashTransaction[]>([]);
   const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
+
 
   useEffect(() => {
-    setIsClient(true);
+    // This effect handles authentication and initial data loading.
     if (!isAuthenticated()) {
       router.replace("/login");
+      return;
     }
-  }, [router]);
-
-  useEffect(() => {
-    if (!isAuthenticated()) return;
-
+    
+    setIsClient(true);
     setIsLoading(true);
 
     const productsCollection = collection(db, 'products');
@@ -77,10 +76,11 @@ export default function Home() {
     const unsubscribeProducts = onSnapshot(productsQuery, snapshot => {
       const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(productsList);
-      setIsLoading(false);
+      setIsLoading(false); // Set loading to false after first data fetch
     }, error => {
       console.error("Error fetching products: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar produtos" });
+      setIsLoading(false);
     });
 
     const clientsCollection = collection(db, 'clients');
@@ -145,7 +145,7 @@ export default function Home() {
       unsubscribeTransactions();
     };
 
-  }, [toast]);
+  }, [router, toast]);
 
 
   const handleLogout = () => {
