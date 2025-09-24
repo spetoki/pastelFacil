@@ -53,6 +53,7 @@ export type Client = {
   address: string;
   cpf: string;
   phone: string;
+  debt: number;
 };
 
 export type DailyClosure = {
@@ -66,3 +67,5 @@ export type DailyClosure = {
   countedAmount: number;
   difference: number;
 };
+
+    

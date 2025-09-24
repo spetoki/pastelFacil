@@ -293,15 +293,19 @@ export default function Home() {
       paymentMethod,
     };
 
+    const batch = writeBatch(db);
+
     if (paymentMethod === "Fiado" && clientId) {
       const client = clients.find(c => c.id === clientId);
       if (client) {
         newSale.clientId = clientId;
         newSale.clientName = client.name;
+        
+        const clientRef = doc(db, "clients", clientId);
+        const newDebt = (client.debt || 0) + total;
+        batch.update(clientRef, { debt: newDebt });
       }
     }
-
-    const batch = writeBatch(db);
   
     for (const item of cartItems) {
       if (!item.product.id) {
@@ -573,3 +577,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
