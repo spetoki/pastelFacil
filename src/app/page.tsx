@@ -132,7 +132,6 @@ export default function Home() {
     const shiftSalesQuery = query(
       collection(db, "sales"), 
       where("date", ">=", shiftStartTimestamp), 
-      orderBy("date", "desc")
     );
     const unsubscribeSales = onSnapshot(shiftSalesQuery, (snapshot) => {
       const salesList: Sale[] = [];
@@ -147,7 +146,7 @@ export default function Home() {
             } as Sale);
         }
       });
-      setSalesHistory(salesList);
+      setSalesHistory(salesList.sort((a,b) => b.date.getTime() - a.date.getTime()));
     }, (error) => {
       console.error("Error fetching shift sales: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar vendas do turno" });
