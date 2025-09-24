@@ -63,7 +63,7 @@ type CashClosingProps = {
   onAddTransaction: (
     type: "expense" | "cashEntry",
     values: { description: string; amount: number }
-  ) => void;
+  ) => Promise<void>;
   onCloseDay: (closureData: Omit<DailyClosure, 'id' | 'date'>) => Promise<void>;
 };
 
@@ -125,23 +125,26 @@ export function CashClosing({
       0
     );
 
-    const finalBalance = Object.values(totalByPaymentMethod).reduce(
+    const totalRevenue = Object.values(totalByPaymentMethod).reduce(
       (sum, total) => sum + total,
       0
     );
     
+    const revenueForClosure = totalRevenue - (totalByPaymentMethod["Fiado"] || 0);
+
     const expectedInCash = (totalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries - totalExpenses;
 
     return {
       totalByPaymentMethod,
       totalExpenses,
       totalCashEntries,
-      finalBalance,
+      totalRevenue,
+      revenueForClosure,
       expectedInCash,
     };
   }, [sales, expenses, cashEntries]);
 
-  const handleFormSubmit = (type: "expense" | "cashEntry") => async (values: TransactionFormValues) => {
+  const handleFormSubmit = async (type: "expense" | "cashEntry", values: TransactionFormValues) => {
       setIsSubmitting(true);
       try {
         await onAddTransaction(type, values);
@@ -157,13 +160,13 @@ export function CashClosing({
     setIsClosingDay(true);
     try {
       await onCloseDay({
-        totalRevenue: dailyData.finalBalance,
+        totalRevenue: dailyData.totalRevenue,
         totalByPaymentMethod: dailyData.totalByPaymentMethod,
         totalExpenses: dailyData.totalExpenses,
         totalCashEntries: dailyData.totalCashEntries,
         expectedInCash: dailyData.expectedInCash,
         countedAmount,
-        difference: countedAmount - dailyData.finalBalance,
+        difference: countedAmount - dailyData.revenueForClosure,
       });
       setIsConferenceOpen(false);
       setCountedAmount(0);
@@ -174,14 +177,14 @@ export function CashClosing({
     }
   }
 
-  const difference = countedAmount - dailyData.finalBalance;
+  const difference = countedAmount - dailyData.revenueForClosure;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Resumo Financeiro do Dia</CardTitle>
+            <CardTitle>Resumo Financeiro do Turno</CardTitle>
             <CardDescription>
               Balanço de todas as movimentações do turno atual.
             </CardDescription>
@@ -208,13 +211,6 @@ export function CashClosing({
               color="text-black"
               bgColor="bg-orange-50 dark:bg-orange-900/20"
             />
-             <FinancialCard
-              title="Vendas (Fiado)"
-              value={dailyData.totalByPaymentMethod["Fiado"] || 0}
-              icon={User}
-              color="text-black"
-              bgColor="bg-yellow-50 dark:bg-yellow-900/20"
-            />
             <FinancialCard
               title="Entradas no Caixa"
               value={dailyData.totalCashEntries}
@@ -229,6 +225,13 @@ export function CashClosing({
               color="text-black"
               bgColor="bg-red-50 dark:bg-red-900/20"
             />
+            <FinancialCard
+              title="Vendas (Fiado)"
+              value={dailyData.totalByPaymentMethod["Fiado"] || 0}
+              icon={User}
+              color="text-black"
+              bgColor="bg-yellow-50 dark:bg-yellow-900/20"
+            />
             
              <div className="col-span-2 lg:col-span-3">
               <Separator className="my-4"/>
@@ -238,7 +241,7 @@ export function CashClosing({
                   <span>Faturamento Total do Turno (todas as formas de pag.)</span>
                 </div>
                 <p className="text-3xl font-bold text-primary/90">
-                  {formatCurrency(dailyData.finalBalance)}
+                  {formatCurrency(dailyData.totalRevenue)}
                 </p>
               </div>
             </div>
@@ -285,20 +288,19 @@ export function CashClosing({
                   <DialogHeader>
                     <DialogTitle>Conferência de Fechamento</DialogTitle>
                     <DialogDescription>
-                      Confira os valores com base no faturamento total do turno.
+                      Confira os valores com base no faturamento do turno (sem fiado).
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4 space-y-4">
                     <div className="flex justify-between items-center bg-muted p-3 rounded-md">
-                      <span className="font-medium">Faturamento Total do Turno</span>
-                      <span className="font-bold text-lg">{formatCurrency(dailyData.finalBalance)}</span>
+                      <span className="font-medium">Faturamento do Turno para Conferência</span>
+                      <span className="font-bold text-lg">{formatCurrency(dailyData.revenueForClosure)}</span>
                     </div>
 
                      <div className="grid grid-cols-2 gap-2 text-sm">
                         <p>Dinheiro: {formatCurrency(dailyData.totalByPaymentMethod['Dinheiro'] || 0)}</p>
                         <p>Pix: {formatCurrency(dailyData.totalByPaymentMethod['Pix'] || 0)}</p>
                         <p>Cartão: {formatCurrency(dailyData.totalByPaymentMethod['Cartão'] || 0)}</p>
-                        <p>Fiado: {formatCurrency(dailyData.totalByPaymentMethod['Fiado'] || 0)}</p>
                     </div>
                     <Separator/>
 
@@ -344,7 +346,7 @@ export function CashClosing({
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
                 <FormField
                   control={form.control}
                   name="description"
@@ -376,7 +378,7 @@ export function CashClosing({
           </CardContent>
           <CardFooter className="flex gap-2">
             <Button
-              onClick={form.handleSubmit(handleFormSubmit("cashEntry"))}
+              onClick={form.handleSubmit((values) => handleFormSubmit("cashEntry", values))}
               disabled={!form.formState.isValid || isSubmitting}
               className="flex-1"
               variant="secondary"
@@ -385,7 +387,7 @@ export function CashClosing({
               Registrar Entrada
             </Button>
             <Button
-              onClick={form.handleSubmit(handleFormSubmit("expense"))}
+              onClick={form.handleSubmit((values) => handleFormSubmit("expense", values))}
               disabled={!form.formState.isValid || isSubmitting}
               className="flex-1"
               variant="destructive"
@@ -443,3 +445,5 @@ const FinancialCard = ({ title, value, icon: Icon, color, bgColor }: {
         </p>
     </div>
 );
+
+    
