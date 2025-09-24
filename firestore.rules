@@ -2,10 +2,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // CUIDADO: Estas regras permitem acesso público a todo o seu banco de dados.
+    // São úteis para começar, mas não são seguras para produção.
+    // Altere para regras mais seguras assim que possível.
     match /{document=**} {
-      // CUIDADO: Estas regras são inseguras e servem apenas para desenvolvimento.
-      // Elas permitem acesso público a todo o seu banco de dados.
-      // Você deve implementar autenticação e regras de segurança adequadas antes da produção.
       allow read, write: if true;
     }
   }
