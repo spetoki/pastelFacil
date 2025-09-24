@@ -46,10 +46,12 @@ import {
   ClipboardList,
   Users,
   FileText,
+  Settings,
 } from "lucide-react";
 import { isAuthenticated, clearAuthentication } from "@/lib/auth";
 import { ClientList } from "@/components/client-list";
 import type { ClientFormValues } from "@/components/add-client-form";
+import { Settings as SettingsComponent } from "@/components/settings";
 
 const getStartOfToday = () => {
     const today = new Date();
@@ -611,7 +613,7 @@ export default function Home() {
       <Header onLogout={handleLogout} />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs defaultValue="caixa">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-7 mb-6">
             <TabsTrigger value="caixa">
               <ShoppingCart className="mr-2" />
               Caixa
@@ -635,6 +637,10 @@ export default function Home() {
              <TabsTrigger value="relatorios">
               <FileText className="mr-2" />
               Relatórios
+            </TabsTrigger>
+            <TabsTrigger value="configuracoes">
+              <Settings className="mr-2" />
+              Configurações
             </TabsTrigger>
           </TabsList>
           <TabsContent value="caixa">
@@ -695,6 +701,9 @@ export default function Home() {
           </TabsContent>
           <TabsContent value="relatorios">
             <DailyClosuresHistory closures={dailyClosures} />
+          </TabsContent>
+          <TabsContent value="configuracoes">
+            <SettingsComponent />
           </TabsContent>
         </Tabs>
       </main>
