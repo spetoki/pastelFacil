@@ -16,8 +16,8 @@ import { Logo } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
 import { setAuthentication, isAuthenticated } from "@/lib/auth";
 
-// O PIN correto é hardcoded como "1234"
-const CORRECT_PIN = "1234";
+// O PIN correto é hardcoded como "0201"
+const CORRECT_PIN = "0201";
 
 export default function LoginPage() {
   const [pin, setPin] = useState("");
