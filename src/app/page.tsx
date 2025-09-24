@@ -258,12 +258,12 @@ export default function Home() {
     clientId?: string
   ) => {
     if (cartItems.length === 0) return;
-  
+
     const total = cartItems.reduce(
       (sum, item) => sum + item.product.price * item.quantity,
       0
     );
-
+  
     const saleItems: SaleItem[] = cartItems.map(item => ({
       productId: item.product.id,
       name: item.product.name,
@@ -276,7 +276,7 @@ export default function Home() {
       const client = clients.find(c => c.id === clientId);
       clientName = client?.name;
     }
-
+  
     const newSale: Omit<Sale, 'id'> = {
       items: saleItems,
       total,
@@ -285,16 +285,24 @@ export default function Home() {
       clientId,
       clientName
     };
-  
+
     const batch = writeBatch(db);
   
-    cartItems.forEach(item => {
-      if(item.product.id) {
-        const productRef = doc(db, "products", item.product.id);
-        const newStock = item.product.stock - item.quantity;
-        batch.update(productRef, { stock: newStock });
+    // Validação para garantir que temos IDs de produto válidos.
+    for (const item of cartItems) {
+      if (!item.product.id) {
+        console.error("Error: Product in cart is missing an ID.", item.product);
+        toast({
+          variant: "destructive",
+          title: "Erro no Carrinho",
+          description: `O produto ${item.product.name} está com um problema. Remova-o e adicione novamente.`,
+        });
+        return;
       }
-    });
+      const productRef = doc(db, "products", item.product.id);
+      const newStock = item.product.stock - item.quantity;
+      batch.update(productRef, { stock: newStock });
+    }
   
     try {
       const salesCollection = collection(db, "sales");
@@ -548,3 +556,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
