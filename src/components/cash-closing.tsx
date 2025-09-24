@@ -88,13 +88,17 @@ export function CashClosing({
   const dailyData = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const startOfToday = today.getTime();
 
-    const filterToday = (item: { date: Date }) =>
-      item.date.getTime() >= today.getTime();
-
-    const todaysSales = sales.filter(filterToday);
-    const todaysExpenses = expenses.filter(filterToday);
-    const todaysCashEntries = cashEntries.filter(filterToday);
+    const todaysSales = sales.filter(
+      (sale) => sale.date.getTime() >= startOfToday
+    );
+    const todaysExpenses = expenses.filter(
+      (exp) => exp.date.getTime() >= startOfToday
+    );
+    const todaysCashEntries = cashEntries.filter(
+      (entry) => entry.date.getTime() >= startOfToday
+    );
 
     const totalRevenue = todaysSales.reduce((sum, sale) => sum + sale.total, 0);
     const totalExpenses = todaysExpenses.reduce(
@@ -122,7 +126,7 @@ export function CashClosing({
   const handleFormSubmit =
     (type: "expense" | "cashEntry") => async (values: TransactionFormValues) => {
       setIsSubmitting(true);
-      onAddTransaction(type, values);
+      await onAddTransaction(type, values);
       form.reset();
       setIsSubmitting(false);
     };
