@@ -129,11 +129,11 @@ export function CashClosing({
       0
     );
 
-    // Saldo em caixa considera apenas dinheiro, pix e outras entradas, menos despesas.
+    // Saldo final agora reflete o faturamento total bruto.
     const finalBalance =
-      totalDinheiro + totalPix + totalCashEntries - totalExpenses;
+      totalDinheiro + totalPix + totalCartao + totalFiado;
       
-    // Saldo esperado em dinheiro físico
+    // Saldo esperado em dinheiro físico (para conferência de caixa)
     const expectedCash = totalDinheiro + totalCashEntries - totalExpenses;
 
     return {
@@ -168,8 +168,7 @@ export function CashClosing({
           <CardHeader>
             <CardTitle>Resumo Financeiro do Dia</CardTitle>
             <CardDescription>
-              Balanço das movimentações de hoje. O saldo em caixa considera
-              apenas entradas imediatas (dinheiro, pix) e retiradas.
+              Balanço de todas as movimentações de hoje.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -225,7 +224,7 @@ export function CashClosing({
                <div className="flex flex-col gap-1 rounded-lg bg-primary/10 p-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-primary">
                   <DollarSign className="h-4 w-4" />
-                  <span>Saldo Final em Caixa (Dinheiro + Pix)</span>
+                  <span>Faturamento Total do Dia (todas as formas de pag.)</span>
                 </div>
                 <p className="text-3xl font-bold text-primary/90">
                   {formatCurrency(dailyData.finalBalance)}
