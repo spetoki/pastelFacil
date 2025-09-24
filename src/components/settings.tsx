@@ -149,7 +149,7 @@ export function Settings() {
                         <AlertDialogDescription>
                             Esta ação é irreversível. Todos os dados de produtos, clientes, vendas e relatórios serão
                              <span className="font-bold text-destructive"> excluídos permanentemente</span>. 
-                            Para confirmar, digite o PIN de proprietário (2209).
+                            Para confirmar, digite o PIN de proprietário.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                      <div className="py-2">
