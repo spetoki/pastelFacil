@@ -40,6 +40,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -283,26 +284,27 @@ export function CashClosing({
                       <span className="font-bold text-lg">{formatCurrency(dailyData.expectedCash)}</span>
                     </div>
                      <div className="space-y-2">
-                       <FormLabel htmlFor="counted-amount">Valor Contado (R$)</FormLabel>
+                       <Label htmlFor="counted-amount">Valor Contado (R$)</Label>
                        <Input
                          id="counted-amount"
                          type="number"
                          placeholder="0,00"
                          step="0.01"
-                         value={countedAmount}
+                         value={countedAmount > 0 ? countedAmount : ""}
                          onChange={(e) => setCountedAmount(Number(e.target.value))}
                          className="text-lg text-right h-12"
                        />
                      </div>
                      <div className={cn("flex justify-between items-center p-3 rounded-md", 
-                        difference === 0 ? "bg-green-100 dark:bg-green-900/20" : "bg-red-100 dark:bg-red-900/20"
+                        countedAmount > 0 && difference === 0 ? "bg-green-100 dark:bg-green-900/20" : "",
+                        countedAmount > 0 && difference !== 0 ? "bg-red-100 dark:bg-red-900/20" : ""
                      )}>
                         <span className="font-medium">Diferença</span>
                         <span className="font-bold text-lg">{formatCurrency(difference)}</span>
                      </div>
-                     {difference > 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é maior que o esperado (Sobra).</p>}
-                     {difference < 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é menor que o esperado (Falta).</p>}
-                     {difference === 0 && countedAmount > 0 && <p className="text-sm text-center text-muted-foreground">O caixa está correto!</p>}
+                     {countedAmount > 0 && difference > 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é maior que o esperado (Sobra).</p>}
+                     {countedAmount > 0 && difference < 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é menor que o esperado (Falta).</p>}
+                     {countedAmount > 0 && difference === 0 && <p className="text-sm text-center text-green-600">O caixa está correto!</p>}
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
