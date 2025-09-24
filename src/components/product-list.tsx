@@ -21,8 +21,9 @@ import { Skeleton } from "./ui/skeleton";
 type ProductListProps = {
   products: Product[];
   onAddProductToCart: (product: Product) => void;
-  onAddProduct: (values: ProductFormValues) => Promise<void>;
+  onAddProduct?: (values: ProductFormValues) => Promise<void>;
   isLoading: boolean;
+  showAddProductButton?: boolean;
 };
 
 const formatCurrency = (value: number) => {
@@ -37,6 +38,7 @@ export function ProductList({
   onAddProductToCart,
   onAddProduct,
   isLoading,
+  showAddProductButton = true,
 }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -52,7 +54,9 @@ export function ProductList({
         <h2 className="text-xl font-headline font-semibold text-foreground">
           Produtos
         </h2>
-        <AddProductDialog onAddProduct={onAddProduct} />
+        {showAddProductButton && onAddProduct && (
+          <AddProductDialog onAddProduct={onAddProduct} />
+        )}
       </div>
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

@@ -434,9 +434,9 @@ export default function Home() {
               <ShoppingCart className="mr-2" />
               Caixa
             </TabsTrigger>
-            <TabsTrigger value="estoque">
+            <TabsTrigger value="produtos">
               <Package className="mr-2" />
-              Estoque
+              Produtos
             </TabsTrigger>
             <TabsTrigger value="vendas">
               <DollarSign className="mr-2" />
@@ -454,8 +454,8 @@ export default function Home() {
                 <ProductList
                   products={products}
                   onAddProductToCart={handleAddProductToCart}
-                  onAddProduct={handleAddProduct}
                   isLoading={isLoadingData}
+                  showAddProductButton={false}
                 />
               </div>
               <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6">
@@ -471,7 +471,7 @@ export default function Home() {
               </div>
             </div>
           </TabsContent>
-          <TabsContent value="estoque">
+          <TabsContent value="produtos">
             <Inventory
               products={products}
               onUpdateStock={handleUpdateStock}
