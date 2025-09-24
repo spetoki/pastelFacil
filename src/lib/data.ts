@@ -1,0 +1,68 @@
+import type { Product } from "./types";
+
+export const initialProducts: Product[] = [
+  {
+    id: "prod_001",
+    name: "Pastel de Carne",
+    description: "Delicioso pastel com recheio de carne moída.",
+    price: 6.5,
+    barcode: "7890001",
+    imageId: "pastel_carne",
+  },
+  {
+    id: "prod_002",
+    name: "Pastel de Queijo",
+    description: "Cremoso e com queijo que derrete na boca.",
+    price: 6.0,
+    barcode: "7890002",
+    imageId: "pastel_queijo",
+  },
+  {
+    id: "prod_003",
+    name: "Coxinha",
+    description: "A clássica coxinha de frango com catupiry.",
+    price: 7.0,
+    barcode: "7890003",
+    imageId: "coxinha",
+  },
+  {
+    id: "prod_004",
+    name: "Pão de Queijo",
+    description: "Porção com 6 unidades.",
+    price: 5.0,
+    barcode: "7890004",
+    imageId: "pao_de_queijo",
+  },
+  {
+    id: "prod_005",
+    name: "Brigadeiro",
+    description: "Doce de chocolate para sobremesa.",
+    price: 3.5,
+    barcode: "7890005",
+    imageId: "brigadeiro",
+  },
+  {
+    id: "prod_006",
+    name: "Guaraná Antarctica",
+    description: "Lata 350ml.",
+    price: 5.5,
+    barcode: "7890006",
+    imageId: "guarana",
+  },
+  {
+    id: "prod_007",
+    name: "Caldo de Cana",
+    description: "Copo de 500ml, puro e gelado.",
+    price: 8.0,
+    barcode: "7890007",
+    imageId: "caldo_de_cana",
+  },
+  {
+    id: "prod_008",
+    name: "Kibe",
+    description: "Salgado frito de trigo com carne.",
+    price: 7.0,
+    barcode: "7890008",
+    imageId: "kibe",
+  },
+];
