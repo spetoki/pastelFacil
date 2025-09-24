@@ -16,15 +16,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const formSchema = z.object({
+const formSchema = (initialStock = 0) => z.object({
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
   description: z.string().optional(),
   price: z.coerce.number().min(0, { message: "O preço não pode ser negativo." }),
-  stock: z.coerce.number().int().min(0, { message: "O estoque não pode ser negativo." }),
+  stock: z.coerce.number().int().min(initialStock, { message: `O estoque não pode ser menor que ${initialStock}.` }),
   barcode: z.string().min(1, { message: "O código de barras é obrigatório." }),
 });
 
-export type ProductFormValues = z.infer<typeof formSchema>;
+export type ProductFormValues = z.infer<ReturnType<typeof formSchema>>;
 
 type AddProductFormProps = {
   onSubmit: (values: ProductFormValues) => void;
@@ -39,8 +39,11 @@ export function AddProductForm({
   isSubmitting,
   initialData,
 }: AddProductFormProps) {
+  const isEditing = !!initialData;
+  const currentStock = initialData?.stock || 0;
+
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema(currentStock)),
     defaultValues: initialData || {
       name: "",
       description: "",
@@ -58,7 +61,6 @@ export function AddProductForm({
 
   const buttonText = initialData ? "Salvar Alterações" : "Salvar Produto";
   const submittingButtonText = initialData ? "Salvando..." : "Adicionando...";
-  const isEditing = !!initialData;
 
   return (
     <Form {...form}>
@@ -110,7 +112,7 @@ export function AddProductForm({
               <FormItem>
                 <FormLabel>Estoque</FormLabel>
                 <FormControl>
-                  <Input type="number" step="1" {...field} disabled={isEditing} />
+                  <Input type="number" step="1" {...field} min={isEditing ? currentStock : 0}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
