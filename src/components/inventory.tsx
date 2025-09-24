@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ProductFormValues } from "./add-product-form";
 import { AddProductDialog } from "./add-product-dialog";
 import { EditProductDialog } from "./edit-product-dialog";
-import { Pencil, Loader2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 
 type InventoryProps = {
@@ -32,29 +32,11 @@ type InventoryProps = {
 
 export function Inventory({
   products,
-  onUpdateStock,
   onAddProduct,
   onUpdateProduct,
   isLoading,
 }: InventoryProps) {
-  const [stockUpdates, setStockUpdates] = useState<Record<string, { value: number; isSaving: boolean }>>({});
   const [searchTerm, setSearchTerm] = useState("");
-
-  const handleStockChange = (productId: string, value: string) => {
-    const newStock = parseInt(value, 10);
-    if (!isNaN(newStock) && newStock >= 0) {
-      setStockUpdates((prev) => ({ ...prev, [productId]: { value: newStock, isSaving: false } }));
-    }
-  };
-
-  const handleSaveStock = async (productId: string) => {
-    if (stockUpdates[productId] !== undefined) {
-      setStockUpdates((prev) => ({ ...prev, [productId]: { ...prev[productId], isSaving: true } }));
-      await onUpdateStock(productId, stockUpdates[productId].value);
-      const { [productId]: _, ...rest } = stockUpdates;
-      setStockUpdates(rest);
-    }
-  };
 
   const filteredProducts = products.filter(
     (product) =>
@@ -89,7 +71,7 @@ export function Inventory({
                 <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-6 w-12 mx-auto" /></TableCell>
-                <TableCell className="text-right"><Skeleton className="h-9 w-48 ml-auto" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-9 w-10 ml-auto" /></TableCell>
               </TableRow>
             ))
           ) : filteredProducts.length > 0 ? (
@@ -105,35 +87,15 @@ export function Inventory({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      value={stockUpdates[product.id]?.value ?? ""}
-                      placeholder={String(product.stock)}
-                      onChange={(e) =>
-                        handleStockChange(product.id, e.target.value)
-                      }
-                      className="w-24"
-                      disabled={stockUpdates[product.id]?.isSaving}
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => handleSaveStock(product.id)}
-                      disabled={stockUpdates[product.id] === undefined || stockUpdates[product.id]?.isSaving}
-                    >
-                      {stockUpdates[product.id]?.isSaving && <Loader2 className="mr-2 animate-spin" />}
-                      Salvar
-                    </Button>
                     <EditProductDialog
                       product={product}
                       onUpdateProduct={onUpdateProduct}
                     >
                       <Button size="icon" variant="outline">
                         <Pencil className="h-4 w-4" />
+                         <span className="sr-only">Editar Produto</span>
                       </Button>
                     </EditProductDialog>
-                  </div>
                 </TableCell>
               </TableRow>
             ))
