@@ -74,8 +74,6 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [shiftStart, setShiftStart] = useState<Date>(getStartOfToday);
 
-  const allSalesForHistory = useMemo(() => [...salesHistory, ...fiadoSales].sort((a,b) => b.date.getTime() - a.date.getTime()), [salesHistory, fiadoSales]);
-
   useEffect(() => {
     if (!isAuthenticated()) {
       router.replace("/login");
@@ -209,6 +207,7 @@ export default function Home() {
     };
   }, [router, toast, shiftStart]);
 
+  const allSalesForHistory = useMemo(() => [...salesHistory, ...fiadoSales].sort((a,b) => b.date.getTime() - a.date.getTime()), [salesHistory, fiadoSales]);
 
   const handleLogout = () => {
     clearAuthentication();
@@ -565,14 +564,13 @@ export default function Home() {
   );
 
   const dailySummary: DailySummaryData = useMemo(() => {
-    const allSales = [...salesHistory, ...fiadoSales];
-    const totalRevenue = allSales.reduce((sum, sale) => sum + sale.total, 0);
-    const numberOfSales = allSales.length;
+    const totalRevenue = salesHistory.reduce((sum, sale) => sum + sale.total, 0);
+    const numberOfSales = salesHistory.length;
     const averageSaleValue =
       numberOfSales > 0 ? totalRevenue / numberOfSales : 0;
 
     return { totalRevenue, numberOfSales, averageSaleValue };
-  }, [salesHistory, fiadoSales]);
+  }, [salesHistory]);
 
   const handleCloseDay = useCallback(async (closureData: Omit<DailyClosure, 'id' | 'date'>) => {
     const newClosure = {
