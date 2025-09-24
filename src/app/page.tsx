@@ -328,18 +328,14 @@ export default function Home() {
     async (values: ProductFormValues): Promise<void> => {
       try {
         await addDoc(collection(db, "products"), values);
-        // State will update via onSnapshot
+        // O estado será atualizado via onSnapshot, então não há necessidade de fazer mais nada aqui.
       } catch (error) {
         console.error("Error adding product: ", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao adicionar produto",
-          description: "Não foi possível salvar o novo produto.",
-        });
+        // O erro é relançado para ser tratado no componente do formulário.
         throw error;
       }
     },
-    [toast]
+    []
   );
   
   const handleUpdateProduct = useCallback(
@@ -347,7 +343,7 @@ export default function Home() {
       try {
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, values);
-        // State will update via onSnapshot
+        // O estado será atualizado via onSnapshot
       } catch (error) {
         console.error("Error updating product: ", error);
         toast({
@@ -366,7 +362,7 @@ export default function Home() {
       try {
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, { stock: newStock });
-        // State will update via onSnapshot
+        // O estado será atualizado via onSnapshot
         toast({
           title: "Estoque atualizado!",
         });
@@ -385,7 +381,7 @@ export default function Home() {
     async (values: ClientFormValues): Promise<void> => {
       try {
         await addDoc(collection(db, "clients"), values);
-        // State will update via onSnapshot
+        // O estado será atualizado via onSnapshot
       } catch (error) {
         console.error("Error adding client: ", error);
         toast({
@@ -412,7 +408,7 @@ export default function Home() {
 
       try {
         await addDoc(collection(db, 'transactions'), newTransaction);
-        // State will update via onSnapshot
+        // O estado será atualizado via onSnapshot
         if (type === "expense") {
           toast({ title: "Despesa registrada com sucesso!" });
         } else {
@@ -441,7 +437,7 @@ export default function Home() {
   if (!isClient || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        {/* Render a spinner or a blank page while redirecting */}
+        {/* Renderiza um spinner ou uma página em branco durante o redirecionamento */}
       </div>
     );
   }
@@ -500,7 +496,6 @@ export default function Home() {
           <TabsContent value="estoque">
             <Inventory
               products={products}
-              onUpdateStock={handleUpdateStock}
               onAddProduct={handleAddProduct}
               onUpdateProduct={handleUpdateProduct}
               isLoading={isLoading}

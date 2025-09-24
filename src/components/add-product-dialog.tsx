@@ -31,15 +31,16 @@ export function AddProductDialog({ onAddProduct }: AddProductDialogProps) {
         title: "Sucesso!",
         description: `Produto "${values.name}" adicionado.`,
       });
-      setOpen(false);
+      setOpen(false); // Fecha o diálogo em caso de sucesso
     } catch (error) {
+      // O erro já é tratado na função principal, mas um toast aqui pode ser útil
       toast({
         variant: "destructive",
         title: "Erro",
         description: "Não foi possível adicionar o produto.",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Garante que o estado de submissão seja resetado
     }
   };
 
