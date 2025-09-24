@@ -90,12 +90,12 @@ export function PayDebtDialog({
     setOpen(isOpen);
   }
 
-  const DialogContainer = children ? Dialog : React.Fragment;
+  const DialogContainer = children ? Dialog : 'div';
   const dialogProps = children ? { open, onOpenChange: handleOpenChange } : {};
 
 
   return (
-    <DialogContainer {...dialogProps}>
+    <Dialog {...dialogProps}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -165,6 +165,6 @@ export function PayDebtDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </DialogContainer>
+    </Dialog>
   );
 }

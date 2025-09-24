@@ -504,10 +504,7 @@ export function CashClosing({
             <PayDebtDialog
                 client={selectedClientForPayment}
                 onPayDebt={onPayDebt}
-            >
-                {/* Trigger is handled manually */}
-                <></>
-            </PayDebtDialog>
+            />
       </Dialog>
     )}
     </>
