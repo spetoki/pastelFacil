@@ -52,6 +52,7 @@ import {
   Wallet,
   DollarSign,
   Calculator,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -134,6 +135,7 @@ export function CashClosing({
       .filter(sale => sale.paymentMethod !== 'Fiado')
       .reduce((sum, sale) => sum + sale.total, 0);
 
+    // Calcula o faturamento para fechamento de caixa (apenas o que entrou)
     const revenueForClosure = (totalByPaymentMethod["Dinheiro"] || 0) + (totalByPaymentMethod["Pix"] || 0) + (totalByPaymentMethod["Cartão"] || 0);
 
     const expectedInCash = (totalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries + totalDebtPayments - totalExpenses;
@@ -198,7 +200,7 @@ export function CashClosing({
               Balanço de todas as movimentações do turno atual.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <CardContent className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <FinancialCard
               title="Vendas (Dinheiro)"
               value={dailyData.totalByPaymentMethod["Dinheiro"] || 0}
@@ -213,6 +215,11 @@ export function CashClosing({
               title="Vendas (Cartão)"
               value={dailyData.totalByPaymentMethod["Cartão"] || 0}
               icon={CreditCard}
+            />
+             <FinancialCard
+              title="Vendas (Fiado)"
+              value={dailyData.totalByPaymentMethod["Fiado"] || 0}
+              icon={User}
             />
             <FinancialCard
               title="Entradas no Caixa"
@@ -230,7 +237,7 @@ export function CashClosing({
               icon={ArrowDownCircle}
             />
             
-             <div className="col-span-2 lg:col-span-3">
+             <div className="col-span-2 lg:col-span-4">
               <Separator className="my-4"/>
                <div className="flex flex-col gap-1 rounded-lg bg-primary/10 p-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-primary">
@@ -440,11 +447,11 @@ const FinancialCard = ({ title, value, icon: Icon }: {
     icon: React.ElementType;
 }) => (
     <div className="flex flex-col gap-1 rounded-lg p-4 bg-background">
-        <div className="flex items-center gap-2 text-sm font-medium text-black">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Icon className="h-4 w-4" />
             <span>{title}</span>
         </div>
-        <p className="text-2xl font-bold text-black">
+        <p className="text-2xl font-bold text-foreground">
             {formatCurrency(value)}
         </p>
     </div>
