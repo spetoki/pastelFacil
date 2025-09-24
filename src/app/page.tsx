@@ -577,6 +577,8 @@ export default function Home() {
        throw error;
     }
   }, [toast]);
+  
+  const allSalesForHistory = useMemo(() => [...salesHistory, ...fiadoSales].sort((a,b) => b.date.getTime() - a.date.getTime()), [salesHistory, fiadoSales]);
 
   if (!isClient) {
     return (
@@ -584,8 +586,6 @@ export default function Home() {
       </div>
     );
   }
-
-  const allSalesForHistory = useMemo(() => [...salesHistory, ...fiadoSales].sort((a,b) => b.date.getTime() - a.date.getTime()), [salesHistory, fiadoSales]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
