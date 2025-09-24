@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "./ui/input";
 import { deleteAllData, resetFiadoData } from "@/lib/db-utils";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { Download } from "lucide-react";
 
 type Theme = "light" | "dark";
 
@@ -37,6 +39,7 @@ export function Settings() {
   const [pin, setPin] = useState("");
   const [isResetting, setIsResetting] = useState(false);
   const [isResettingFiado, setIsResettingFiado] = useState(false);
+  const { canInstall, install } = usePwaInstall();
 
   useEffect(() => {
     setIsMounted(true);
@@ -165,6 +168,26 @@ export function Settings() {
           </div>
         </CardContent>
       </Card>
+
+       <Card>
+        <CardHeader>
+          <CardTitle>Instalação do Aplicativo</CardTitle>
+           <CardDescription>Instale o aplicativo em seu dispositivo para acesso rápido e uma experiência mais integrada.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {canInstall ? (
+              <Button onClick={install}>
+                <Download className="mr-2 h-4 w-4" />
+                Instalar Aplicativo
+              </Button>
+            ) : (
+                <p className="text-sm text-muted-foreground">
+                    O aplicativo já está instalado ou seu navegador não suporta a instalação.
+                </p>
+            )}
+        </CardContent>
+      </Card>
+
       <Card className="border-destructive">
           <CardHeader>
               <CardTitle>Zona de Perigo</CardTitle>
