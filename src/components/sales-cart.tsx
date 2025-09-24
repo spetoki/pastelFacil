@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Barcode, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import React, { useState } from "react";
 
 type SalesCartProps = {
@@ -38,7 +37,6 @@ export function SalesCart({
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
-  const imageMap = new Map(PlaceHolderImages.map((p) => [p.id, p]));
 
   const handleBarcodeScan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,19 +84,16 @@ export function SalesCart({
           </div>
         ) : (
           items.map(({ product, quantity }) => {
-            const placeholder = imageMap.get(product.imageId);
             return (
               <div key={product.id} className="flex items-center gap-4">
-                {placeholder && (
                   <Image
-                    src={placeholder.imageUrl}
+                    src={product.imageUrl}
                     alt={product.name}
                     width={64}
                     height={48}
-                    className="rounded-md object-cover"
-                    data-ai-hint={placeholder.imageHint}
+                    className="rounded-md object-cover bg-muted"
+                    unoptimized
                   />
-                )}
                 <div className="flex-1">
                   <p className="font-semibold">{product.name}</p>
                   <p className="text-sm text-muted-foreground">

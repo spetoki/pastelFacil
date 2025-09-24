@@ -41,6 +41,7 @@ export function EditProductDialog({
       });
       setOpen(false);
     } catch (error) {
+      console.error("Failed to update product:", error)
       toast({
         variant: "destructive",
         title: "Erro",
@@ -57,6 +58,7 @@ export function EditProductDialog({
     price: product.price,
     stock: product.stock,
     barcode: product.barcode,
+    imageUrl: product.imageUrl,
   };
 
   return (

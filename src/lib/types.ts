@@ -4,7 +4,7 @@ export type Product = {
   description: string;
   price: number;
   barcode: string;
-  imageId: string;
+  imageUrl: string;
   stock: number;
 };
 

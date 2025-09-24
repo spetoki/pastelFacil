@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { Product } from "@/lib/types";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,8 +44,6 @@ export function ProductList({
       product.barcode.includes(searchTerm)
   );
 
-  const imageMap = new Map(PlaceHolderImages.map((p) => [p.id, p]));
-
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -67,7 +64,6 @@ export function ProductList({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredProducts.map((product) => {
-          const placeholder = imageMap.get(product.imageId);
           const outOfStock = product.stock <= 0;
           return (
             <Card
@@ -75,17 +71,15 @@ export function ProductList({
               className={`flex flex-col overflow-hidden transition-shadow hover:shadow-lg ${outOfStock ? 'opacity-50' : ''}`}
             >
               <CardHeader className="p-0 relative">
-                 {placeholder && (
-                  <div className="aspect-[4/3] relative w-full">
+                 <div className="aspect-[4/3] relative w-full bg-muted">
                     <Image
-                      src={placeholder.imageUrl}
+                      src={product.imageUrl}
                       alt={product.name}
                       fill
                       className="object-cover"
-                      data-ai-hint={placeholder.imageHint}
+                      unoptimized // Since we are using external URLs from firebase storage
                     />
                   </div>
-                )}
                 {outOfStock && (
                   <Badge variant="destructive" className="absolute top-2 right-2">Esgotado</Badge>
                 )}

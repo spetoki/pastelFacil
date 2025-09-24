@@ -28,6 +28,15 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { isAuthenticated, clearAuthentication } from "@/lib/auth";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+
+async function uploadImage(imageFile: File, productId: string): Promise<string> {
+  const storageRef = ref(storage, `products/${productId}/${imageFile.name}`);
+  const snapshot = await uploadBytes(storageRef, imageFile);
+  const downloadURL = await getDownloadURL(snapshot.ref);
+  return downloadURL;
+}
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
@@ -183,48 +192,54 @@ export default function Home() {
 
   const handleAddProduct = useCallback(
     async (values: ProductFormValues): Promise<void> => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const newProduct: Product = {
-            id: `prod_${Date.now()}`,
-            name: values.name,
-            description: values.description || "",
-            price: values.price,
-            barcode: values.barcode,
-            stock: values.stock,
-            imageId: "pao_de_queijo",
-          };
-          setProducts((prev) => [newProduct, ...prev]);
-          resolve();
-        }, 500);
-      });
+      const productId = `prod_${Date.now()}`;
+      let imageUrl = "https://picsum.photos/seed/placeholder/400/300";
+
+      if (values.image && values.image.length > 0) {
+        imageUrl = await uploadImage(values.image[0], productId);
+      }
+
+      const newProduct: Product = {
+        id: productId,
+        name: values.name,
+        description: values.description || "",
+        price: values.price,
+        barcode: values.barcode,
+        stock: values.stock,
+        imageUrl: imageUrl,
+      };
+      setProducts((prev) => [newProduct, ...prev]);
     },
     []
   );
 
   const handleUpdateProduct = useCallback(
     async (productId: string, values: ProductFormValues): Promise<void> => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          setProducts((prev) =>
-            prev.map((p) =>
-              p.id === productId
-                ? {
-                    ...p,
-                    name: values.name,
-                    description: values.description || "",
-                    price: values.price,
-                    stock: values.stock,
-                    barcode: values.barcode,
-                  }
-                : p
-            )
-          );
-          resolve();
-        }, 500);
-      });
+       const productToUpdate = products.find((p) => p.id === productId);
+      if (!productToUpdate) return;
+
+      let imageUrl = productToUpdate.imageUrl;
+      if (values.image && values.image.length > 0) {
+        imageUrl = await uploadImage(values.image[0], productId);
+      }
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === productId
+            ? {
+                ...p,
+                name: values.name,
+                description: values.description || "",
+                price: values.price,
+                stock: values.stock,
+                barcode: values.barcode,
+                imageUrl: imageUrl,
+              }
+            : p
+        )
+      );
     },
-    []
+    [products]
   );
 
   const handleUpdateStock = useCallback(
