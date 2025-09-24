@@ -49,17 +49,17 @@ import {
   CircleDollarSign,
   CreditCard,
   Landmark,
-  User,
+  Wallet,
   DollarSign,
   Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 
 type CashClosingProps = {
   sales: Sale[];
   expenses: CashTransaction[];
   cashEntries: CashTransaction[];
+  debtPayments: CashTransaction[];
   onAddTransaction: (
     type: "expense" | "cashEntry",
     values: { description: string; amount: number }
@@ -93,10 +93,10 @@ export function CashClosing({
   sales,
   expenses,
   cashEntries,
+  debtPayments,
   onAddTransaction,
   onCloseDay,
 }: CashClosingProps) {
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClosingDay, setIsClosingDay] = useState(false);
   const [isConferenceOpen, setIsConferenceOpen] = useState(false);
@@ -124,6 +124,10 @@ export function CashClosing({
       (sum, entry) => sum + entry.amount,
       0
     );
+    const totalDebtPayments = debtPayments.reduce(
+      (sum, entry) => sum + entry.amount,
+      0
+    );
 
     const totalRevenue = Object.values(totalByPaymentMethod).reduce(
       (sum, total) => sum + total,
@@ -132,17 +136,18 @@ export function CashClosing({
     
     const revenueForClosure = (totalByPaymentMethod["Dinheiro"] || 0) + (totalByPaymentMethod["Pix"] || 0) + (totalByPaymentMethod["Cartão"] || 0);
 
-    const expectedInCash = (totalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries - totalExpenses;
+    const expectedInCash = (totalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries + totalDebtPayments - totalExpenses;
 
     return {
       totalByPaymentMethod,
       totalExpenses,
       totalCashEntries,
+      totalDebtPayments,
       totalRevenue,
       revenueForClosure,
       expectedInCash,
     };
-  }, [sales, expenses, cashEntries]);
+  }, [sales, expenses, cashEntries, debtPayments]);
 
   const handleFormSubmit = async (type: "expense" | "cashEntry", values: TransactionFormValues) => {
       setIsSubmitting(true);
@@ -194,36 +199,31 @@ export function CashClosing({
               title="Vendas (Dinheiro)"
               value={dailyData.totalByPaymentMethod["Dinheiro"] || 0}
               icon={CircleDollarSign}
-              color="text-black"
-              bgColor="bg-green-50 dark:bg-green-900/20"
             />
             <FinancialCard
               title="Vendas (Pix)"
               value={dailyData.totalByPaymentMethod["Pix"] || 0}
               icon={Landmark}
-              color="text-black"
-              bgColor="bg-cyan-50 dark:bg-cyan-900/20"
             />
             <FinancialCard
               title="Vendas (Cartão)"
               value={dailyData.totalByPaymentMethod["Cartão"] || 0}
               icon={CreditCard}
-              color="text-black"
-              bgColor="bg-orange-50 dark:bg-orange-900/20"
             />
             <FinancialCard
               title="Entradas no Caixa"
               value={dailyData.totalCashEntries}
               icon={ArrowUpCircle}
-              color="text-black"
-              bgColor="bg-blue-50 dark:bg-blue-900/20"
+            />
+            <FinancialCard
+              title="Recebimentos (Fiado)"
+              value={dailyData.totalDebtPayments}
+              icon={Wallet}
             />
             <FinancialCard
               title="Despesas / Retiradas"
               value={dailyData.totalExpenses}
               icon={ArrowDownCircle}
-              color="text-black"
-              bgColor="bg-red-50 dark:bg-red-900/20"
             />
             
              <div className="col-span-2 lg:col-span-3">
@@ -430,19 +430,17 @@ function TransactionTable({ transactions }: { transactions: CashTransaction[] })
   );
 }
 
-const FinancialCard = ({ title, value, icon: Icon, color, bgColor }: {
+const FinancialCard = ({ title, value, icon: Icon }: {
     title: string;
     value: number;
     icon: React.ElementType;
-    color: string;
-    bgColor: string;
 }) => (
-    <div className={`flex flex-col gap-1 rounded-lg p-4 ${bgColor}`}>
-        <div className={`flex items-center gap-2 text-sm font-medium ${color}`}>
+    <div className="flex flex-col gap-1 rounded-lg p-4 bg-background">
+        <div className="flex items-center gap-2 text-sm font-medium text-black">
             <Icon className="h-4 w-4" />
             <span>{title}</span>
         </div>
-        <p className={`text-2xl font-bold ${color}`}>
+        <p className="text-2xl font-bold text-black">
             {formatCurrency(value)}
         </p>
     </div>

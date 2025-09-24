@@ -44,7 +44,8 @@ export type CashTransaction = {
   description: string;
   amount: number;
   date: Date;
-  type?: "expense" | "cashEntry";
+  type?: "expense" | "cashEntry" | "debtPayment";
+  paymentMethod?: PaymentMethod;
 };
 
 export type Client = {
@@ -67,5 +68,3 @@ export type DailyClosure = {
   countedAmount: number;
   difference: number;
 };
-
-    

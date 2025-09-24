@@ -66,6 +66,7 @@ export default function Home() {
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<CashTransaction[]>([]);
   const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
+  const [debtPayments, setDebtPayments] = useState<CashTransaction[]>([]);
   const [dailyClosures, setDailyClosures] = useState<DailyClosure[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
@@ -123,6 +124,7 @@ export default function Home() {
     const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
       const expensesList: CashTransaction[] = [];
       const cashEntriesList: CashTransaction[] = [];
+      const debtPaymentsList: CashTransaction[] = [];
       snapshot.forEach(doc => {
         const data = doc.data();
         const transaction = {
@@ -134,10 +136,13 @@ export default function Home() {
           expensesList.push(transaction);
         } else if (data.type === 'cashEntry') {
           cashEntriesList.push(transaction);
+        } else if (data.type === 'debtPayment') {
+            debtPaymentsList.push(transaction);
         }
       });
       setExpenses(expensesList);
       setCashEntries(cashEntriesList);
+      setDebtPayments(debtPaymentsList);
     }, (error) => {
       console.error("Error fetching transactions: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar transações" });
@@ -400,7 +405,7 @@ export default function Home() {
   const handleAddClient = useCallback(
     async (values: ClientFormValues): Promise<void> => {
       try {
-        await addDoc(collection(db, "clients"), values);
+        await addDoc(collection(db, "clients"), {...values, debt: 0});
       } catch (error) {
         console.error("Error adding client: ", error);
         toast({
@@ -412,6 +417,64 @@ export default function Home() {
       }
     },
     [toast]
+  );
+
+  const handlePayDebt = useCallback(
+    async (
+      clientId: string,
+      amount: number,
+      paymentMethod: PaymentMethod
+    ): Promise<void> => {
+      const client = clients.find((c) => c.id === clientId);
+      if (!client) {
+        toast({ variant: "destructive", title: "Cliente não encontrado." });
+        throw new Error("Client not found");
+      }
+
+      if (amount <= 0) {
+        toast({ variant: "destructive", title: "Valor inválido." });
+        throw new Error("Invalid amount");
+      }
+
+      const newDebt = client.debt - amount;
+      if (newDebt < 0) {
+         toast({ variant: "destructive", title: "Valor excede a dívida.", description: `O cliente deve apenas ${client.debt}` });
+         throw new Error("Amount exceeds debt");
+      }
+
+      const batch = writeBatch(db);
+
+      // 1. Update client's debt
+      const clientRef = doc(db, "clients", clientId);
+      batch.update(clientRef, { debt: newDebt });
+
+      // 2. Add transaction for the cash entry
+      const transaction: Omit<CashTransaction, "id"> = {
+        date: new Date(),
+        type: "debtPayment",
+        description: `Pagamento de dívida - ${client.name}`,
+        amount: amount,
+        paymentMethod: paymentMethod,
+      };
+      const transactionRef = doc(collection(db, "transactions"));
+      batch.set(transactionRef, transaction);
+      
+      try {
+        await batch.commit();
+        toast({
+          title: "Pagamento recebido!",
+          description: `${new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(amount)} recebido de ${client.name}.`
+        });
+      } catch (error) {
+        console.error("Error processing debt payment: ", error);
+        toast({ variant: "destructive", title: "Erro ao processar pagamento" });
+        throw error;
+      }
+    },
+    [toast, clients]
   );
 
   const handleAddTransaction = useCallback(
@@ -554,6 +617,7 @@ export default function Home() {
             <ClientList
               clients={clients}
               onAddClient={handleAddClient}
+              onPayDebt={handlePayDebt}
               isLoading={isLoading}
             />
           </TabsContent>
@@ -565,6 +629,7 @@ export default function Home() {
               sales={salesHistory}
               expenses={expenses}
               cashEntries={cashEntries}
+              debtPayments={debtPayments}
               onAddTransaction={handleAddTransaction}
               onCloseDay={handleCloseDay}
             />
@@ -577,5 +642,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

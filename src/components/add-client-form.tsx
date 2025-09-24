@@ -20,7 +20,6 @@ const formSchema = z.object({
   address: z.string().min(5, { message: "O endereço deve ter pelo menos 5 caracteres." }),
   cpf: z.string().length(11, { message: "O CPF deve ter 11 dígitos." }),
   phone: z.string().min(10, { message: "O telefone deve ter pelo menos 10 dígitos." }),
-  debt: z.number().default(0),
 });
 
 export type ClientFormValues = z.infer<typeof formSchema>;
@@ -45,7 +44,6 @@ export function AddClientForm({
       address: "",
       cpf: "",
       phone: "",
-      debt: 0,
     },
   });
 
@@ -127,5 +125,3 @@ export function AddClientForm({
     </Form>
   );
 }
-
-    
