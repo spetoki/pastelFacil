@@ -281,6 +281,15 @@ export function CashClosing({
             </CardContent>
           </Card>
         </div>
+         <Card>
+            <CardHeader>
+                <CardTitle>Recebimentos de Fiado</CardTitle>
+                <CardDescription>Pagamentos de dívidas recebidos neste turno.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <TransactionTable transactions={debtPayments} />
+            </CardContent>
+        </Card>
       </div>
 
       <div className="space-y-6">
@@ -428,7 +437,7 @@ export function CashClosing({
 
 function TransactionTable({ transactions }: { transactions: CashTransaction[] }) {
   if (transactions.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nenhuma movimentação hoje.</p>;
+    return <p className="text-sm text-muted-foreground">Nenhuma movimentação neste turno.</p>;
   }
   return (
     <Table>
