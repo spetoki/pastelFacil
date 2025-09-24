@@ -141,6 +141,18 @@ export function CashClosing({
     };
   }, [sales, expenses, cashEntries]);
 
+  const handleFormSubmit = (type: "expense" | "cashEntry") => async (values: TransactionFormValues) => {
+      setIsSubmitting(true);
+      try {
+        await onAddTransaction(type, values);
+        form.reset();
+      } catch (error) {
+        // Toast de erro já é mostrado na função principal
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
   const handleConfirmCloseDay = async () => {
     setIsClosingDay(true);
     try {
@@ -431,5 +443,3 @@ const FinancialCard = ({ title, value, icon: Icon, color, bgColor }: {
         </p>
     </div>
 );
-
-    
