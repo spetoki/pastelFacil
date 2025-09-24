@@ -41,3 +41,11 @@ export type CashTransaction = {
   date: Date;
   type?: "expense" | "cashEntry";
 };
+
+export type Client = {
+  id: string;
+  name: string;
+  address: string;
+  cpf: string;
+  phone: string;
+};

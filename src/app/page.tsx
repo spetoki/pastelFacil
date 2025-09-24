@@ -22,6 +22,7 @@ import type {
   DailySummaryData,
   CashTransaction,
   SaleItem,
+  Client,
 } from "@/lib/types";
 import { Header } from "@/components/header";
 import { DailySummary } from "@/components/daily-summary";
@@ -39,8 +40,11 @@ import {
   Package,
   ShoppingCart,
   ClipboardList,
+  Users,
 } from "lucide-react";
 import { isAuthenticated, clearAuthentication } from "@/lib/auth";
+import { ClientList } from "@/components/client-list";
+import type { ClientFormValues } from "@/components/add-client-form";
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
@@ -54,6 +58,7 @@ export default function Home() {
   }, [router]);
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<CashTransaction[]>([]);
@@ -67,6 +72,7 @@ export default function Home() {
     if (!isAuthenticated()) return;
     setIsLoadingData(true);
     try {
+      // Fetch Products
       const productsCollection = collection(db, 'products');
       const productSnapshot = await getDocs(query(productsCollection, orderBy("name")));
       const productsList = productSnapshot.docs.map(
@@ -74,6 +80,15 @@ export default function Home() {
       );
       setProducts(productsList);
 
+      // Fetch Clients
+      const clientsCollection = collection(db, 'clients');
+      const clientSnapshot = await getDocs(query(clientsCollection, orderBy("name")));
+      const clientsList = clientSnapshot.docs.map(
+        doc => ({ id: doc.id, ...doc.data() } as Client)
+      );
+      setClients(clientsList);
+
+      // Fetch daily data (Sales and Transactions)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const startOfToday = Timestamp.fromDate(today);
@@ -300,8 +315,7 @@ export default function Home() {
     async (values: ProductFormValues): Promise<void> => {
       try {
         const docRef = await addDoc(collection(db, "products"), values);
-        setProducts((prev) => [{ id: docRef.id, ...values }, ...prev]);
-        fetchData();
+        setProducts((prev) => [{ id: docRef.id, ...values }, ...prev].sort((a,b) => a.name.localeCompare(b.name)));
       } catch (error) {
         console.error("Error adding product: ", error);
         toast({
@@ -312,7 +326,7 @@ export default function Home() {
         throw error;
       }
     },
-    [toast, fetchData]
+    [toast]
   );
   
   const handleUpdateProduct = useCallback(
@@ -323,9 +337,8 @@ export default function Home() {
         setProducts((prev) =>
           prev.map((p) =>
             p.id === productId ? { ...p, ...values } : p
-          )
+          ).sort((a,b) => a.name.localeCompare(b.name))
         );
-        fetchData();
       } catch (error) {
         console.error("Error updating product: ", error);
         toast({
@@ -336,7 +349,7 @@ export default function Home() {
         throw error;
       }
     },
-    [toast, fetchData]
+    [toast]
   );
   
   const handleUpdateStock = useCallback(
@@ -356,6 +369,28 @@ export default function Home() {
           variant: "destructive",
           title: "Erro ao atualizar estoque",
         });
+      }
+    },
+    [toast]
+  );
+
+  const handleAddClient = useCallback(
+    async (values: ClientFormValues): Promise<void> => {
+      try {
+        const docRef = await addDoc(collection(db, "clients"), values);
+        setClients((prev) =>
+          [...prev, { id: docRef.id, ...values }].sort((a, b) =>
+            a.name.localeCompare(b.name)
+          )
+        );
+      } catch (error) {
+        console.error("Error adding client: ", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao adicionar cliente",
+          description: "Não foi possível salvar o novo cliente.",
+        });
+        throw error;
       }
     },
     [toast]
@@ -401,15 +436,8 @@ export default function Home() {
   );
 
   const dailySummary: DailySummaryData = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const todaysSales = salesHistory.filter(
-      (sale) => sale.date.getTime() >= today.getTime()
-    );
-
-    const totalRevenue = todaysSales.reduce((sum, sale) => sum + sale.total, 0);
-    const numberOfSales = todaysSales.length;
+    const totalRevenue = salesHistory.reduce((sum, sale) => sum + sale.total, 0);
+    const numberOfSales = salesHistory.length;
     const averageSaleValue =
       numberOfSales > 0 ? totalRevenue / numberOfSales : 0;
 
@@ -429,7 +457,7 @@ export default function Home() {
       <Header onLogout={handleLogout} />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs defaultValue="caixa">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="caixa">
               <ShoppingCart className="mr-2" />
               Caixa
@@ -437,6 +465,10 @@ export default function Home() {
             <TabsTrigger value="produtos">
               <Package className="mr-2" />
               Produtos
+            </TabsTrigger>
+            <TabsTrigger value="clientes">
+              <Users className="mr-2" />
+              Clientes
             </TabsTrigger>
             <TabsTrigger value="vendas">
               <DollarSign className="mr-2" />
@@ -477,6 +509,13 @@ export default function Home() {
               onUpdateStock={handleUpdateStock}
               onAddProduct={handleAddProduct}
               onUpdateProduct={handleUpdateProduct}
+              isLoading={isLoadingData}
+            />
+          </TabsContent>
+           <TabsContent value="clientes">
+            <ClientList
+              clients={clients}
+              onAddClient={handleAddClient}
               isLoading={isLoadingData}
             />
           </TabsContent>
