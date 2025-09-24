@@ -16,11 +16,13 @@ import { Plus, Search } from "lucide-react";
 import { AddProductDialog } from "./add-product-dialog";
 import type { ProductFormValues } from "./add-product-form";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "./ui/skeleton";
 
 type ProductListProps = {
   products: Product[];
   onAddProductToCart: (product: Product) => void;
   onAddProduct: (values: ProductFormValues) => Promise<void>;
+  isLoading: boolean;
 };
 
 const formatCurrency = (value: number) => {
@@ -34,13 +36,14 @@ export function ProductList({
   products,
   onAddProductToCart,
   onAddProduct,
+  isLoading,
 }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.barcode.includes(searchTerm)
+      (product.barcode && product.barcode.includes(searchTerm))
   );
 
   return (
@@ -62,51 +65,68 @@ export function ProductList({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredProducts.map((product) => {
-          const outOfStock = product.stock <= 0;
-          return (
-            <Card
-              key={product.id}
-              className={`flex flex-col overflow-hidden transition-shadow hover:shadow-lg ${outOfStock ? 'opacity-50' : ''}`}
-            >
-              <CardHeader className="p-4 relative">
-                <CardTitle className="text-lg font-headline">
-                  {product.name}
-                </CardTitle>
-                 <div className="absolute top-2 right-2 flex gap-1">
-                    {outOfStock && (
-                      <Badge variant="destructive">Esgotado</Badge>
-                    )}
-                     <Badge variant="secondary">{product.stock} em estoque</Badge>
-                 </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 flex-1">
-                <CardDescription className="text-sm mt-1 h-10">
-                  {product.description}
-                </CardDescription>
-              </CardContent>
-              <CardFooter className="p-4 flex justify-between items-center">
-                <p className="font-semibold text-lg">
-                  {formatCurrency(product.price)}
-                </p>
-                <Button
-                  size="icon"
-                  aria-label={`Adicionar ${product.name} ao carrinho`}
-                  onClick={() => onAddProductToCart(product)}
-                  disabled={outOfStock}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </CardFooter>
-            </Card>
-          );
-        })}
+        {isLoading ? (
+            Array.from({ length: 8 }).map((_, i) => (
+              <Card key={i} className="flex flex-col overflow-hidden">
+                <CardHeader className="p-4">
+                  <Skeleton className="h-6 w-3/4" />
+                </CardHeader>
+                <CardContent className="p-4 pt-0 flex-1">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-1/2 mt-2" />
+                </CardContent>
+                <CardFooter className="p-4 flex justify-between items-center">
+                  <Skeleton className="h-7 w-20" />
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                </CardFooter>
+              </Card>
+            ))
+        ) : filteredProducts.length > 0 ? (
+          filteredProducts.map((product) => {
+            const outOfStock = product.stock <= 0;
+            return (
+              <Card
+                key={product.id}
+                className={`flex flex-col overflow-hidden transition-shadow hover:shadow-lg ${outOfStock ? 'opacity-50' : ''}`}
+              >
+                <CardHeader className="p-4 relative">
+                  <CardTitle className="text-lg font-headline">
+                    {product.name}
+                  </CardTitle>
+                  <div className="absolute top-2 right-2 flex gap-1">
+                      {outOfStock && (
+                        <Badge variant="destructive">Esgotado</Badge>
+                      )}
+                      <Badge variant="secondary">{product.stock} em estoque</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 flex-1">
+                  <CardDescription className="text-sm mt-1 h-10">
+                    {product.description}
+                  </CardDescription>
+                </CardContent>
+                <CardFooter className="p-4 flex justify-between items-center">
+                  <p className="font-semibold text-lg">
+                    {formatCurrency(product.price)}
+                  </p>
+                  <Button
+                    size="icon"
+                    aria-label={`Adicionar ${product.name} ao carrinho`}
+                    onClick={() => onAddProductToCart(product)}
+                    disabled={outOfStock}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })
+        ) : (
+          <div className="col-span-full text-center py-10">
+            <p className="text-muted-foreground">Nenhum produto encontrado.</p>
+          </div>
+        )}
       </div>
-      {filteredProducts.length === 0 && (
-        <div className="col-span-full text-center py-10">
-          <p className="text-muted-foreground">Nenhum produto encontrado.</p>
-        </div>
-      )}
     </div>
   );
 }

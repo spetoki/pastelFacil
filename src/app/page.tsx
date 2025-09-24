@@ -2,6 +2,16 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  getDocs,
+  writeBatch,
+  query
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import type {
   Product,
   CartItem,
@@ -9,7 +19,6 @@ import type {
   DailySummaryData,
   CashTransaction,
 } from "@/lib/types";
-import { initialProducts } from "@/lib/data";
 import { Header } from "@/components/header";
 import { DailySummary } from "@/components/daily-summary";
 import { ProductList } from "@/components/product-list";
@@ -40,12 +49,39 @@ export default function Home() {
     }
   }, [router]);
 
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<CashTransaction[]>([]);
   const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const productsCollection = collection(db, "products");
+      const productSnapshot = await getDocs(productsCollection);
+      const productsList = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      setProducts(productsList);
+    } catch (error) {
+      console.error("Error fetching products: ", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar produtos",
+        description: "Não foi possível carregar os produtos do banco de dados.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      fetchProducts();
+    }
+  }, [fetchProducts]);
+
 
   const handleLogout = () => {
     clearAuthentication();
@@ -146,83 +182,120 @@ export default function Home() {
     );
   }, []);
 
-  const handleFinalizeSale = useCallback(() => {
+  const handleFinalizeSale = useCallback(async () => {
     if (cartItems.length === 0) return;
-
+  
     const total = cartItems.reduce(
       (sum, item) => sum + item.product.price * item.quantity,
       0
     );
-    const newSale: Sale = {
-      id: `sale_${Date.now()}`,
-      items: cartItems,
+    const newSale: Omit<Sale, 'id'> = {
+      items: cartItems.map(item => ({...item, product: { ...item.product, id: item.product.id || '' }})),
       total,
       date: new Date(),
     };
-
-    setProducts((prevProducts) =>
-      prevProducts.map((p) => {
-        const cartItem = cartItems.find((item) => item.product.id === p.id);
-        if (cartItem) {
-          return { ...p, stock: p.stock - cartItem.quantity };
-        }
-        return p;
-      })
-    );
-
-    setSalesHistory((prev) => [newSale, ...prev]);
-    setCartItems([]);
-    toast({
-      title: "Venda Finalizada!",
-      description: `Total de ${new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(total)}.`,
+  
+    const batch = writeBatch(db);
+  
+    cartItems.forEach(item => {
+      if(item.product.id) {
+        const productRef = doc(db, "products", item.product.id);
+        const newStock = item.product.stock - item.quantity;
+        batch.update(productRef, { stock: newStock });
+      }
     });
-  }, [cartItems, toast]);
+  
+    try {
+      // await addDoc(collection(db, "sales"), newSale); // We will integrate this later
+      await batch.commit();
+  
+      setSalesHistory((prev) => [{...newSale, id: `sale_${Date.now()}`}, ...prev]);
+      setCartItems([]);
+      fetchProducts(); // Refresh products to show updated stock
+  
+      toast({
+        title: "Venda Finalizada!",
+        description: `Total de ${new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(total)}.`,
+      });
+    } catch (error) {
+      console.error("Error finalizing sale: ", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao finalizar venda",
+        description: "Não foi possível atualizar o estoque dos produtos.",
+      });
+    }
+  }, [cartItems, toast, fetchProducts]);
 
   const handleAddProduct = useCallback(
     async (values: ProductFormValues): Promise<void> => {
-      const newProduct: Product = {
-        id: `prod_${Date.now()}`,
-        name: values.name,
-        description: values.description || "",
-        price: values.price,
-        barcode: values.barcode,
-        stock: values.stock,
-      };
-      setProducts((prev) => [newProduct, ...prev]);
+      try {
+        const docRef = await addDoc(collection(db, "products"), values);
+        setProducts((prev) => [{ id: docRef.id, ...values }, ...prev]);
+      } catch (error) {
+        console.error("Error adding product: ", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao adicionar produto",
+          description: "Não foi possível salvar o novo produto.",
+        });
+        throw error;
+      }
     },
-    []
+    [toast]
   );
 
   const handleUpdateProduct = useCallback(
     async (productId: string, values: ProductFormValues): Promise<void> => {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === productId
-            ? {
-                ...p,
-                name: values.name,
-                description: values.description || "",
-                price: values.price,
-                stock: values.stock,
-                barcode: values.barcode,
-              }
-            : p
-        )
-      );
+      try {
+        const productRef = doc(db, "products", productId);
+        await updateDoc(productRef, values);
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === productId
+              ? {
+                  ...p,
+                  ...values,
+                }
+              : p
+          )
+        );
+      } catch (error) {
+        console.error("Error updating product: ", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao atualizar produto",
+          description: "Não foi possível salvar as alterações.",
+        });
+        throw error;
+      }
     },
-    []
+    [toast]
   );
 
   const handleUpdateStock = useCallback(
-    (productId: string, newStock: number) => {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === productId ? { ...p, stock: newStock } : p))
-      );
+    async (productId: string, newStock: number) => {
+       try {
+        const productRef = doc(db, "products", productId);
+        await updateDoc(productRef, { stock: newStock });
+        setProducts((prev) =>
+          prev.map((p) => (p.id === productId ? { ...p, stock: newStock } : p))
+        );
+        toast({
+          title: "Estoque atualizado!",
+        });
+      } catch (error) {
+        console.error("Error updating stock: ", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao atualizar estoque",
+        });
+      }
     },
-    []
+    [toast]
   );
 
   const handleAddTransaction = useCallback(
@@ -301,6 +374,7 @@ export default function Home() {
                   products={products}
                   onAddProductToCart={handleAddProductToCart}
                   onAddProduct={handleAddProduct}
+                  isLoading={isLoading}
                 />
               </div>
               <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6">
@@ -322,6 +396,7 @@ export default function Home() {
               onUpdateStock={handleUpdateStock}
               onAddProduct={handleAddProduct}
               onUpdateProduct={handleUpdateProduct}
+              isLoading={isLoading}
             />
           </TabsContent>
           <TabsContent value="vendas">
