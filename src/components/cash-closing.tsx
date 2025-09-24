@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { Sale, CashTransaction, DailyClosure } from "@/lib/types";
+import type { Sale, CashTransaction, DailyClosure, Client, PaymentMethod } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -55,6 +55,15 @@ import {
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PayDebtDialog } from "./pay-debt-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+
 
 type CashClosingProps = {
   sales: Sale[];
@@ -62,11 +71,13 @@ type CashClosingProps = {
   expenses: CashTransaction[];
   cashEntries: CashTransaction[];
   debtPayments: CashTransaction[];
+  clients: Client[];
   onAddTransaction: (
     type: "expense" | "cashEntry",
     values: { description: string; amount: number }
   ) => Promise<void>;
   onCloseDay: (closureData: Omit<DailyClosure, 'id' | 'date'>) => Promise<void>;
+  onPayDebt: (clientId: string, amount: number, paymentMethod: PaymentMethod) => Promise<void>;
 };
 
 const formatCurrency = (value: number) => {
@@ -97,12 +108,16 @@ export function CashClosing({
   expenses,
   cashEntries,
   debtPayments,
+  clients,
   onAddTransaction,
   onCloseDay,
+  onPayDebt
 }: CashClosingProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClosingDay, setIsClosingDay] = useState(false);
   const [isConferenceOpen, setIsConferenceOpen] = useState(false);
+  const [isPayDebtOpen, setIsPayDebtOpen] = useState(false);
+  const [selectedClientForPayment, setSelectedClientForPayment] = useState<Client | undefined>();
   const [countedAmount, setCountedAmount] = useState(0);
 
   const form = useForm<TransactionFormValues>({
@@ -199,9 +214,21 @@ export function CashClosing({
     }
   }
 
+  const handleSelectClientForPayment = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    setSelectedClientForPayment(client);
+  }
+
+  const handleOpenPayDebtDialog = () => {
+    if (selectedClientForPayment) {
+      setIsPayDebtOpen(true);
+    }
+  }
+
   const difference = countedAmount - dailyData.revenueForClosure;
 
   return (
+    <>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
         <Card>
@@ -372,6 +399,43 @@ export function CashClosing({
       
         <Card>
           <CardHeader>
+            <CardTitle>Ações do Cliente</CardTitle>
+            <CardDescription>Receba pagamentos de dívidas de clientes.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="client-select-payment">Selecionar Cliente</Label>
+               <Select onValueChange={handleSelectClientForPayment} value={selectedClientForPayment?.id}>
+                  <SelectTrigger id="client-select-payment">
+                    <SelectValue placeholder="Escolha um cliente para pagar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.filter(c => c.debt > 0).length > 0 ? (
+                      clients.filter(c => c.debt > 0).map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          <div className="flex justify-between w-full">
+                            <span>{client.name}</span>
+                            <span className="text-muted-foreground">{formatCurrency(client.debt)}</span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        Nenhum cliente com dívidas.
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+            </div>
+             <Button className="w-full" onClick={handleOpenPayDebtDialog} disabled={!selectedClientForPayment}>
+                <Wallet className="mr-2"/>
+                Receber Pagamento Fiado
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Adicionar Transação Manual</CardTitle>
             <CardDescription>
               Registre uma nova despesa ou uma entrada de dinheiro avulsa (ex: troco inicial).
@@ -432,6 +496,21 @@ export function CashClosing({
         </Card>
       </div>
     </div>
+    {selectedClientForPayment && (
+        <Dialog open={isPayDebtOpen} onOpenChange={(isOpen) => {
+          setIsPayDebtOpen(isOpen);
+          if (!isOpen) setSelectedClientForPayment(undefined); // Reset client on close
+        }}>
+            <PayDebtDialog
+                client={selectedClientForPayment}
+                onPayDebt={onPayDebt}
+            >
+                {/* Trigger is handled manually */}
+                <></>
+            </PayDebtDialog>
+      </Dialog>
+    )}
+    </>
   );
 }
 

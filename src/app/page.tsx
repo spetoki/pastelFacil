@@ -700,8 +700,10 @@ export default function Home() {
               expenses={expenses}
               cashEntries={cashEntries}
               debtPayments={debtPayments}
+              clients={clients}
               onAddTransaction={handleAddTransaction}
               onCloseDay={handleCloseDay}
+              onPayDebt={handlePayDebt}
             />
           </TabsContent>
           <TabsContent value="relatorios">

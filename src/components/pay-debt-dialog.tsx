@@ -30,7 +30,7 @@ type PayDebtDialogProps = {
     amount: number,
     paymentMethod: PaymentMethod
   ) => Promise<void>;
-  children: ReactNode;
+  children?: ReactNode; // Made optional
 };
 
 const formatCurrency = (value: number) => {
@@ -51,7 +51,7 @@ export function PayDebtDialog({
   onPayDebt,
   children,
 }: PayDebtDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!children); // Open by default if no trigger
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [amount, setAmount] = useState(client.debt);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Dinheiro");
@@ -90,9 +90,13 @@ export function PayDebtDialog({
     setOpen(isOpen);
   }
 
+  const DialogContainer = children ? Dialog : React.Fragment;
+  const dialogProps = children ? { open, onOpenChange: handleOpenChange } : {};
+
+
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <DialogContainer {...dialogProps}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline">Pagar Dívida</DialogTitle>
@@ -161,6 +165,6 @@ export function PayDebtDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+    </DialogContainer>
   );
 }
