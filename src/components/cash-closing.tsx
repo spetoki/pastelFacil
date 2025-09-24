@@ -166,6 +166,8 @@ export function CashClosing({
 
     const expectedInCash = (shiftTotalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries + totalDebtPayments - totalExpenses;
 
+    const fiadoBalanceToday = totalFiadoToday - totalDebtPayments;
+
     return {
       totalByPaymentMethod,
       totalExpenses,
@@ -174,6 +176,7 @@ export function CashClosing({
       totalRevenue,
       revenueForClosure,
       expectedInCash,
+      fiadoBalanceToday
     };
   }, [sales, fiadoSales, expenses, cashEntries, debtPayments]);
 
@@ -261,8 +264,8 @@ export function CashClosing({
               icon={CreditCard}
             />
              <FinancialCard
-              title="Vendas (Fiado - Dia)"
-              value={dailyData.totalByPaymentMethod["Fiado"] || 0}
+              title="Balanço (Fiado - Dia)"
+              value={dailyData.fiadoBalanceToday}
               icon={User}
             />
             <FinancialCard
