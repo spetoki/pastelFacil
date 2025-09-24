@@ -13,6 +13,7 @@ import {
   where,
   Timestamp,
   onSnapshot,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type {
@@ -437,6 +438,28 @@ export default function Home() {
     [toast]
   );
 
+  const handleDeleteProduct = useCallback(
+    async (productId: string): Promise<void> => {
+      try {
+        const productRef = doc(db, "products", productId);
+        await deleteDoc(productRef);
+        toast({
+          title: "Produto Excluído!",
+          description: "O produto foi removido permanentemente do sistema.",
+        });
+      } catch (error) {
+        console.error("Error deleting product: ", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao excluir produto",
+          description: "Não foi possível remover o produto.",
+        });
+        throw error;
+      }
+    },
+    [toast]
+  );
+
   const handleAddClient = useCallback(
     async (values: ClientFormValues): Promise<void> => {
       try {
@@ -646,6 +669,7 @@ export default function Home() {
               onAddProduct={handleAddProduct}
               onUpdateProduct={handleUpdateProduct}
               onUpdateStock={handleUpdateStock}
+              onDeleteProduct={handleDeleteProduct}
               isLoading={isLoading}
             />
           </TabsContent>

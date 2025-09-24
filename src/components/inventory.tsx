@@ -16,8 +16,19 @@ import { Badge } from "@/components/ui/badge";
 import type { ProductFormValues } from "./add-product-form";
 import { AddProductDialog } from "./add-product-dialog";
 import { EditProductDialog } from "./edit-product-dialog";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type InventoryProps = {
   products: Product[];
@@ -27,6 +38,7 @@ type InventoryProps = {
     values: ProductFormValues
   ) => Promise<void>;
   onUpdateStock: (productId: string, newStock: number) => Promise<void>;
+  onDeleteProduct: (productId: string) => Promise<void>;
   isLoading: boolean;
 };
 
@@ -34,6 +46,7 @@ export function Inventory({
   products,
   onAddProduct,
   onUpdateProduct,
+  onDeleteProduct,
   isLoading,
 }: InventoryProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,7 +84,7 @@ export function Inventory({
                 <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-6 w-12 mx-auto" /></TableCell>
-                <TableCell className="text-right"><Skeleton className="h-9 w-10 ml-auto" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-9 w-24 ml-auto" /></TableCell>
               </TableRow>
             ))
           ) : filteredProducts.length > 0 ? (
@@ -87,15 +100,44 @@ export function Inventory({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
+                  <div className="flex gap-2 justify-end">
                     <EditProductDialog
                       product={product}
                       onUpdateProduct={onUpdateProduct}
                     >
                       <Button size="icon" variant="outline">
                         <Pencil className="h-4 w-4" />
-                         <span className="sr-only">Editar Produto</span>
+                        <span className="sr-only">Editar Produto</span>
                       </Button>
                     </EditProductDialog>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="destructive">
+                          <Trash className="h-4 w-4" />
+                          <span className="sr-only">Excluir Produto</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o produto
+                             <span className="font-semibold"> {product.name}</span>.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => onDeleteProduct(product.id)}
+                            className="bg-destructive hover:bg-destructive/90"
+                          >
+                            Sim, excluir produto
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))
