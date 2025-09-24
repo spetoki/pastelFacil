@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,7 +30,9 @@ type PayDebtDialogProps = {
     amount: number,
     paymentMethod: PaymentMethod
   ) => Promise<void>;
-  children?: ReactNode; // Made optional
+  children?: ReactNode; // Trigger
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 };
 
 const formatCurrency = (value: number) => {
@@ -50,12 +52,22 @@ export function PayDebtDialog({
   client,
   onPayDebt,
   children,
+  isOpen,
+  onOpenChange,
 }: PayDebtDialogProps) {
-  const [open, setOpen] = useState(!children); // Open by default if no trigger
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [amount, setAmount] = useState(client.debt);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Dinheiro");
   const { toast } = useToast();
+  
+  // Reset state when client changes or dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setAmount(client.debt);
+      setPaymentMethod("Dinheiro");
+    }
+  }, [isOpen, client.debt]);
+
 
   const handleSubmit = async () => {
     if (amount <= 0 || amount > client.debt) {
@@ -70,32 +82,25 @@ export function PayDebtDialog({
     setIsSubmitting(true);
     try {
       await onPayDebt(client.id, amount, paymentMethod);
-      setOpen(false);
-      // Reset state for next time
-      setAmount(client.debt - amount); 
-      setPaymentMethod("Dinheiro");
+      onOpenChange?.(false); // Close dialog on success
     } catch (error) {
         // Error toast is handled in the main page logic
     } finally {
       setIsSubmitting(false);
     }
   };
-  
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-        // Reset state when closing dialog
-        setAmount(client.debt);
-        setPaymentMethod("Dinheiro");
+
+  const internalOnOpenChange = (open: boolean) => {
+    if (!open) {
+      // Reset state for next time
+      setAmount(0);
+      setPaymentMethod("Dinheiro");
     }
-    setOpen(isOpen);
-  }
-
-  const DialogContainer = children ? Dialog : 'div';
-  const dialogProps = children ? { open, onOpenChange: handleOpenChange } : {};
-
-
+    onOpenChange?.(open);
+  };
+  
   return (
-    <Dialog {...dialogProps}>
+    <Dialog open={isOpen} onOpenChange={internalOnOpenChange}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

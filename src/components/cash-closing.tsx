@@ -224,6 +224,12 @@ export function CashClosing({
       setIsPayDebtOpen(true);
     }
   }
+  
+  const handlePayDebtDialogClose = () => {
+      setIsPayDebtOpen(false);
+      // Timeout to avoid seeing client change before dialog closes
+      setTimeout(() => setSelectedClientForPayment(undefined), 100);
+  }
 
   const difference = countedAmount - dailyData.revenueForClosure;
 
@@ -497,15 +503,12 @@ export function CashClosing({
       </div>
     </div>
     {selectedClientForPayment && (
-        <Dialog open={isPayDebtOpen} onOpenChange={(isOpen) => {
-          setIsPayDebtOpen(isOpen);
-          if (!isOpen) setSelectedClientForPayment(undefined); // Reset client on close
-        }}>
-            <PayDebtDialog
-                client={selectedClientForPayment}
-                onPayDebt={onPayDebt}
-            />
-      </Dialog>
+       <PayDebtDialog
+          isOpen={isPayDebtOpen}
+          onOpenChange={handlePayDebtDialogClose}
+          client={selectedClientForPayment}
+          onPayDebt={onPayDebt}
+       />
     )}
     </>
   );
