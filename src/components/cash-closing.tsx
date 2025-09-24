@@ -128,12 +128,12 @@ export function CashClosing({
       (sum, entry) => sum + entry.amount,
       0
     );
-
-    const totalRevenue = Object.values(totalByPaymentMethod).reduce(
-      (sum, total) => sum + total,
-      0
-    );
     
+    // Calcula o faturamento total do turno (sem fiado)
+    const totalRevenue = sales
+      .filter(sale => sale.paymentMethod !== 'Fiado')
+      .reduce((sum, sale) => sum + sale.total, 0);
+
     const revenueForClosure = (totalByPaymentMethod["Dinheiro"] || 0) + (totalByPaymentMethod["Pix"] || 0) + (totalByPaymentMethod["Cartão"] || 0);
 
     const expectedInCash = (totalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries + totalDebtPayments - totalExpenses;
@@ -164,11 +164,15 @@ export function CashClosing({
   const handleConfirmCloseDay = async () => {
     setIsClosingDay(true);
     try {
+      // O faturamento total aqui deve incluir todas as formas de pagamento para o relatório
+      const fullTotalRevenue = Object.values(dailyData.totalByPaymentMethod).reduce((sum, total) => sum + total, 0);
+
       await onCloseDay({
-        totalRevenue: dailyData.totalRevenue,
+        totalRevenue: fullTotalRevenue,
         totalByPaymentMethod: dailyData.totalByPaymentMethod,
         totalExpenses: dailyData.totalExpenses,
         totalCashEntries: dailyData.totalCashEntries,
+        totalDebtPayments: dailyData.totalDebtPayments,
         expectedInCash: dailyData.expectedInCash,
         countedAmount,
         difference: countedAmount - dailyData.revenueForClosure,
@@ -231,7 +235,7 @@ export function CashClosing({
                <div className="flex flex-col gap-1 rounded-lg bg-primary/10 p-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-primary">
                   <DollarSign className="h-4 w-4" />
-                  <span>Faturamento Total do Turno (todas as formas de pag.)</span>
+                  <span>Faturamento do Turno (Dinheiro, Pix, Cartão)</span>
                 </div>
                 <p className="text-3xl font-bold text-primary/90">
                   {formatCurrency(dailyData.totalRevenue)}
