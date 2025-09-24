@@ -65,12 +65,12 @@ export function SalesHistory({ sales }: SalesHistoryProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sale.items.map((item) => (
-                  <TableRow key={item.product.id}>
-                    <TableCell>{item.product.name}</TableCell>
+                {sale.items.map((item, index) => (
+                  <TableRow key={`${item.productId}-${index}`}>
+                    <TableCell>{item.name}</TableCell>
                     <TableCell className="text-center">{item.quantity}</TableCell>
                     <TableCell className="text-right">
-                      {formatCurrency(item.product.price * item.quantity)}
+                      {formatCurrency(item.price * item.quantity)}
                     </TableCell>
                   </TableRow>
                 ))}

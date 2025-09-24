@@ -21,6 +21,7 @@ import type {
   Sale,
   DailySummaryData,
   CashTransaction,
+  SaleItem,
 } from "@/lib/types";
 import { Header } from "@/components/header";
 import { DailySummary } from "@/components/daily-summary";
@@ -67,7 +68,7 @@ export default function Home() {
     setIsLoadingData(true);
     try {
       const productsCollection = collection(db, 'products');
-      const productSnapshot = await getDocs(productsCollection);
+      const productSnapshot = await getDocs(query(productsCollection, orderBy("name")));
       const productsList = productSnapshot.docs.map(
         doc => ({ id: doc.id, ...doc.data() } as Product)
       );
@@ -243,8 +244,16 @@ export default function Home() {
       (sum, item) => sum + item.product.price * item.quantity,
       0
     );
+
+    const saleItems: SaleItem[] = cartItems.map(item => ({
+      productId: item.product.id,
+      name: item.product.name,
+      price: item.product.price,
+      quantity: item.quantity,
+    }));
+
     const newSale: Omit<Sale, 'id'> = {
-      items: cartItems.map(item => ({...item, product: { ...item.product, id: item.product.id || '' }})),
+      items: saleItems,
       total,
       date: new Date(),
     };
@@ -261,7 +270,8 @@ export default function Home() {
   
     try {
       const salesCollection = collection(db, "sales");
-      const saleDocRef = await addDoc(salesCollection, newSale);
+      const saleDocRef = doc(salesCollection);
+      batch.set(saleDocRef, newSale);
       
       await batch.commit();
   
@@ -368,6 +378,7 @@ export default function Home() {
         const addedTransaction: CashTransaction = {
           id: docRef.id,
           date: newTransaction.date,
+          type: type,
           ...values
         };
 
@@ -405,7 +416,7 @@ export default function Home() {
     return { totalRevenue, numberOfSales, averageSaleValue };
   }, [salesHistory]);
 
-  if (!isClient || !isAuthenticated()) {
+  if (!isClient || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         {/* Render a spinner or a blank page while redirecting */}
@@ -444,7 +455,7 @@ export default function Home() {
                   products={products}
                   onAddProductToCart={handleAddProductToCart}
                   onAddProduct={handleAddProduct}
-                  isLoading={isLoading}
+                  isLoading={isLoadingData}
                 />
               </div>
               <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6">
@@ -466,7 +477,7 @@ export default function Home() {
               onUpdateStock={handleUpdateStock}
               onAddProduct={handleAddProduct}
               onUpdateProduct={handleUpdateProduct}
-              isLoading={isLoading}
+              isLoading={isLoadingData}
             />
           </TabsContent>
           <TabsContent value="vendas">

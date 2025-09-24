@@ -12,9 +12,18 @@ export type CartItem = {
   quantity: number;
 };
 
+// Um tipo simplificado para o item do carrinho dentro de uma Venda
+// para evitar problemas de serialização com o Firestore.
+export type SaleItem = {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
 export type Sale = {
   id: string;
-  items: CartItem[];
+  items: SaleItem[];
   total: number;
   date: Date;
 };
