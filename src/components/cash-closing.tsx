@@ -157,28 +157,28 @@ export function CashClosing({
               title="Vendas (Dinheiro)"
               value={dailyData.totalDinheiro}
               icon={CircleDollarSign}
-              color="text-green-800 dark:text-green-300"
+              color="text-black"
               bgColor="bg-green-50 dark:bg-green-900/20"
             />
             <FinancialCard
               title="Vendas (Pix)"
               value={dailyData.totalPix}
               icon={Landmark}
-              color="text-cyan-800 dark:text-cyan-300"
+              color="text-black"
               bgColor="bg-cyan-50 dark:bg-cyan-900/20"
             />
             <FinancialCard
               title="Vendas (Cartão)"
               value={dailyData.totalCartao}
               icon={CreditCard}
-              color="text-orange-800 dark:text-orange-300"
+              color="text-black"
               bgColor="bg-orange-50 dark:bg-orange-900/20"
             />
              <FinancialCard
               title="Vendas (Fiado)"
               value={dailyData.totalFiado}
               icon={User}
-              color="text-yellow-800 dark:text-yellow-300"
+              color="text-black"
               bgColor="bg-yellow-50 dark:bg-yellow-900/20"
             />
 
@@ -187,14 +187,14 @@ export function CashClosing({
               title="Entradas no Caixa"
               value={dailyData.totalCashEntries}
               icon={ArrowUpCircle}
-              color="text-blue-800 dark:text-blue-300"
+              color="text-black"
               bgColor="bg-blue-50 dark:bg-blue-900/20"
             />
             <FinancialCard
               title="Despesas / Retiradas"
               value={dailyData.totalExpenses}
               icon={ArrowDownCircle}
-              color="text-red-800 dark:text-red-300"
+              color="text-black"
               bgColor="bg-red-50 dark:bg-red-900/20"
             />
             
@@ -334,7 +334,7 @@ const FinancialCard = ({ title, value, icon: Icon, color, bgColor }: {
     bgColor: string;
 }) => (
     <div className={`flex flex-col gap-1 rounded-lg p-4 ${bgColor}`}>
-        <div className={`flex items-center gap-2 text-sm font-medium ${color.replace('text-', 'text-opacity-80 dark:text-opacity-80')}`}>
+        <div className={`flex items-center gap-2 text-sm font-medium ${color}`}>
             <Icon className="h-4 w-4" />
             <span>{title}</span>
         </div>
