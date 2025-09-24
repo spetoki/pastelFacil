@@ -23,6 +23,7 @@ import type {
   CashTransaction,
   SaleItem,
   Client,
+  PaymentMethod,
 } from "@/lib/types";
 import { Header } from "@/components/header";
 import { DailySummary } from "@/components/daily-summary";
@@ -252,7 +253,10 @@ export default function Home() {
     );
   }, []);
 
-  const handleFinalizeSale = useCallback(async () => {
+  const handleFinalizeSale = useCallback(async (
+    paymentMethod: PaymentMethod,
+    clientId?: string
+  ) => {
     if (cartItems.length === 0) return;
   
     const total = cartItems.reduce(
@@ -266,11 +270,20 @@ export default function Home() {
       price: item.product.price,
       quantity: item.quantity,
     }));
+    
+    let clientName: string | undefined;
+    if (clientId) {
+      const client = clients.find(c => c.id === clientId);
+      clientName = client?.name;
+    }
 
     const newSale: Omit<Sale, 'id'> = {
       items: saleItems,
       total,
       date: new Date(),
+      paymentMethod,
+      clientId,
+      clientName
     };
   
     const batch = writeBatch(db);
@@ -290,7 +303,7 @@ export default function Home() {
       
       await batch.commit();
   
-      setSalesHistory((prev) => [{...newSale, id: saleDocRef.id}, ...prev]);
+      setSalesHistory((prev) => [{...newSale, id: saleDocRef.id, date: newSale.date}, ...prev]);
       setCartItems([]);
       fetchData(); 
   
@@ -299,7 +312,7 @@ export default function Home() {
         description: `Total de ${new Intl.NumberFormat("pt-BR", {
           style: "currency",
           currency: "BRL",
-        }).format(total)}.`,
+        }).format(total)} em ${paymentMethod}.`,
       });
     } catch (error) {
       console.error("Error finalizing sale: ", error);
@@ -309,7 +322,7 @@ export default function Home() {
         description: "Não foi possível salvar a venda ou atualizar o estoque.",
       });
     }
-  }, [cartItems, toast, fetchData]);
+  }, [cartItems, toast, fetchData, clients]);
 
   const handleAddProduct = useCallback(
     async (values: ProductFormValues): Promise<void> => {
@@ -493,7 +506,7 @@ export default function Home() {
               <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6">
                 <SalesCart
                   items={cartItems}
-                  products={products}
+                  clients={clients}
                   onUpdateQuantity={handleUpdateQuantity}
                   onRemoveItem={handleRemoveItem}
                   onFinalizeSale={handleFinalizeSale}

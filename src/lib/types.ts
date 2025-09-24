@@ -21,11 +21,16 @@ export type SaleItem = {
   quantity: number;
 };
 
+export type PaymentMethod = "Dinheiro" | "Pix" | "Cartão" | "Fiado";
+
 export type Sale = {
   id: string;
   items: SaleItem[];
   total: number;
   date: Date;
+  paymentMethod: PaymentMethod;
+  clientId?: string;
+  clientName?: string;
 };
 
 export type DailySummaryData = {

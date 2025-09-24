@@ -1,18 +1,38 @@
 "use client";
 
-import type { CartItem, Product } from "@/lib/types";
+import type { CartItem, Client, PaymentMethod } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Barcode, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { Barcode, Minus, Plus, ShoppingCart, Trash2, CreditCard, Landmark, CircleDollarSign, User } from "lucide-react";
 import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+
 
 type SalesCartProps = {
   items: CartItem[];
-  products: Product[];
+  clients: Client[];
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onRemoveItem: (productId: string) => void;
-  onFinalizeSale: () => void;
+  onFinalizeSale: (paymentMethod: PaymentMethod, clientId?: string) => Promise<void>;
   onAddByBarcode: (barcode: string) => boolean;
 };
 
@@ -25,12 +45,18 @@ const formatCurrency = (value: number) => {
 
 export function SalesCart({
   items,
+  clients,
   onUpdateQuantity,
   onRemoveItem,
   onFinalizeSale,
   onAddByBarcode,
 }: SalesCartProps) {
   const [barcode, setBarcode] = useState("");
+  const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Dinheiro");
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const total = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
@@ -46,6 +72,31 @@ export function SalesCart({
       }
     }
   };
+
+  const handleConfirmFinalizeSale = async () => {
+    if (paymentMethod === "Fiado" && !selectedClientId) {
+      toast({
+        variant: "destructive",
+        title: "Cliente não selecionado",
+        description: "Por favor, selecione um cliente para vendas em fiado.",
+      });
+      return;
+    }
+    setIsSubmitting(true);
+    await onFinalizeSale(paymentMethod, selectedClientId);
+    setIsSubmitting(false);
+    setIsFinalizeDialogOpen(false);
+    // Reset state for next sale
+    setPaymentMethod("Dinheiro");
+    setSelectedClientId(undefined);
+  };
+
+  const paymentOptions: { value: PaymentMethod; label: string, icon: React.FC<any> }[] = [
+    { value: "Dinheiro", label: "Dinheiro", icon: CircleDollarSign },
+    { value: "Pix", label: "Pix", icon: Landmark },
+    { value: "Cartão", label: "Cartão", icon: CreditCard },
+    { value: "Fiado", label: "Fiado", icon: User },
+  ];
 
   return (
     <div className="bg-card rounded-lg border h-full flex flex-col">
@@ -136,12 +187,68 @@ export function SalesCart({
             <span>Total:</span>
             <span>{formatCurrency(total)}</span>
           </div>
-          <Button
-            className="w-full h-12 text-base bg-accent hover:bg-accent/90 text-accent-foreground"
-            onClick={onFinalizeSale}
-          >
-            Finalizar Venda
-          </Button>
+          <Dialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full h-12 text-base bg-accent hover:bg-accent/90 text-accent-foreground">
+                Finalizar Venda
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Finalizar Venda</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-lg font-bold text-center">{formatCurrency(total)}</p>
+                <RadioGroup 
+                  value={paymentMethod} 
+                  onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+                  className="grid grid-cols-2 gap-4"
+                >
+                  {paymentOptions.map((option) => (
+                     <Label key={option.value} htmlFor={option.value} className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 hover:bg-accent/50 hover:text-accent-foreground cursor-pointer ${paymentMethod === option.value ? 'border-primary' : 'border-muted'}`}>
+                      <input type="radio" id={option.value} name="paymentMethod" value={option.value} className="sr-only"/>
+                      <option.icon className="h-6 w-6"/>
+                      <span>{option.label}</span>
+                    </Label>
+                  ))}
+                </RadioGroup>
+
+                {paymentMethod === "Fiado" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="client-select">Selecionar Cliente</Label>
+                     <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                        <SelectTrigger id="client-select">
+                          <SelectValue placeholder="Escolha um cliente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients.length > 0 ? (
+                            clients.map(client => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                              Nenhum cliente cadastrado.
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline" disabled={isSubmitting}>
+                    Cancelar
+                  </Button>
+                </DialogClose>
+                <Button onClick={handleConfirmFinalizeSale} disabled={isSubmitting}>
+                  {isSubmitting ? "Finalizando..." : "Confirmar Venda"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </div>

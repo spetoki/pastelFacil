@@ -39,7 +39,7 @@ export function SalesHistory({ sales }: SalesHistoryProps) {
   if (sales.length === 0) {
     return (
       <div className="text-center py-10">
-        <p className="text-muted-foreground">Nenhuma venda registrada ainda.</p>
+        <p className="text-muted-foreground">Nenhuma venda registrada hoje.</p>
       </div>
     );
   }
@@ -49,10 +49,15 @@ export function SalesHistory({ sales }: SalesHistoryProps) {
       {sales.map((sale) => (
         <AccordionItem value={sale.id} key={sale.id}>
           <AccordionTrigger>
-            <div className="flex justify-between w-full pr-4">
-              <span>Venda #{sale.id.slice(-6)}</span>
-              <span className="text-muted-foreground">{formatDate(sale.date)}</span>
-              <Badge>{formatCurrency(sale.total)}</Badge>
+            <div className="flex justify-between w-full pr-4 items-center">
+              <div className="flex flex-col text-left">
+                <span className="font-semibold">Venda #{sale.id.slice(-6)}</span>
+                <span className="text-sm text-muted-foreground">{formatDate(sale.date)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">{sale.paymentMethod}{sale.clientName ? `: ${sale.clientName}`: ''}</Badge>
+                <Badge>{formatCurrency(sale.total)}</Badge>
+              </div>
             </div>
           </AccordionTrigger>
           <AccordionContent>
