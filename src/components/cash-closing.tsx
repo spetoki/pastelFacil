@@ -29,6 +29,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -40,7 +50,9 @@ import {
   Landmark,
   User,
   DollarSign,
+  Calculator,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type CashClosingProps = {
   sales: Sale[];
@@ -81,6 +93,8 @@ export function CashClosing({
   onAddTransaction,
 }: CashClosingProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConferenceOpen, setIsConferenceOpen] = useState(false);
+  const [countedAmount, setCountedAmount] = useState(0);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -117,6 +131,9 @@ export function CashClosing({
     // Saldo em caixa considera apenas dinheiro, pix e outras entradas, menos despesas.
     const finalBalance =
       totalDinheiro + totalPix + totalCashEntries - totalExpenses;
+      
+    // Saldo esperado em dinheiro físico
+    const expectedCash = totalDinheiro + totalCashEntries - totalExpenses;
 
     return {
       todaysSales,
@@ -129,6 +146,7 @@ export function CashClosing({
       totalExpenses,
       totalCashEntries,
       finalBalance,
+      expectedCash,
     };
   }, [sales, expenses, cashEntries]);
 
@@ -139,6 +157,8 @@ export function CashClosing({
       form.reset();
       setIsSubmitting(false);
     };
+
+  const difference = countedAmount - dailyData.expectedCash;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -204,7 +224,7 @@ export function CashClosing({
                <div className="flex flex-col gap-1 rounded-lg bg-primary/10 p-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-primary">
                   <DollarSign className="h-4 w-4" />
-                  <span>Saldo Final em Caixa</span>
+                  <span>Saldo Final em Caixa (Dinheiro + Pix)</span>
                 </div>
                 <p className="text-3xl font-bold text-primary/90">
                   {formatCurrency(dailyData.finalBalance)}
@@ -235,6 +255,65 @@ export function CashClosing({
       </div>
 
       <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ações de Fechamento</CardTitle>
+             <CardDescription>
+              Use as opções abaixo para gerenciar as finanças do dia.
+            </CardDescription>
+          </CardHeader>
+           <CardContent className="grid gap-4">
+              <Dialog open={isConferenceOpen} onOpenChange={setIsConferenceOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full h-12">
+                    <Calculator className="mr-2" />
+                    Finalizar Dia e Conferir Caixa
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Conferência de Caixa</DialogTitle>
+                    <DialogDescription>
+                      Insira o valor total em dinheiro contado no caixa para verificar se corresponde ao esperado.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4 space-y-4">
+                    <div className="flex justify-between items-center bg-muted p-3 rounded-md">
+                      <span className="font-medium">Valor Esperado em Caixa</span>
+                      <span className="font-bold text-lg">{formatCurrency(dailyData.expectedCash)}</span>
+                    </div>
+                     <div className="space-y-2">
+                       <FormLabel htmlFor="counted-amount">Valor Contado (R$)</FormLabel>
+                       <Input
+                         id="counted-amount"
+                         type="number"
+                         placeholder="0,00"
+                         step="0.01"
+                         value={countedAmount}
+                         onChange={(e) => setCountedAmount(Number(e.target.value))}
+                         className="text-lg text-right h-12"
+                       />
+                     </div>
+                     <div className={cn("flex justify-between items-center p-3 rounded-md", 
+                        difference === 0 ? "bg-green-100 dark:bg-green-900/20" : "bg-red-100 dark:bg-red-900/20"
+                     )}>
+                        <span className="font-medium">Diferença</span>
+                        <span className="font-bold text-lg">{formatCurrency(difference)}</span>
+                     </div>
+                     {difference > 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é maior que o esperado (Sobra).</p>}
+                     {difference < 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é menor que o esperado (Falta).</p>}
+                     {difference === 0 && countedAmount > 0 && <p className="text-sm text-center text-muted-foreground">O caixa está correto!</p>}
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button type="button" variant="outline">Fechar</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+           </CardContent>
+        </Card>
+      
         <Card>
           <CardHeader>
             <CardTitle>Adicionar Transação Manual</CardTitle>

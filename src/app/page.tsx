@@ -66,15 +66,15 @@ export default function Home() {
       router.replace("/login");
       return; // Stop execution if not authenticated
     }
-  
-    setIsClient(true);
+
+    setIsClient(true); // Assume client-side rendering is happening
     setIsLoading(true);
 
     const productsQuery = query(collection(db, 'products'), orderBy("name"));
     const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
       const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(productsList);
-      setIsLoading(false);
+      setIsLoading(false); // Set loading to false after initial product fetch
     }, (error) => {
       console.error("Error fetching products: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar produtos" });
@@ -134,7 +134,7 @@ export default function Home() {
       toast({ variant: "destructive", title: "Erro ao buscar transações" });
     });
 
-    // Cleanup function
+    // Cleanup function to unsubscribe from listeners
     return () => {
       unsubscribeProducts();
       unsubscribeClients();
