@@ -26,6 +26,7 @@ type InventoryProps = {
     productId: string,
     values: ProductFormValues
   ) => Promise<void>;
+  onUpdateStock: (productId: string, newStock: number) => Promise<void>;
   isLoading: boolean;
 };
 

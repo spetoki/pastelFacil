@@ -62,43 +62,40 @@ export default function Home() {
 
 
   useEffect(() => {
-    // This effect handles authentication and initial data loading.
     if (!isAuthenticated()) {
       router.replace("/login");
-      return;
+      return; // Stop execution if not authenticated
     }
-    
+  
     setIsClient(true);
     setIsLoading(true);
 
-    const productsCollection = collection(db, 'products');
-    const productsQuery = query(productsCollection, orderBy("name"));
-    const unsubscribeProducts = onSnapshot(productsQuery, snapshot => {
+    const productsQuery = query(collection(db, 'products'), orderBy("name"));
+    const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
       const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(productsList);
-      setIsLoading(false); // Set loading to false after first data fetch
-    }, error => {
+      if (isLoading) setIsLoading(false);
+    }, (error) => {
       console.error("Error fetching products: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar produtos" });
       setIsLoading(false);
     });
 
-    const clientsCollection = collection(db, 'clients');
-    const clientsQuery = query(clientsCollection, orderBy("name"));
-    const unsubscribeClients = onSnapshot(clientsQuery, snapshot => {
+    const clientsQuery = query(collection(db, 'clients'), orderBy("name"));
+    const unsubscribeClients = onSnapshot(clientsQuery, (snapshot) => {
       const clientsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
       setClients(clientsList);
-    }, error => {
+    }, (error) => {
       console.error("Error fetching clients: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar clientes" });
     });
-
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const startOfToday = Timestamp.fromDate(today);
 
     const salesQuery = query(collection(db, "sales"), where("date", ">=", startOfToday), orderBy("date", "desc"));
-    const unsubscribeSales = onSnapshot(salesQuery, snapshot => {
+    const unsubscribeSales = onSnapshot(salesQuery, (snapshot) => {
       const salesList = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -108,13 +105,13 @@ export default function Home() {
         } as Sale;
       });
       setSalesHistory(salesList);
-    }, error => {
+    }, (error) => {
       console.error("Error fetching sales: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar vendas" });
     });
 
     const transactionsQuery = query(collection(db, "transactions"), where("date", ">=", startOfToday), orderBy("date", "desc"));
-    const unsubscribeTransactions = onSnapshot(transactionsQuery, snapshot => {
+    const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
       const expensesList: CashTransaction[] = [];
       const cashEntriesList: CashTransaction[] = [];
       snapshot.forEach(doc => {
@@ -132,20 +129,18 @@ export default function Home() {
       });
       setExpenses(expensesList);
       setCashEntries(cashEntriesList);
-    }, error => {
+    }, (error) => {
       console.error("Error fetching transactions: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar transações" });
     });
 
-    // Cleanup function
     return () => {
       unsubscribeProducts();
       unsubscribeClients();
       unsubscribeSales();
       unsubscribeTransactions();
     };
-
-  }, [router, toast]);
+  }, [router, toast, isLoading]);
 
 
   const handleLogout = () => {
@@ -434,7 +429,7 @@ export default function Home() {
     return { totalRevenue, numberOfSales, averageSaleValue };
   }, [salesHistory]);
 
-  if (!isClient || isLoading) {
+  if (!isClient) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         {/* Renderiza um spinner ou uma página em branco durante o redirecionamento */}
@@ -498,6 +493,7 @@ export default function Home() {
               products={products}
               onAddProduct={handleAddProduct}
               onUpdateProduct={handleUpdateProduct}
+              onUpdateStock={handleUpdateStock}
               isLoading={isLoading}
             />
           </TabsContent>
