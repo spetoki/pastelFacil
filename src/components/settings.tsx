@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "./ui/input";
-import { deleteAllData } from "@/lib/db-utils";
+import { deleteAllData, resetFiadoData } from "@/lib/db-utils";
 
 type Theme = "light" | "dark";
 
@@ -36,6 +36,7 @@ export function Settings() {
   const [isMounted, setIsMounted] = useState(false);
   const [pin, setPin] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  const [isResettingFiado, setIsResettingFiado] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -98,6 +99,37 @@ export function Settings() {
     }
   }
 
+  const handleResetFiado = async () => {
+    if (pin !== "2209") {
+        toast({
+            variant: "destructive",
+            title: "PIN Incorreto",
+            description: "Você não tem permissão para realizar esta ação."
+        });
+        return;
+    }
+    
+    setIsResettingFiado(true);
+    try {
+        await resetFiadoData();
+        toast({
+            title: "Dados de Fiado Resetados!",
+            description: "Vendas fiado, pagamentos e dívidas de clientes foram zerados. A página será recarregada."
+        });
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+    } catch(error) {
+        console.error("Error resetting fiado data:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Resetar Fiado",
+            description: "Não foi possível apagar os dados de fiado. Tente novamente."
+        });
+        setIsResettingFiado(false);
+    }
+  }
+
   if (!isMounted) {
     return null; // ou um skeleton
   }
@@ -138,7 +170,7 @@ export function Settings() {
               <CardTitle>Zona de Perigo</CardTitle>
               <CardDescription>Ações nesta seção são permanentes e não podem ser desfeitas.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col sm:flex-row gap-4">
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive">Resetar Aplicativo</Button>
@@ -147,7 +179,7 @@ export function Settings() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta ação é irreversível. Todos os dados de produtos, clientes, vendas e relatórios serão
+                           Esta ação é irreversível. Todos os dados de produtos, clientes, vendas e relatórios serão
                              <span className="font-bold text-destructive"> excluídos permanentemente</span>. 
                             Para confirmar, digite o PIN de proprietário.
                         </AlertDialogDescription>
@@ -171,6 +203,42 @@ export function Settings() {
                             disabled={pin !== "2209" || isResetting}
                         >
                             {isResetting ? "Resetando..." : "Eu entendo, resetar o aplicativo"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="bg-orange-600 hover:bg-orange-700">Zerar Dados de Fiado</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Zerar Dados de Fiado?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta ação irá apagar <span className="font-bold text-destructive">todas as vendas "Fiado"</span> e <span className="font-bold text-destructive">todos os recebimentos de dívidas</span>. A dívida de todos os clientes será <span className="font-bold text-destructive">zerada</span>. Esta ação é irreversível.
+                            Para confirmar, digite o PIN de proprietário.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                     <div className="py-2">
+                        <Label htmlFor="pin-reset-fiado">PIN de Confirmação</Label>
+                        <Input 
+                            id="pin-reset-fiado"
+                            type="password"
+                            maxLength={4}
+                            placeholder="••••"
+                            className="text-center tracking-widest mt-2"
+                            value={pin}
+                            onChange={(e) => setPin(e.target.value)}
+                        />
+                     </div>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setPin("")}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={handleResetFiado} 
+                            disabled={pin !== "2209" || isResettingFiado}
+                            className="bg-orange-600 hover:bg-orange-700"
+                        >
+                            {isResettingFiado ? "Zerando..." : "Sim, zerar dados de fiado"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
