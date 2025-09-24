@@ -58,7 +58,6 @@ export function EditProductDialog({
     price: product.price,
     stock: product.stock,
     barcode: product.barcode,
-    imageUrl: product.imageUrl,
   };
 
   return (

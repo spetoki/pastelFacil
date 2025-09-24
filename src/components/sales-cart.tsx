@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Barcode, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
-import Image from "next/image";
 import React, { useState } from "react";
 
 type SalesCartProps = {
@@ -86,14 +85,9 @@ export function SalesCart({
           items.map(({ product, quantity }) => {
             return (
               <div key={product.id} className="flex items-center gap-4">
-                  <Image
-                    src={product.imageUrl}
-                    alt={product.name}
-                    width={64}
-                    height={48}
-                    className="rounded-md object-cover bg-muted"
-                    unoptimized
-                  />
+                 <div className="w-16 h-12 bg-muted rounded-md flex items-center justify-center">
+                    <ShoppingCart className="w-6 h-6 text-muted-foreground" />
+                  </div>
                 <div className="flex-1">
                   <p className="font-semibold">{product.name}</p>
                   <p className="text-sm text-muted-foreground">

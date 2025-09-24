@@ -13,7 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Plus, Search } from "lucide-react";
-import Image from "next/image";
 import { AddProductDialog } from "./add-product-dialog";
 import type { ProductFormValues } from "./add-product-form";
 import { Badge } from "@/components/ui/badge";
@@ -70,25 +69,18 @@ export function ProductList({
               key={product.id}
               className={`flex flex-col overflow-hidden transition-shadow hover:shadow-lg ${outOfStock ? 'opacity-50' : ''}`}
             >
-              <CardHeader className="p-0 relative">
-                 <div className="aspect-[4/3] relative w-full bg-muted">
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                      unoptimized // Since we are using external URLs from firebase storage
-                    />
-                  </div>
-                {outOfStock && (
-                  <Badge variant="destructive" className="absolute top-2 right-2">Esgotado</Badge>
-                )}
-                 <Badge className="absolute bottom-2 right-2">{product.stock} em estoque</Badge>
-              </CardHeader>
-              <CardContent className="p-4 flex-1">
+              <CardHeader className="p-4 relative">
                 <CardTitle className="text-lg font-headline">
                   {product.name}
                 </CardTitle>
+                 <div className="absolute top-2 right-2 flex gap-1">
+                    {outOfStock && (
+                      <Badge variant="destructive">Esgotado</Badge>
+                    )}
+                     <Badge variant="secondary">{product.stock} em estoque</Badge>
+                 </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 flex-1">
                 <CardDescription className="text-sm mt-1 h-10">
                   {product.description}
                 </CardDescription>
