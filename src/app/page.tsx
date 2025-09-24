@@ -278,7 +278,11 @@ export default function Home() {
             </div>
           </TabsContent>
           <TabsContent value="estoque">
-            <Inventory products={products} onUpdateStock={handleUpdateStock} />
+            <Inventory
+              products={products}
+              onUpdateStock={handleUpdateStock}
+              onAddProduct={handleAddProduct}
+            />
           </TabsContent>
           <TabsContent value="vendas">
             <SalesHistoryComponent sales={salesHistory} />

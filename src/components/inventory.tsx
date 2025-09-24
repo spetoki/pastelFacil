@@ -13,13 +13,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { ProductFormValues } from "./add-product-form";
+import { AddProductDialog } from "./add-product-dialog";
 
 type InventoryProps = {
   products: Product[];
   onUpdateStock: (productId: string, newStock: number) => void;
+  onAddProduct: (values: ProductFormValues) => Promise<void>;
 };
 
-export function Inventory({ products, onUpdateStock }: InventoryProps) {
+export function Inventory({
+  products,
+  onUpdateStock,
+  onAddProduct,
+}: InventoryProps) {
   const [stockUpdates, setStockUpdates] = useState<Record<string, number>>({});
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -37,7 +44,7 @@ export function Inventory({ products, onUpdateStock }: InventoryProps) {
       setStockUpdates(rest);
     }
   };
-  
+
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,12 +53,15 @@ export function Inventory({ products, onUpdateStock }: InventoryProps) {
 
   return (
     <div className="space-y-4">
-       <Input
-        placeholder="Buscar produto..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex justify-between items-center">
+        <Input
+          placeholder="Buscar produto..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        <AddProductDialog onAddProduct={onAddProduct} />
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -67,7 +77,9 @@ export function Inventory({ products, onUpdateStock }: InventoryProps) {
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{product.barcode}</TableCell>
               <TableCell className="text-center">
-                 <Badge variant={product.stock <= 10 ? "destructive" : "secondary"}>
+                <Badge
+                  variant={product.stock <= 10 ? "destructive" : "secondary"}
+                >
                   {product.stock}
                 </Badge>
               </TableCell>
@@ -77,7 +89,9 @@ export function Inventory({ products, onUpdateStock }: InventoryProps) {
                     type="number"
                     min="0"
                     value={stockUpdates[product.id] ?? product.stock}
-                    onChange={(e) => handleStockChange(product.id, e.target.value)}
+                    onChange={(e) =>
+                      handleStockChange(product.id, e.target.value)
+                    }
                     className="w-24"
                   />
                   <Button
@@ -93,7 +107,7 @@ export function Inventory({ products, onUpdateStock }: InventoryProps) {
           ))}
         </TableBody>
       </Table>
-       {filteredProducts.length === 0 && (
+      {filteredProducts.length === 0 && (
         <div className="text-center py-10">
           <p className="text-muted-foreground">Nenhum produto encontrado.</p>
         </div>
