@@ -74,7 +74,7 @@ export default function Home() {
     const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
       const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(productsList);
-      if (isLoading) setIsLoading(false);
+      setIsLoading(false);
     }, (error) => {
       console.error("Error fetching products: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar produtos" });
@@ -134,13 +134,14 @@ export default function Home() {
       toast({ variant: "destructive", title: "Erro ao buscar transações" });
     });
 
+    // Cleanup function
     return () => {
       unsubscribeProducts();
       unsubscribeClients();
       unsubscribeSales();
       unsubscribeTransactions();
     };
-  }, [router, toast, isLoading]);
+  }, [router, toast]);
 
 
   const handleLogout = () => {
@@ -277,7 +278,6 @@ export default function Home() {
 
     const batch = writeBatch(db);
   
-    // Validação para garantir que temos IDs de produto válidos.
     for (const item of cartItems) {
       if (!item.product.id) {
         console.error("Error: Product in cart is missing an ID.", item.product);
