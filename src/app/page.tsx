@@ -202,6 +202,31 @@ export default function Home() {
     []
   );
 
+  const handleUpdateProduct = useCallback(
+    async (productId: string, values: ProductFormValues): Promise<void> => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          setProducts((prev) =>
+            prev.map((p) =>
+              p.id === productId
+                ? {
+                    ...p,
+                    name: values.name,
+                    description: values.description || "",
+                    price: values.price,
+                    stock: values.stock,
+                    barcode: values.barcode,
+                  }
+                : p
+            )
+          );
+          resolve();
+        }, 500);
+      });
+    },
+    []
+  );
+
   const handleUpdateStock = useCallback(
     (productId: string, newStock: number) => {
       setProducts((prev) =>
@@ -307,6 +332,7 @@ export default function Home() {
               products={products}
               onUpdateStock={handleUpdateStock}
               onAddProduct={handleAddProduct}
+              onUpdateProduct={handleUpdateProduct}
             />
           </TabsContent>
           <TabsContent value="vendas">

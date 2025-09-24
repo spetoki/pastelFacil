@@ -15,17 +15,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ProductFormValues } from "./add-product-form";
 import { AddProductDialog } from "./add-product-dialog";
+import { EditProductDialog } from "./edit-product-dialog";
+import { Pencil } from "lucide-react";
 
 type InventoryProps = {
   products: Product[];
   onUpdateStock: (productId: string, newStock: number) => void;
   onAddProduct: (values: ProductFormValues) => Promise<void>;
+  onUpdateProduct: (
+    productId: string,
+    values: ProductFormValues
+  ) => Promise<void>;
 };
 
 export function Inventory({
   products,
   onUpdateStock,
   onAddProduct,
+  onUpdateProduct,
 }: InventoryProps) {
   const [stockUpdates, setStockUpdates] = useState<Record<string, number>>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -88,7 +95,8 @@ export function Inventory({
                   <Input
                     type="number"
                     min="0"
-                    value={stockUpdates[product.id] ?? product.stock}
+                    value={stockUpdates[product.id] ?? ""}
+                    placeholder={String(product.stock)}
                     onChange={(e) =>
                       handleStockChange(product.id, e.target.value)
                     }
@@ -99,8 +107,16 @@ export function Inventory({
                     onClick={() => handleSaveStock(product.id)}
                     disabled={stockUpdates[product.id] === undefined}
                   >
-                    Salvar
+                    Salvar Estoque
                   </Button>
+                  <EditProductDialog
+                    product={product}
+                    onUpdateProduct={onUpdateProduct}
+                  >
+                    <Button size="icon" variant="outline">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </EditProductDialog>
                 </div>
               </TableCell>
             </TableRow>
