@@ -60,6 +60,8 @@ const getStartOfToday = () => {
     return today;
 };
 
+const SHIFT_START_KEY = 'shiftStartTimestamp';
+
 export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
@@ -75,16 +77,32 @@ export default function Home() {
   const [dailyClosures, setDailyClosures] = useState<DailyClosure[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
-  const [shiftStart, setShiftStart] = useState<Date>(getStartOfToday);
+  const [shiftStart, setShiftStart] = useState<Date | null>(null);
   const [isReportsUnlocked, setIsReportsUnlocked] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
       router.replace("/login");
-      return; // Stop execution if not authenticated
+      return; 
     }
 
     setIsClient(true);
+    
+    // Initialize shiftStart from localStorage or default to today
+    const savedShiftStart = localStorage.getItem(SHIFT_START_KEY);
+    if (savedShiftStart) {
+        setShiftStart(new Date(JSON.parse(savedShiftStart)));
+    } else {
+        const startOfShift = getStartOfToday();
+        setShiftStart(startOfShift);
+        localStorage.setItem(SHIFT_START_KEY, JSON.stringify(startOfShift.toISOString()));
+    }
+  }, [router]);
+
+
+  useEffect(() => {
+    if (!isClient || !shiftStart) return;
+
     setIsLoading(true);
 
     const startOfTodayTimestamp = Timestamp.fromDate(getStartOfToday());
@@ -209,7 +227,7 @@ export default function Home() {
       unsubscribeTransactions();
       unsubscribeDailyClosures();
     };
-  }, [router, toast, shiftStart]);
+  }, [isClient, toast, shiftStart]);
 
   const allSalesForHistory = useMemo(() => [...salesHistory, ...fiadoSales].sort((a,b) => b.date.getTime() - a.date.getTime()), [salesHistory, fiadoSales]);
 
@@ -588,8 +606,11 @@ export default function Home() {
         title: "Dia Fechado com Sucesso!",
         description: "Um novo turno de vendas foi iniciado."
       });
-      // Set the start of the new shift to now
-      setShiftStart(new Date());
+      // Set the start of the new shift to now and persist it
+      const newShiftStart = new Date();
+      setShiftStart(newShiftStart);
+      localStorage.setItem(SHIFT_START_KEY, JSON.stringify(newShiftStart.toISOString()));
+      
       // Reset cart
       setCartItems([]);
     } catch(error) {
@@ -603,7 +624,7 @@ export default function Home() {
     }
   }, [toast]);
   
-  if (!isClient) {
+  if (!isClient || !shiftStart) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
       </div>
