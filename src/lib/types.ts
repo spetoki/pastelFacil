@@ -64,6 +64,7 @@ export type DailyClosure = {
   totalByPaymentMethod: Record<string, number>;
   totalExpenses: number;
   totalCashEntries: number;
+  totalDebtPayments: number;
   expectedInCash: number;
   countedAmount: number;
   difference: number;

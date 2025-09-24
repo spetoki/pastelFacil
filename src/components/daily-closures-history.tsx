@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { ArrowDownCircle, ArrowUpCircle, CircleDollarSign, CreditCard, Landmark, User, FileText } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, CircleDollarSign, CreditCard, Landmark, User, FileText, Wallet } from "lucide-react";
 
 
 type DailyClosuresHistoryProps = {
@@ -100,6 +100,11 @@ export function DailyClosuresHistory({ closures }: DailyClosuresHistoryProps) {
                           title="Despesas / Retiradas"
                           value={closure.totalExpenses}
                           icon={ArrowDownCircle}
+                        />
+                        <FinancialCard
+                          title="Recebimentos (Fiado)"
+                          value={closure.totalDebtPayments || 0}
+                          icon={Wallet}
                         />
                          <InfoCard title="Faturamento Total" value={closure.totalRevenue} />
                          <InfoCard title="Valor Esperado (Dinheiro)" value={closure.expectedInCash} />
