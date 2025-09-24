@@ -15,9 +15,9 @@ const formatCurrency = (value: number) => {
 
 export function DailySummary({ summary }: DailySummaryProps) {
   return (
-    <div className="mb-6">
+    <div>
       <h2 className="text-xl font-headline font-semibold mb-4 text-foreground">
-        Resumo do Dia
+        Resumo de Vendas (Hoje)
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>

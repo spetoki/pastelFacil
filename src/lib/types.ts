@@ -25,3 +25,10 @@ export type DailySummaryData = {
   numberOfSales: number;
   averageSaleValue: number;
 };
+
+export type CashTransaction = {
+  id: string;
+  description: string;
+  amount: number;
+  date: Date;
+};

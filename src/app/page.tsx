@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import type { Product, CartItem, Sale, DailySummaryData } from "@/lib/types";
+import type {
+  Product,
+  CartItem,
+  Sale,
+  DailySummaryData,
+  CashTransaction,
+} from "@/lib/types";
 import { initialProducts } from "@/lib/data";
 import { Header } from "@/components/header";
 import { DailySummary } from "@/components/daily-summary";
@@ -13,12 +19,20 @@ import type { ProductFormValues } from "@/components/add-product-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Inventory } from "@/components/inventory";
 import { SalesHistory as SalesHistoryComponent } from "@/components/sales-history";
-import { DollarSign, Package, ShoppingCart } from "lucide-react";
+import { CashClosing } from "@/components/cash-closing";
+import {
+  DollarSign,
+  Package,
+  ShoppingCart,
+  ClipboardList,
+} from "lucide-react";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
+  const [expenses, setExpenses] = useState<CashTransaction[]>([]);
+  const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
   const { toast } = useToast();
 
   const handleAddProductToCart = useCallback(
@@ -180,9 +194,37 @@ export default function Home() {
     []
   );
 
+  const handleAddTransaction = useCallback(
+    (
+      type: "expense" | "cashEntry",
+      values: { description: string; amount: number }
+    ) => {
+      const newTransaction: CashTransaction = {
+        id: `${type}_${Date.now()}`,
+        date: new Date(),
+        ...values,
+      };
+      if (type === "expense") {
+        setExpenses((prev) => [newTransaction, ...prev]);
+        toast({ title: "Despesa registrada com sucesso!" });
+      } else {
+        setCashEntries((prev) => [newTransaction, ...prev]);
+        toast({ title: "Entrada de caixa registrada com sucesso!" });
+      }
+    },
+    [toast]
+  );
+
   const dailySummary: DailySummaryData = useMemo(() => {
-    const totalRevenue = salesHistory.reduce((sum, sale) => sum + sale.total, 0);
-    const numberOfSales = salesHistory.length;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todaysSales = salesHistory.filter(
+      (sale) => sale.date.getTime() >= today.getTime()
+    );
+
+    const totalRevenue = todaysSales.reduce((sum, sale) => sum + sale.total, 0);
+    const numberOfSales = todaysSales.length;
     const averageSaleValue =
       numberOfSales > 0 ? totalRevenue / numberOfSales : 0;
 
@@ -194,10 +236,23 @@ export default function Home() {
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs defaultValue="caixa">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="caixa"><ShoppingCart className="mr-2" />Caixa</TabsTrigger>
-            <TabsTrigger value="estoque"><Package className="mr-2" />Estoque</TabsTrigger>
-            <TabsTrigger value="vendas"><DollarSign className="mr-2" />Vendas</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="caixa">
+              <ShoppingCart className="mr-2" />
+              Caixa
+            </TabsTrigger>
+            <TabsTrigger value="estoque">
+              <Package className="mr-2" />
+              Estoque
+            </TabsTrigger>
+            <TabsTrigger value="vendas">
+              <DollarSign className="mr-2" />
+              Vendas
+            </TabsTrigger>
+            <TabsTrigger value="fechamento">
+              <ClipboardList className="mr-2" />
+              Fechamento
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="caixa">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start">
@@ -227,6 +282,14 @@ export default function Home() {
           </TabsContent>
           <TabsContent value="vendas">
             <SalesHistoryComponent sales={salesHistory} />
+          </TabsContent>
+          <TabsContent value="fechamento">
+            <CashClosing
+              sales={salesHistory}
+              expenses={expenses}
+              cashEntries={cashEntries}
+              onAddTransaction={handleAddTransaction}
+            />
           </TabsContent>
         </Tabs>
       </main>
