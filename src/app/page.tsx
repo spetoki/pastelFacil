@@ -64,6 +64,7 @@ export default function Home() {
   const [clients, setClients] = useState<Client[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
+  const [fiadoSales, setFiadoSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<CashTransaction[]>([]);
   const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
   const [debtPayments, setDebtPayments] = useState<CashTransaction[]>([]);
@@ -82,7 +83,8 @@ export default function Home() {
     setIsClient(true);
     setIsLoading(true);
 
-    const startTimestamp = Timestamp.fromDate(shiftStart);
+    const startOfTodayTimestamp = Timestamp.fromDate(getStartOfToday());
+    const shiftStartTimestamp = Timestamp.fromDate(shiftStart);
 
     const productsQuery = query(collection(db, 'products'), orderBy("name"));
     const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
@@ -104,23 +106,55 @@ export default function Home() {
       toast({ variant: "destructive", title: "Erro ao buscar clientes" });
     });
     
-    const salesQuery = query(collection(db, "sales"), where("date", ">=", startTimestamp), orderBy("date", "desc"));
-    const unsubscribeSales = onSnapshot(salesQuery, (snapshot) => {
-      const salesList = snapshot.docs.map(doc => {
+    // Query for sales of the current shift (Dinheiro, Pix, Cartão)
+    const shiftSalesQuery = query(
+      collection(db, "sales"), 
+      where("date", ">=", shiftStartTimestamp), 
+      orderBy("date", "desc")
+    );
+    const unsubscribeSales = onSnapshot(shiftSalesQuery, (snapshot) => {
+      const salesList: Sale[] = [];
+      snapshot.forEach(doc => {
         const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          date: (data.date as Timestamp).toDate(),
-        } as Sale;
+        // Separate fiado sales to be handled by their own query
+        if (data.paymentMethod !== 'Fiado') {
+            salesList.push({
+              id: doc.id,
+              ...data,
+              date: (data.date as Timestamp).toDate(),
+            } as Sale);
+        }
       });
       setSalesHistory(salesList);
     }, (error) => {
-      console.error("Error fetching sales: ", error);
-      toast({ variant: "destructive", title: "Erro ao buscar vendas" });
+      console.error("Error fetching shift sales: ", error);
+      toast({ variant: "destructive", title: "Erro ao buscar vendas do turno" });
+    });
+    
+    // Query for all fiado sales of the entire day
+    const fiadoSalesQuery = query(
+        collection(db, "sales"),
+        where("date", ">=", startOfTodayTimestamp),
+        where("paymentMethod", "==", "Fiado"),
+        orderBy("date", "desc")
+    );
+    const unsubscribeFiadoSales = onSnapshot(fiadoSalesQuery, (snapshot) => {
+        const fiadoList = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                date: (data.date as Timestamp).toDate(),
+            } as Sale;
+        });
+        setFiadoSales(fiadoList);
+    }, (error) => {
+        console.error("Error fetching fiado sales: ", error);
+        toast({ variant: "destructive", title: "Erro ao buscar vendas fiado" });
     });
 
-    const transactionsQuery = query(collection(db, "transactions"), where("date", ">=", startTimestamp), orderBy("date", "desc"));
+
+    const transactionsQuery = query(collection(db, "transactions"), where("date", ">=", shiftStartTimestamp), orderBy("date", "desc"));
     const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
       const expensesList: CashTransaction[] = [];
       const cashEntriesList: CashTransaction[] = [];
@@ -168,6 +202,7 @@ export default function Home() {
       unsubscribeProducts();
       unsubscribeClients();
       unsubscribeSales();
+      unsubscribeFiadoSales();
       unsubscribeTransactions();
       unsubscribeDailyClosures();
     };
@@ -507,13 +542,14 @@ export default function Home() {
   );
 
   const dailySummary: DailySummaryData = useMemo(() => {
-    const totalRevenue = salesHistory.reduce((sum, sale) => sum + sale.total, 0);
-    const numberOfSales = salesHistory.length;
+    const allSales = [...salesHistory, ...fiadoSales];
+    const totalRevenue = allSales.reduce((sum, sale) => sum + sale.total, 0);
+    const numberOfSales = allSales.length;
     const averageSaleValue =
       numberOfSales > 0 ? totalRevenue / numberOfSales : 0;
 
     return { totalRevenue, numberOfSales, averageSaleValue };
-  }, [salesHistory]);
+  }, [salesHistory, fiadoSales]);
 
   const handleCloseDay = useCallback(async (closureData: Omit<DailyClosure, 'id' | 'date'>) => {
     const newClosure = {
@@ -548,6 +584,8 @@ export default function Home() {
       </div>
     );
   }
+
+  const allSalesForHistory = useMemo(() => [...salesHistory, ...fiadoSales].sort((a,b) => b.date.getTime() - a.date.getTime()), [salesHistory, fiadoSales]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -622,11 +660,12 @@ export default function Home() {
             />
           </TabsContent>
           <TabsContent value="vendas">
-            <SalesHistoryComponent sales={salesHistory} />
+            <SalesHistoryComponent sales={allSalesForHistory} />
           </TabsContent>
           <TabsContent value="fechamento">
             <CashClosing
               sales={salesHistory}
+              fiadoSales={fiadoSales}
               expenses={expenses}
               cashEntries={cashEntries}
               debtPayments={debtPayments}

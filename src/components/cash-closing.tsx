@@ -58,6 +58,7 @@ import { cn } from "@/lib/utils";
 
 type CashClosingProps = {
   sales: Sale[];
+  fiadoSales: Sale[];
   expenses: CashTransaction[];
   cashEntries: CashTransaction[];
   debtPayments: CashTransaction[];
@@ -92,6 +93,7 @@ type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 export function CashClosing({
   sales,
+  fiadoSales,
   expenses,
   cashEntries,
   debtPayments,
@@ -109,13 +111,22 @@ export function CashClosing({
   });
 
   const dailyData = useMemo(() => {
-    const totalByPaymentMethod = sales.reduce(
+    // Totals for the current shift (Dinheiro, Pix, Cartão)
+    const shiftTotalByPaymentMethod = sales.reduce(
       (acc, sale) => {
         acc[sale.paymentMethod] = (acc[sale.paymentMethod] || 0) + sale.total;
         return acc;
       },
       {} as Record<string, number>
     );
+
+    // Total for fiado sales for the whole day
+    const totalFiadoToday = fiadoSales.reduce((sum, sale) => sum + sale.total, 0);
+
+    const totalByPaymentMethod = {
+      ...shiftTotalByPaymentMethod,
+      "Fiado": totalFiadoToday,
+    }
 
     const totalExpenses = expenses.reduce(
       (sum, exp) => sum + exp.amount,
@@ -130,15 +141,15 @@ export function CashClosing({
       0
     );
     
-    // Calcula o faturamento total do turno (sem fiado)
+    // Total revenue of the shift (doesn't include fiado)
     const totalRevenue = sales
       .filter(sale => sale.paymentMethod !== 'Fiado')
       .reduce((sum, sale) => sum + sale.total, 0);
 
-    // Calcula o faturamento para fechamento de caixa (apenas o que entrou)
-    const revenueForClosure = (totalByPaymentMethod["Dinheiro"] || 0) + (totalByPaymentMethod["Pix"] || 0) + (totalByPaymentMethod["Cartão"] || 0);
+    // Revenue for cash closing (only what came in during the shift)
+    const revenueForClosure = (shiftTotalByPaymentMethod["Dinheiro"] || 0) + (shiftTotalByPaymentMethod["Pix"] || 0) + (shiftTotalByPaymentMethod["Cartão"] || 0);
 
-    const expectedInCash = (totalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries + totalDebtPayments - totalExpenses;
+    const expectedInCash = (shiftTotalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries + totalDebtPayments - totalExpenses;
 
     return {
       totalByPaymentMethod,
@@ -149,7 +160,7 @@ export function CashClosing({
       revenueForClosure,
       expectedInCash,
     };
-  }, [sales, expenses, cashEntries, debtPayments]);
+  }, [sales, fiadoSales, expenses, cashEntries, debtPayments]);
 
   const handleFormSubmit = async (type: "expense" | "cashEntry", values: TransactionFormValues) => {
       setIsSubmitting(true);
@@ -166,7 +177,7 @@ export function CashClosing({
   const handleConfirmCloseDay = async () => {
     setIsClosingDay(true);
     try {
-      // O faturamento total aqui deve incluir todas as formas de pagamento para o relatório
+      // The full revenue for the report includes shift sales + fiado sales for the day
       const fullTotalRevenue = Object.values(dailyData.totalByPaymentMethod).reduce((sum, total) => sum + total, 0);
 
       await onCloseDay({
@@ -217,7 +228,7 @@ export function CashClosing({
               icon={CreditCard}
             />
              <FinancialCard
-              title="Vendas (Fiado)"
+              title="Vendas (Fiado - Dia)"
               value={dailyData.totalByPaymentMethod["Fiado"] || 0}
               icon={User}
             />
