@@ -206,7 +206,7 @@ export function SalesCart({
                 >
                   {paymentOptions.map((option) => (
                      <Label key={option.value} htmlFor={option.value} className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 hover:bg-accent/50 hover:text-accent-foreground cursor-pointer ${paymentMethod === option.value ? 'border-primary' : 'border-muted'}`}>
-                      <input type="radio" id={option.value} name="paymentMethod" value={option.value} className="sr-only"/>
+                      <RadioGroupItem value={option.value} id={option.value} className="sr-only" />
                       <option.icon className="h-6 w-6"/>
                       <span>{option.label}</span>
                     </Label>
