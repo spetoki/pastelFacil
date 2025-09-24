@@ -265,20 +265,20 @@ export default function Home() {
       quantity: item.quantity,
     }));
     
-    let clientName: string | undefined;
-    if (clientId) {
-      const client = clients.find(c => c.id === clientId);
-      clientName = client?.name;
-    }
-  
     const newSale: Omit<Sale, 'id'> = {
       items: saleItems,
       total,
       date: new Date(),
       paymentMethod,
-      clientId,
-      clientName
     };
+
+    if (paymentMethod === "Fiado" && clientId) {
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        newSale.clientId = clientId;
+        newSale.clientName = client.name;
+      }
+    }
 
     const batch = writeBatch(db);
   
