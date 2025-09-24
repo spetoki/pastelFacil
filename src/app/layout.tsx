@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 export const metadata: Metadata = {
   title: "Pastelaria Fácil",
   description: "Gerencie sua pastelaria com facilidade.",
-  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({
