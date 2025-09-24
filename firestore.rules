@@ -1,11 +1,12 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite que usuários autenticados leiam e escrevam em qualquer documento.
-    // Para um aplicativo em produção, você deve refinar essas regras
-    // para garantir que os usuários só possam acessar os dados que lhes são permitidos.
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      // CUIDADO: Estas regras são inseguras e servem apenas para desenvolvimento.
+      // Elas permitem acesso público a todo o seu banco de dados.
+      // Você deve implementar autenticação e regras de segurança adequadas antes da produção.
+      allow read, write: if true;
     }
   }
 }
