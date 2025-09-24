@@ -56,6 +56,7 @@ export type Client = {
 };
 
 export type DailyClosure = {
+  id: string;
   date: Date;
   totalRevenue: number;
   totalByPaymentMethod: Record<string, number>;

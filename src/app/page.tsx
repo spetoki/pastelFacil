@@ -36,6 +36,7 @@ import type { ProductFormValues } from "@/components/add-product-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Inventory } from "@/components/inventory";
 import { SalesHistory as SalesHistoryComponent } from "@/components/sales-history";
+import { DailyClosuresHistory } from "@/components/daily-closures-history";
 import { CashClosing } from "@/components/cash-closing";
 import {
   DollarSign,
@@ -43,6 +44,7 @@ import {
   ShoppingCart,
   ClipboardList,
   Users,
+  FileText,
 } from "lucide-react";
 import { isAuthenticated, clearAuthentication } from "@/lib/auth";
 import { ClientList } from "@/components/client-list";
@@ -64,6 +66,7 @@ export default function Home() {
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<CashTransaction[]>([]);
   const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
+  const [dailyClosures, setDailyClosures] = useState<DailyClosure[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
   const [shiftStart, setShiftStart] = useState<Date>(getStartOfToday);
@@ -140,11 +143,28 @@ export default function Home() {
       toast({ variant: "destructive", title: "Erro ao buscar transações" });
     });
 
+    const dailyClosuresQuery = query(collection(db, "dailySummaries"), orderBy("date", "desc"));
+    const unsubscribeDailyClosures = onSnapshot(dailyClosuresQuery, (snapshot) => {
+      const closuresList = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          date: (data.date as Timestamp).toDate(),
+        } as DailyClosure;
+      });
+      setDailyClosures(closuresList);
+    }, (error) => {
+      console.error("Error fetching daily closures: ", error);
+      toast({ variant: "destructive", title: "Erro ao buscar relatórios" });
+    });
+
     return () => {
       unsubscribeProducts();
       unsubscribeClients();
       unsubscribeSales();
       unsubscribeTransactions();
+      unsubscribeDailyClosures();
     };
   }, [router, toast, shiftStart]);
 
@@ -428,8 +448,8 @@ export default function Home() {
     return { totalRevenue, numberOfSales, averageSaleValue };
   }, [salesHistory]);
 
-  const handleCloseDay = useCallback(async (closureData: Omit<DailyClosure, 'date'>) => {
-    const newClosure: DailyClosure = {
+  const handleCloseDay = useCallback(async (closureData: Omit<DailyClosure, 'id' | 'date'>) => {
+    const newClosure = {
       date: new Date(),
       ...closureData,
     }
@@ -467,7 +487,7 @@ export default function Home() {
       <Header onLogout={handleLogout} />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs defaultValue="caixa">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="caixa">
               <ShoppingCart className="mr-2" />
               Caixa
@@ -487,6 +507,10 @@ export default function Home() {
             <TabsTrigger value="fechamento">
               <ClipboardList className="mr-2" />
               Fechamento
+            </TabsTrigger>
+             <TabsTrigger value="relatorios">
+              <FileText className="mr-2" />
+              Relatórios
             </TabsTrigger>
           </TabsList>
           <TabsContent value="caixa">
@@ -540,6 +564,9 @@ export default function Home() {
               onAddTransaction={handleAddTransaction}
               onCloseDay={handleCloseDay}
             />
+          </TabsContent>
+          <TabsContent value="relatorios">
+            <DailyClosuresHistory closures={dailyClosures} />
           </TabsContent>
         </Tabs>
       </main>
