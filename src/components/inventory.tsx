@@ -21,7 +21,6 @@ import { Skeleton } from "./ui/skeleton";
 
 type InventoryProps = {
   products: Product[];
-  onUpdateStock: (productId: string, newStock: number) => Promise<void>;
   onAddProduct: (values: ProductFormValues) => Promise<void>;
   onUpdateProduct: (
     productId: string,
