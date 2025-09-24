@@ -52,6 +52,7 @@ import { isAuthenticated, clearAuthentication } from "@/lib/auth";
 import { ClientList } from "@/components/client-list";
 import type { ClientFormValues } from "@/components/add-client-form";
 import { Settings as SettingsComponent } from "@/components/settings";
+import { ReportPinDialog } from "@/components/report-pin-dialog";
 
 const getStartOfToday = () => {
     const today = new Date();
@@ -75,6 +76,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
   const [shiftStart, setShiftStart] = useState<Date>(getStartOfToday);
+  const [isReportsUnlocked, setIsReportsUnlocked] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -607,6 +609,9 @@ export default function Home() {
       </div>
     );
   }
+  const handleUnlockReports = () => {
+    setIsReportsUnlocked(true);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -700,8 +705,12 @@ export default function Home() {
             />
           </TabsContent>
           <TabsContent value="relatorios">
-            <DailyClosuresHistory closures={dailyClosures} />
-          </TabsContent>
+            {isReportsUnlocked ? (
+                <DailyClosuresHistory closures={dailyClosures} />
+            ) : (
+                <ReportPinDialog onUnlock={handleUnlockReports} />
+            )}
+            </TabsContent>
           <TabsContent value="configuracoes">
             <SettingsComponent />
           </TabsContent>
