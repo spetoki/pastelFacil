@@ -201,7 +201,7 @@ export default function Home() {
     });
 
     // Query day-specific debt payments
-    const debtPaymentsQuery = query(collection(db, "transactions"), where("date", ">=", startOfTodayTimestamp), where("type", "==", "debtPayment"), orderBy("date", "desc"));
+    const debtPaymentsQuery = query(collection(db, "transactions"), where("date", ">=", startOfTodayTimestamp), where("type", "==", "debtPayment"));
     const unsubscribeDebtPayments = onSnapshot(debtPaymentsQuery, (snapshot) => {
         const paymentsList: CashTransaction[] = [];
          snapshot.forEach(doc => {
@@ -212,7 +212,8 @@ export default function Home() {
                 date: (data.date as Timestamp).toDate(),
             } as CashTransaction);
         });
-        setDebtPayments(paymentsList);
+        // Sort in client-side
+        setDebtPayments(paymentsList.sort((a,b) => b.date.getTime() - a.date.getTime()));
     }, (error) => {
        console.error("Error fetching debt payments: ", error);
        toast({ variant: "destructive", title: "Erro ao buscar pagamentos de dívidas" });
