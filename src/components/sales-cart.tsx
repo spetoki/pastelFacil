@@ -25,6 +25,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 
 type SalesCartProps = {
@@ -199,18 +200,43 @@ export function SalesCart({
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <p className="text-lg font-bold text-center">{formatCurrency(total)}</p>
-                <RadioGroup 
-                  value={paymentMethod} 
+                <RadioGroup
+                  value={paymentMethod}
                   onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
                   className="grid grid-cols-2 gap-4"
                 >
-                  {paymentOptions.map((option) => (
-                     <Label key={option.value} htmlFor={option.value} className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 hover:bg-accent/50 hover:text-accent-foreground cursor-pointer ${paymentMethod === option.value ? 'border-primary' : 'border-muted'}`}>
-                      <RadioGroupItem value={option.value} id={option.value} className="sr-only" />
-                      <option.icon className="h-6 w-6"/>
-                      <span>{option.label}</span>
-                    </Label>
-                  ))}
+                  {paymentOptions.map((option) => {
+                    const isFiado = option.value === "Fiado";
+                    const noClients = clients.length === 0;
+                    const isDisabled = isFiado && noClients;
+
+                    return (
+                      <Label
+                        key={option.value}
+                        htmlFor={option.value}
+                        className={cn(
+                          "flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4",
+                          {
+                            "border-primary": paymentMethod === option.value,
+                            "border-muted": paymentMethod !== option.value,
+                            "hover:bg-accent/50 hover:text-accent-foreground cursor-pointer":
+                              !isDisabled,
+                            "opacity-50 cursor-not-allowed": isDisabled,
+                          }
+                        )}
+                        title={isDisabled ? "Cadastre um cliente para usar esta opção" : ""}
+                      >
+                        <RadioGroupItem
+                          value={option.value}
+                          id={option.value}
+                          className="sr-only"
+                          disabled={isDisabled}
+                        />
+                        <option.icon className="h-6 w-6" />
+                        <span>{option.label}</span>
+                      </Label>
+                    );
+                  })}
                 </RadioGroup>
 
                 {paymentMethod === "Fiado" && (
