@@ -155,8 +155,7 @@ export default function Home() {
     // Query for all fiado sales of the entire day
     const fiadoSalesQuery = query(
         collection(db, "sales"),
-        where("date", ">=", startOfTodayTimestamp),
-        orderBy("date", "desc")
+        where("date", ">=", startOfTodayTimestamp)
     );
     const unsubscribeFiadoSales = onSnapshot(fiadoSalesQuery, (snapshot) => {
         const fiadoList = snapshot.docs.map(doc => {
@@ -167,7 +166,7 @@ export default function Home() {
                 date: (data.date as Timestamp).toDate(),
             } as Sale;
         }).filter(sale => sale.paymentMethod === 'Fiado');
-        setFiadoSales(fiadoList);
+        setFiadoSales(fiadoList.sort((a,b) => b.date.getTime() - a.date.getTime()));
     }, (error) => {
         console.error("Error fetching fiado sales: ", error);
         toast({ variant: "destructive", title: "Erro ao buscar vendas fiado" });
@@ -175,7 +174,7 @@ export default function Home() {
 
 
     // Query shift-specific transactions (expenses, cash entries)
-    const shiftTransactionsQuery = query(collection(db, "transactions"), where("date", ">=", shiftStartTimestamp), orderBy("date", "desc"));
+    const shiftTransactionsQuery = query(collection(db, "transactions"), where("date", ">=", shiftStartTimestamp));
     const unsubscribeShiftTransactions = onSnapshot(shiftTransactionsQuery, (snapshot) => {
       const expensesList: CashTransaction[] = [];
       const cashEntriesList: CashTransaction[] = [];
@@ -192,8 +191,8 @@ export default function Home() {
           cashEntriesList.push(transaction);
         }
       });
-      setExpenses(expensesList);
-      setCashEntries(cashEntriesList);
+      setExpenses(expensesList.sort((a,b) => b.date.getTime() - a.date.getTime()));
+      setCashEntries(cashEntriesList.sort((a,b) => b.date.getTime() - a.date.getTime()));
     }, (error) => {
       console.error("Error fetching shift transactions: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar transações do turno" });
@@ -758,3 +757,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
