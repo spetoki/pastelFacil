@@ -35,9 +35,11 @@ import { Separator } from "@/components/ui/separator";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
+  CircleDollarSign,
+  CreditCard,
+  Landmark,
+  User,
   DollarSign,
-  TrendingDown,
-  TrendingUp,
 } from "lucide-react";
 
 type CashClosingProps = {
@@ -86,21 +88,23 @@ export function CashClosing({
   });
 
   const dailyData = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const startOfToday = today.getTime();
+    const todaysSales = sales;
+    const todaysExpenses = expenses;
+    const todaysCashEntries = cashEntries;
 
-    const todaysSales = sales.filter(
-      (sale) => sale.date.getTime() >= startOfToday
-    );
-    const todaysExpenses = expenses.filter(
-      (exp) => exp.date.getTime() >= startOfToday
-    );
-    const todaysCashEntries = cashEntries.filter(
-      (entry) => entry.date.getTime() >= startOfToday
+    const totalByPaymentMethod = todaysSales.reduce(
+      (acc, sale) => {
+        acc[sale.paymentMethod] = (acc[sale.paymentMethod] || 0) + sale.total;
+        return acc;
+      },
+      {} as Record<string, number>
     );
 
-    const totalRevenue = todaysSales.reduce((sum, sale) => sum + sale.total, 0);
+    const totalDinheiro = totalByPaymentMethod["Dinheiro"] || 0;
+    const totalPix = totalByPaymentMethod["Pix"] || 0;
+    const totalCartao = totalByPaymentMethod["Cartão"] || 0;
+    const totalFiado = totalByPaymentMethod["Fiado"] || 0;
+
     const totalExpenses = todaysExpenses.reduce(
       (sum, exp) => sum + exp.amount,
       0
@@ -110,13 +114,18 @@ export function CashClosing({
       0
     );
 
-    const finalBalance = totalRevenue + totalCashEntries - totalExpenses;
+    // Saldo em caixa considera apenas dinheiro, pix e outras entradas, menos despesas.
+    const finalBalance =
+      totalDinheiro + totalPix + totalCashEntries - totalExpenses;
 
     return {
       todaysSales,
       todaysExpenses,
       todaysCashEntries,
-      totalRevenue,
+      totalDinheiro,
+      totalPix,
+      totalCartao,
+      totalFiado,
       totalExpenses,
       totalCashEntries,
       finalBalance,
@@ -138,45 +147,69 @@ export function CashClosing({
           <CardHeader>
             <CardTitle>Resumo Financeiro do Dia</CardTitle>
             <CardDescription>
-              Balanço das movimentações de hoje.
+              Balanço das movimentações de hoje. O saldo em caixa considera
+              apenas entradas imediatas (dinheiro, pix) e retiradas.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex flex-col gap-1 rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
-              <div className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-400">
-                <TrendingUp className="h-4 w-4" />
-                <span>Receita de Vendas</span>
+          <CardContent className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Vendas */}
+            <FinancialCard
+              title="Vendas (Dinheiro)"
+              value={dailyData.totalDinheiro}
+              icon={CircleDollarSign}
+              color="text-green-800 dark:text-green-300"
+              bgColor="bg-green-50 dark:bg-green-900/20"
+            />
+            <FinancialCard
+              title="Vendas (Pix)"
+              value={dailyData.totalPix}
+              icon={Landmark}
+              color="text-cyan-800 dark:text-cyan-300"
+              bgColor="bg-cyan-50 dark:bg-cyan-900/20"
+            />
+            <FinancialCard
+              title="Vendas (Cartão)"
+              value={dailyData.totalCartao}
+              icon={CreditCard}
+              color="text-orange-800 dark:text-orange-300"
+              bgColor="bg-orange-50 dark:bg-orange-900/20"
+            />
+             <FinancialCard
+              title="Vendas (Fiado)"
+              value={dailyData.totalFiado}
+              icon={User}
+              color="text-yellow-800 dark:text-yellow-300"
+              bgColor="bg-yellow-50 dark:bg-yellow-900/20"
+            />
+
+            {/* Movimentações de Caixa */}
+            <FinancialCard
+              title="Entradas no Caixa"
+              value={dailyData.totalCashEntries}
+              icon={ArrowUpCircle}
+              color="text-blue-800 dark:text-blue-300"
+              bgColor="bg-blue-50 dark:bg-blue-900/20"
+            />
+            <FinancialCard
+              title="Despesas / Retiradas"
+              value={dailyData.totalExpenses}
+              icon={ArrowDownCircle}
+              color="text-red-800 dark:text-red-300"
+              bgColor="bg-red-50 dark:bg-red-900/20"
+            />
+            
+            {/* Saldo Final */}
+             <div className="col-span-2 lg:col-span-3">
+              <Separator className="my-4"/>
+               <div className="flex flex-col gap-1 rounded-lg bg-primary/10 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                  <DollarSign className="h-4 w-4" />
+                  <span>Saldo Final em Caixa</span>
+                </div>
+                <p className="text-3xl font-bold text-primary/90">
+                  {formatCurrency(dailyData.finalBalance)}
+                </p>
               </div>
-              <p className="text-2xl font-bold text-green-800 dark:text-green-300">
-                {formatCurrency(dailyData.totalRevenue)}
-              </p>
-            </div>
-             <div className="flex flex-col gap-1 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-              <div className="flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-400">
-                <ArrowUpCircle className="h-4 w-4" />
-                <span>Entradas no Caixa</span>
-              </div>
-              <p className="text-2xl font-bold text-blue-800 dark:text-blue-300">
-                {formatCurrency(dailyData.totalCashEntries)}
-              </p>
-            </div>
-            <div className="flex flex-col gap-1 rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
-              <div className="flex items-center gap-2 text-sm font-medium text-red-700 dark:text-red-400">
-                <TrendingDown className="h-4 w-4" />
-                <span>Despesas / Retiradas</span>
-              </div>
-              <p className="text-2xl font-bold text-red-800 dark:text-red-300">
-                {formatCurrency(dailyData.totalExpenses)}
-              </p>
-            </div>
-            <div className="flex flex-col gap-1 rounded-lg bg-primary/10 p-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                <DollarSign className="h-4 w-4" />
-                <span>Saldo em Caixa</span>
-              </div>
-              <p className="text-2xl font-bold text-primary/90">
-                {formatCurrency(dailyData.finalBalance)}
-              </p>
             </div>
           </CardContent>
         </Card>
@@ -184,7 +217,7 @@ export function CashClosing({
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Entradas de Caixa</CardTitle>
+              <CardTitle>Entradas de Caixa Avulsas</CardTitle>
             </CardHeader>
             <CardContent>
               <TransactionTable transactions={dailyData.todaysCashEntries} />
@@ -204,9 +237,9 @@ export function CashClosing({
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Adicionar Transação</CardTitle>
+            <CardTitle>Adicionar Transação Manual</CardTitle>
             <CardDescription>
-              Registre uma nova despesa ou entrada de dinheiro.
+              Registre uma nova despesa ou uma entrada de dinheiro avulsa (ex: troco inicial).
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -292,3 +325,21 @@ function TransactionTable({ transactions }: { transactions: CashTransaction[] })
     </Table>
   );
 }
+
+const FinancialCard = ({ title, value, icon: Icon, color, bgColor }: {
+    title: string;
+    value: number;
+    icon: React.ElementType;
+    color: string;
+    bgColor: string;
+}) => (
+    <div className={`flex flex-col gap-1 rounded-lg p-4 ${bgColor}`}>
+        <div className={`flex items-center gap-2 text-sm font-medium ${color.replace('text-', 'text-opacity-80 dark:text-opacity-80')}`}>
+            <Icon className="h-4 w-4" />
+            <span>{title}</span>
+        </div>
+        <p className={`text-2xl font-bold ${color}`}>
+            {formatCurrency(value)}
+        </p>
+    </div>
+);

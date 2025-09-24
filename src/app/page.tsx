@@ -328,7 +328,7 @@ export default function Home() {
     async (values: ProductFormValues): Promise<void> => {
       try {
         await addDoc(collection(db, "products"), values);
-        // O estado será atualizado via onSnapshot, então não há necessidade de fazer mais nada aqui.
+        // O estado será atualizado via onSnapshot
       } catch (error) {
         console.error("Error adding product: ", error);
         // O erro é relançado para ser tratado no componente do formulário.
