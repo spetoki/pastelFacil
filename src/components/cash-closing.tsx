@@ -130,7 +130,7 @@ export function CashClosing({
       0
     );
     
-    const revenueForClosure = totalRevenue - (totalByPaymentMethod["Fiado"] || 0);
+    const revenueForClosure = (totalByPaymentMethod["Dinheiro"] || 0) + (totalByPaymentMethod["Pix"] || 0) + (totalByPaymentMethod["Cartão"] || 0);
 
     const expectedInCash = (totalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries - totalExpenses;
 
@@ -226,7 +226,7 @@ export function CashClosing({
               bgColor="bg-red-50 dark:bg-red-900/20"
             />
             <FinancialCard
-              title="Vendas (Fiado)"
+              title="Total de Vendas em Fiado"
               value={dailyData.totalByPaymentMethod["Fiado"] || 0}
               icon={User}
               color="text-black"
@@ -297,10 +297,19 @@ export function CashClosing({
                       <span className="font-bold text-lg">{formatCurrency(dailyData.revenueForClosure)}</span>
                     </div>
 
-                     <div className="grid grid-cols-2 gap-2 text-sm">
-                        <p>Dinheiro: {formatCurrency(dailyData.totalByPaymentMethod['Dinheiro'] || 0)}</p>
-                        <p>Pix: {formatCurrency(dailyData.totalByPaymentMethod['Pix'] || 0)}</p>
-                        <p>Cartão: {formatCurrency(dailyData.totalByPaymentMethod['Cartão'] || 0)}</p>
+                     <div className="grid grid-cols-3 gap-2 text-sm text-center">
+                        <div>
+                            <p className="text-muted-foreground">Dinheiro</p>
+                            <p className="font-medium">{formatCurrency(dailyData.totalByPaymentMethod['Dinheiro'] || 0)}</p>
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground">Pix</p>
+                            <p className="font-medium">{formatCurrency(dailyData.totalByPaymentMethod['Pix'] || 0)}</p>
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground">Cartão</p>
+                            <p className="font-medium">{formatCurrency(dailyData.totalByPaymentMethod['Cartão'] || 0)}</p>
+                        </div>
                     </div>
                     <Separator/>
 
@@ -445,5 +454,3 @@ const FinancialCard = ({ title, value, icon: Icon, color, bgColor }: {
         </p>
     </div>
 );
-
-    
