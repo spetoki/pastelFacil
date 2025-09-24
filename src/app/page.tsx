@@ -9,7 +9,10 @@ import {
   doc,
   getDocs,
   writeBatch,
-  query
+  query,
+  orderBy,
+  where,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type {
@@ -56,32 +59,82 @@ export default function Home() {
   const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
-  const fetchProducts = useCallback(async () => {
+
+  const fetchData = useCallback(async () => {
     if (!isAuthenticated()) return;
+    setIsLoadingData(true);
     try {
-      setIsLoading(true);
-      const productsCollection = collection(db, "products");
+      const productsCollection = collection(db, 'products');
       const productSnapshot = await getDocs(productsCollection);
       const productsList = productSnapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Product)
+        doc => ({ id: doc.id, ...doc.data() } as Product)
       );
       setProducts(productsList);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const startOfToday = Timestamp.fromDate(today);
+      
+      const salesQuery = query(
+        collection(db, "sales"), 
+        where("date", ">=", startOfToday),
+        orderBy("date", "desc")
+      );
+      const salesSnapshot = await getDocs(salesQuery);
+      const salesList = salesSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          date: (data.date as Timestamp).toDate(),
+        } as Sale;
+      });
+      setSalesHistory(salesList);
+      
+      const transactionsQuery = query(
+        collection(db, "transactions"),
+        where("date", ">=", startOfToday),
+        orderBy("date", "desc")
+      );
+      const transactionsSnapshot = await getDocs(transactionsQuery);
+      const expensesList: CashTransaction[] = [];
+      const cashEntriesList: CashTransaction[] = [];
+
+      transactionsSnapshot.forEach(doc => {
+        const data = doc.data();
+        const transaction = {
+          id: doc.id,
+          ...data,
+          date: (data.date as Timestamp).toDate(),
+        } as CashTransaction;
+
+        if (data.type === 'expense') {
+          expensesList.push(transaction);
+        } else if (data.type === 'cashEntry') {
+          cashEntriesList.push(transaction);
+        }
+      });
+      setExpenses(expensesList);
+      setCashEntries(cashEntriesList);
+
     } catch (error) {
-      console.error("Error fetching products: ", error);
+      console.error("Error fetching data: ", error);
       toast({
         variant: "destructive",
-        title: "Erro ao buscar produtos",
-        description: "Não foi possível carregar os produtos do banco de dados.",
+        title: "Erro ao buscar dados",
+        description: "Não foi possível carregar os dados do banco de dados.",
       });
     } finally {
+      setIsLoadingData(false);
       setIsLoading(false);
     }
   }, [toast]);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    fetchData();
+  }, [fetchData]);
 
 
   const handleLogout = () => {
@@ -207,12 +260,14 @@ export default function Home() {
     });
   
     try {
-      // await addDoc(collection(db, "sales"), newSale); // We will integrate this later
+      const salesCollection = collection(db, "sales");
+      const saleDocRef = await addDoc(salesCollection, newSale);
+      
       await batch.commit();
   
-      setSalesHistory((prev) => [{...newSale, id: `sale_${Date.now()}`}, ...prev]);
+      setSalesHistory((prev) => [{...newSale, id: saleDocRef.id}, ...prev]);
       setCartItems([]);
-      fetchProducts(); // Refresh products to show updated stock
+      fetchData(); 
   
       toast({
         title: "Venda Finalizada!",
@@ -226,17 +281,17 @@ export default function Home() {
       toast({
         variant: "destructive",
         title: "Erro ao finalizar venda",
-        description: "Não foi possível atualizar o estoque dos produtos.",
+        description: "Não foi possível salvar a venda ou atualizar o estoque.",
       });
     }
-  }, [cartItems, toast, fetchProducts]);
+  }, [cartItems, toast, fetchData]);
 
   const handleAddProduct = useCallback(
     async (values: ProductFormValues): Promise<void> => {
       try {
         const docRef = await addDoc(collection(db, "products"), values);
         setProducts((prev) => [{ id: docRef.id, ...values }, ...prev]);
-        fetchProducts(); // Refresh products list
+        fetchData();
       } catch (error) {
         console.error("Error adding product: ", error);
         toast({
@@ -247,7 +302,7 @@ export default function Home() {
         throw error;
       }
     },
-    [toast, fetchProducts]
+    [toast, fetchData]
   );
   
   const handleUpdateProduct = useCallback(
@@ -260,7 +315,7 @@ export default function Home() {
             p.id === productId ? { ...p, ...values } : p
           )
         );
-        fetchProducts(); // Refresh products list
+        fetchData();
       } catch (error) {
         console.error("Error updating product: ", error);
         toast({
@@ -271,7 +326,7 @@ export default function Home() {
         throw error;
       }
     },
-    [toast, fetchProducts]
+    [toast, fetchData]
   );
   
   const handleUpdateStock = useCallback(
@@ -297,21 +352,38 @@ export default function Home() {
   );
 
   const handleAddTransaction = useCallback(
-    (
+    async (
       type: "expense" | "cashEntry",
       values: { description: string; amount: number }
     ) => {
-      const newTransaction: CashTransaction = {
-        id: `${type}_${Date.now()}`,
+      const newTransaction = {
         date: new Date(),
+        type: type,
         ...values,
       };
-      if (type === "expense") {
-        setExpenses((prev) => [newTransaction, ...prev]);
-        toast({ title: "Despesa registrada com sucesso!" });
-      } else {
-        setCashEntries((prev) => [newTransaction, ...prev]);
-        toast({ title: "Entrada de caixa registrada com sucesso!" });
+
+      try {
+        const docRef = await addDoc(collection(db, 'transactions'), newTransaction);
+        
+        const addedTransaction: CashTransaction = {
+          id: docRef.id,
+          date: newTransaction.date,
+          ...values
+        };
+
+        if (type === "expense") {
+          setExpenses((prev) => [addedTransaction, ...prev]);
+          toast({ title: "Despesa registrada com sucesso!" });
+        } else {
+          setCashEntries((prev) => [addedTransaction, ...prev]);
+          toast({ title: "Entrada de caixa registrada com sucesso!" });
+        }
+      } catch(error) {
+          console.error("Error adding transaction: ", error);
+          toast({
+            variant: "destructive",
+            title: "Erro ao registrar transação",
+          });
       }
     },
     [toast]

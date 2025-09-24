@@ -30,4 +30,5 @@ export type CashTransaction = {
   description: string;
   amount: number;
   date: Date;
+  type?: "expense" | "cashEntry";
 };
