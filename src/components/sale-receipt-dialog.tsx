@@ -43,7 +43,7 @@ const ReceiptContent = ({ sale }: { sale: Omit<Sale, "id"> }) => (
       <p>Rua da Pastelaria, 123 - Centro</p>
       <p>CNPJ: 12.345.678/0001-99</p>
       <p>--------------------------------</p>
-      <p className="font-bold">CUPOM NÃO FISCAL</p>
+      <p className="font-bold">CUPOM FISCAL</p>
       <p>--------------------------------</p>
     </div>
     <div className="mb-2">
