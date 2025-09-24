@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Label } from "./ui/label";
 
 type InventoryProps = {
   products: Product[];
@@ -41,6 +42,78 @@ type InventoryProps = {
   onDeleteProduct: (productId: string) => Promise<void>;
   isLoading: boolean;
 };
+
+function DeleteProductDialog({
+  product,
+  onDeleteProduct,
+}: {
+  product: Product;
+  onDeleteProduct: (productId: string) => void;
+}) {
+  const [pin, setPin] = useState("");
+  const [open, setOpen] = useState(false);
+  const CORRECT_PIN = "2209";
+
+  const handleDelete = () => {
+    onDeleteProduct(product.id);
+    setOpen(false); // Close dialog on success
+  };
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) {
+          setPin(""); // Reset PIN when closing
+        }
+      }}
+    >
+      <AlertDialogTrigger asChild>
+        <Button size="icon" variant="destructive">
+          <Trash className="h-4 w-4" />
+          <span className="sr-only">Excluir Produto</span>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta ação não pode ser desfeita. Para excluir permanentemente o
+            produto <span className="font-semibold">{product.name}</span>, por
+            favor, insira o PIN de proprietário.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="py-2">
+          <Label htmlFor={`pin-delete-${product.id}`}>PIN de Confirmação</Label>
+          <Input
+            id={`pin-delete-${product.id}`}
+            type="password"
+            maxLength={4}
+            placeholder="••••"
+            className="text-center tracking-widest mt-2"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            autoFocus
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setPin("")}>
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive hover:bg-destructive/90"
+            disabled={pin !== CORRECT_PIN}
+          >
+            Sim, excluir produto
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 
 export function Inventory({
   products,
@@ -111,32 +184,11 @@ export function Inventory({
                       </Button>
                     </EditProductDialog>
 
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="icon" variant="destructive">
-                          <Trash className="h-4 w-4" />
-                          <span className="sr-only">Excluir Produto</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o produto
-                             <span className="font-semibold"> {product.name}</span>.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => onDeleteProduct(product.id)}
-                            className="bg-destructive hover:bg-destructive/90"
-                          >
-                            Sim, excluir produto
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <DeleteProductDialog
+                      product={product}
+                      onDeleteProduct={onDeleteProduct}
+                    />
+
                   </div>
                 </TableCell>
               </TableRow>
