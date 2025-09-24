@@ -64,7 +64,7 @@ type CashClosingProps = {
     type: "expense" | "cashEntry",
     values: { description: string; amount: number }
   ) => void;
-  onCloseDay: (closureData: Omit<DailyClosure, 'date'>) => Promise<void>;
+  onCloseDay: (closureData: Omit<DailyClosure, 'id' | 'date'>) => Promise<void>;
 };
 
 const formatCurrency = (value: number) => {
@@ -179,7 +179,7 @@ export function CashClosing({
           <CardHeader>
             <CardTitle>Resumo Financeiro do Dia</CardTitle>
             <CardDescription>
-              Balanço de todas as movimentações de hoje.
+              Balanço de todas as movimentações do turno atual.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -231,7 +231,7 @@ export function CashClosing({
                <div className="flex flex-col gap-1 rounded-lg bg-primary/10 p-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-primary">
                   <DollarSign className="h-4 w-4" />
-                  <span>Faturamento Total do Dia (todas as formas de pag.)</span>
+                  <span>Faturamento Total do Turno (todas as formas de pag.)</span>
                 </div>
                 <p className="text-3xl font-bold text-primary/90">
                   {formatCurrency(dailyData.finalBalance)}
@@ -286,11 +286,11 @@ export function CashClosing({
                   </DialogHeader>
                   <div className="py-4 space-y-4">
                     <div className="flex justify-between items-center bg-muted p-3 rounded-md">
-                      <span className="font-medium">Valor Esperado em Caixa</span>
+                      <span className="font-medium">Valor Esperado (Dinheiro)</span>
                       <span className="font-bold text-lg">{formatCurrency(dailyData.expectedInCash)}</span>
                     </div>
                      <div className="space-y-2">
-                       <Label htmlFor="counted-amount">Valor Contado (Dinheiro)</Label>
+                       <Label htmlFor="counted-amount">Valor Contado em Caixa (R$)</Label>
                        <Input
                          id="counted-amount"
                          type="number"
