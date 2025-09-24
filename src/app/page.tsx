@@ -456,9 +456,9 @@ export default function Home() {
               <ShoppingCart className="mr-2" />
               Caixa
             </TabsTrigger>
-            <TabsTrigger value="produtos">
+            <TabsTrigger value="estoque">
               <Package className="mr-2" />
-              Produtos
+              Estoque
             </TabsTrigger>
             <TabsTrigger value="clientes">
               <Users className="mr-2" />
@@ -497,7 +497,7 @@ export default function Home() {
               </div>
             </div>
           </TabsContent>
-          <TabsContent value="produtos">
+          <TabsContent value="estoque">
             <Inventory
               products={products}
               onUpdateStock={handleUpdateStock}
