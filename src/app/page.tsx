@@ -58,11 +58,14 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchProducts = useCallback(async () => {
+    if (!isAuthenticated()) return;
     try {
       setIsLoading(true);
       const productsCollection = collection(db, "products");
       const productSnapshot = await getDocs(productsCollection);
-      const productsList = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      const productsList = productSnapshot.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as Product)
+      );
       setProducts(productsList);
     } catch (error) {
       console.error("Error fetching products: ", error);
@@ -77,9 +80,7 @@ export default function Home() {
   }, [toast]);
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      fetchProducts();
-    }
+    fetchProducts();
   }, [fetchProducts]);
 
 
@@ -235,6 +236,7 @@ export default function Home() {
       try {
         const docRef = await addDoc(collection(db, "products"), values);
         setProducts((prev) => [{ id: docRef.id, ...values }, ...prev]);
+        fetchProducts(); // Refresh products list
       } catch (error) {
         console.error("Error adding product: ", error);
         toast({
@@ -245,9 +247,9 @@ export default function Home() {
         throw error;
       }
     },
-    [toast]
+    [toast, fetchProducts]
   );
-
+  
   const handleUpdateProduct = useCallback(
     async (productId: string, values: ProductFormValues): Promise<void> => {
       try {
@@ -255,14 +257,10 @@ export default function Home() {
         await updateDoc(productRef, values);
         setProducts((prev) =>
           prev.map((p) =>
-            p.id === productId
-              ? {
-                  ...p,
-                  ...values,
-                }
-              : p
+            p.id === productId ? { ...p, ...values } : p
           )
         );
+        fetchProducts(); // Refresh products list
       } catch (error) {
         console.error("Error updating product: ", error);
         toast({
@@ -273,12 +271,12 @@ export default function Home() {
         throw error;
       }
     },
-    [toast]
+    [toast, fetchProducts]
   );
-
+  
   const handleUpdateStock = useCallback(
     async (productId: string, newStock: number) => {
-       try {
+      try {
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, { stock: newStock });
         setProducts((prev) =>
