@@ -129,12 +129,11 @@ export function CashClosing({
       0
     );
 
-    // Saldo final agora reflete o faturamento total bruto.
     const finalBalance =
       totalDinheiro + totalPix + totalCartao + totalFiado;
       
-    // Saldo esperado em dinheiro físico (para conferência de caixa)
-    const expectedCash = totalDinheiro + totalCashEntries - totalExpenses;
+    // Saldo esperado em caixa é o faturamento total do dia.
+    const expectedCash = finalBalance;
 
     return {
       todaysSales,
@@ -272,18 +271,18 @@ export function CashClosing({
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Conferência de Caixa</DialogTitle>
+                    <DialogTitle>Conferência de Fechamento</DialogTitle>
                     <DialogDescription>
-                      Insira o valor total em dinheiro contado no caixa para verificar se corresponde ao esperado.
+                      Insira o valor conferido para comparar com o faturamento total do dia.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4 space-y-4">
                     <div className="flex justify-between items-center bg-muted p-3 rounded-md">
-                      <span className="font-medium">Valor Esperado em Caixa</span>
+                      <span className="font-medium">Faturamento Total do Dia</span>
                       <span className="font-bold text-lg">{formatCurrency(dailyData.expectedCash)}</span>
                     </div>
                      <div className="space-y-2">
-                       <Label htmlFor="counted-amount">Valor Contado (R$)</Label>
+                       <Label htmlFor="counted-amount">Valor Conferido (R$)</Label>
                        <Input
                          id="counted-amount"
                          type="number"
@@ -301,9 +300,9 @@ export function CashClosing({
                         <span className="font-medium">Diferença</span>
                         <span className="font-bold text-lg">{formatCurrency(difference)}</span>
                      </div>
-                     {countedAmount > 0 && difference > 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é maior que o esperado (Sobra).</p>}
-                     {countedAmount > 0 && difference < 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é menor que o esperado (Falta).</p>}
-                     {countedAmount > 0 && difference === 0 && <p className="text-sm text-center text-green-600">O caixa está correto!</p>}
+                     {countedAmount > 0 && difference > 0 && <p className="text-sm text-center text-muted-foreground">O valor conferido é maior que o faturamento (Sobra).</p>}
+                     {countedAmount > 0 && difference < 0 && <p className="text-sm text-center text-muted-foreground">O valor conferido é menor que o faturamento (Falta).</p>}
+                     {countedAmount > 0 && difference === 0 && <p className="text-sm text-center text-green-600">O valor conferido bate com o faturamento!</p>}
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
