@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { Sale, CashTransaction } from "@/lib/types";
+import type { Sale, CashTransaction, DailyClosure } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -54,6 +54,7 @@ import {
   Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 type CashClosingProps = {
   sales: Sale[];
@@ -63,6 +64,7 @@ type CashClosingProps = {
     type: "expense" | "cashEntry",
     values: { description: string; amount: number }
   ) => void;
+  onCloseDay: (closureData: Omit<DailyClosure, 'date'>) => Promise<void>;
 };
 
 const formatCurrency = (value: number) => {
@@ -92,8 +94,11 @@ export function CashClosing({
   expenses,
   cashEntries,
   onAddTransaction,
+  onCloseDay,
 }: CashClosingProps) {
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClosingDay, setIsClosingDay] = useState(false);
   const [isConferenceOpen, setIsConferenceOpen] = useState(false);
   const [countedAmount, setCountedAmount] = useState(0);
 
@@ -103,11 +108,7 @@ export function CashClosing({
   });
 
   const dailyData = useMemo(() => {
-    const todaysSales = sales;
-    const todaysExpenses = expenses;
-    const todaysCashEntries = cashEntries;
-
-    const totalByPaymentMethod = todaysSales.reduce(
+    const totalByPaymentMethod = sales.reduce(
       (acc, sale) => {
         acc[sale.paymentMethod] = (acc[sale.paymentMethod] || 0) + sale.total;
         return acc;
@@ -115,38 +116,28 @@ export function CashClosing({
       {} as Record<string, number>
     );
 
-    const totalDinheiro = totalByPaymentMethod["Dinheiro"] || 0;
-    const totalPix = totalByPaymentMethod["Pix"] || 0;
-    const totalCartao = totalByPaymentMethod["Cartão"] || 0;
-    const totalFiado = totalByPaymentMethod["Fiado"] || 0;
-
-    const totalExpenses = todaysExpenses.reduce(
+    const totalExpenses = expenses.reduce(
       (sum, exp) => sum + exp.amount,
       0
     );
-    const totalCashEntries = todaysCashEntries.reduce(
+    const totalCashEntries = cashEntries.reduce(
       (sum, entry) => sum + entry.amount,
       0
     );
 
-    const finalBalance =
-      totalDinheiro + totalPix + totalCartao + totalFiado;
-      
-    // Saldo esperado em caixa é o faturamento total do dia.
-    const expectedCash = finalBalance;
+    const finalBalance = Object.values(totalByPaymentMethod).reduce(
+      (sum, total) => sum + total,
+      0
+    );
+    
+    const expectedInCash = (totalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries - totalExpenses;
 
     return {
-      todaysSales,
-      todaysExpenses,
-      todaysCashEntries,
-      totalDinheiro,
-      totalPix,
-      totalCartao,
-      totalFiado,
+      totalByPaymentMethod,
       totalExpenses,
       totalCashEntries,
       finalBalance,
-      expectedCash,
+      expectedInCash,
     };
   }, [sales, expenses, cashEntries]);
 
@@ -158,7 +149,28 @@ export function CashClosing({
       setIsSubmitting(false);
     };
 
-  const difference = countedAmount - dailyData.expectedCash;
+  const handleConfirmCloseDay = async () => {
+    setIsClosingDay(true);
+    try {
+      await onCloseDay({
+        totalRevenue: dailyData.finalBalance,
+        totalByPaymentMethod: dailyData.totalByPaymentMethod,
+        totalExpenses: dailyData.totalExpenses,
+        totalCashEntries: dailyData.totalCashEntries,
+        expectedInCash: dailyData.expectedInCash,
+        countedAmount,
+        difference: countedAmount - dailyData.expectedInCash,
+      });
+      setIsConferenceOpen(false);
+      setCountedAmount(0);
+    } catch (error) {
+      // Toast de erro já é mostrado na função principal
+    } finally {
+      setIsClosingDay(false);
+    }
+  }
+
+  const difference = countedAmount - dailyData.expectedInCash;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -171,37 +183,34 @@ export function CashClosing({
             </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Vendas */}
             <FinancialCard
               title="Vendas (Dinheiro)"
-              value={dailyData.totalDinheiro}
+              value={dailyData.totalByPaymentMethod["Dinheiro"] || 0}
               icon={CircleDollarSign}
               color="text-black"
               bgColor="bg-green-50 dark:bg-green-900/20"
             />
             <FinancialCard
               title="Vendas (Pix)"
-              value={dailyData.totalPix}
+              value={dailyData.totalByPaymentMethod["Pix"] || 0}
               icon={Landmark}
               color="text-black"
               bgColor="bg-cyan-50 dark:bg-cyan-900/20"
             />
             <FinancialCard
               title="Vendas (Cartão)"
-              value={dailyData.totalCartao}
+              value={dailyData.totalByPaymentMethod["Cartão"] || 0}
               icon={CreditCard}
               color="text-black"
               bgColor="bg-orange-50 dark:bg-orange-900/20"
             />
              <FinancialCard
               title="Vendas (Fiado)"
-              value={dailyData.totalFiado}
+              value={dailyData.totalByPaymentMethod["Fiado"] || 0}
               icon={User}
               color="text-black"
               bgColor="bg-yellow-50 dark:bg-yellow-900/20"
             />
-
-            {/* Movimentações de Caixa */}
             <FinancialCard
               title="Entradas no Caixa"
               value={dailyData.totalCashEntries}
@@ -217,7 +226,6 @@ export function CashClosing({
               bgColor="bg-red-50 dark:bg-red-900/20"
             />
             
-            {/* Saldo Final */}
              <div className="col-span-2 lg:col-span-3">
               <Separator className="my-4"/>
                <div className="flex flex-col gap-1 rounded-lg bg-primary/10 p-4">
@@ -239,7 +247,7 @@ export function CashClosing({
               <CardTitle>Entradas de Caixa Avulsas</CardTitle>
             </CardHeader>
             <CardContent>
-              <TransactionTable transactions={dailyData.todaysCashEntries} />
+              <TransactionTable transactions={cashEntries} />
             </CardContent>
           </Card>
           <Card>
@@ -247,7 +255,7 @@ export function CashClosing({
               <CardTitle>Despesas e Retiradas</CardTitle>
             </CardHeader>
             <CardContent>
-              <TransactionTable transactions={dailyData.todaysExpenses} />
+              <TransactionTable transactions={expenses} />
             </CardContent>
           </Card>
         </div>
@@ -273,16 +281,16 @@ export function CashClosing({
                   <DialogHeader>
                     <DialogTitle>Conferência de Fechamento</DialogTitle>
                     <DialogDescription>
-                      Insira o valor conferido para comparar com o faturamento total do dia.
+                      Insira o valor conferido em dinheiro para registrar o fechamento do dia.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4 space-y-4">
                     <div className="flex justify-between items-center bg-muted p-3 rounded-md">
-                      <span className="font-medium">Faturamento Total do Dia</span>
-                      <span className="font-bold text-lg">{formatCurrency(dailyData.expectedCash)}</span>
+                      <span className="font-medium">Valor Esperado em Caixa</span>
+                      <span className="font-bold text-lg">{formatCurrency(dailyData.expectedInCash)}</span>
                     </div>
                      <div className="space-y-2">
-                       <Label htmlFor="counted-amount">Valor Conferido (R$)</Label>
+                       <Label htmlFor="counted-amount">Valor Contado (Dinheiro)</Label>
                        <Input
                          id="counted-amount"
                          type="number"
@@ -300,14 +308,17 @@ export function CashClosing({
                         <span className="font-medium">Diferença</span>
                         <span className="font-bold text-lg">{formatCurrency(difference)}</span>
                      </div>
-                     {countedAmount > 0 && difference > 0 && <p className="text-sm text-center text-muted-foreground">O valor conferido é maior que o faturamento (Sobra).</p>}
-                     {countedAmount > 0 && difference < 0 && <p className="text-sm text-center text-muted-foreground">O valor conferido é menor que o faturamento (Falta).</p>}
-                     {countedAmount > 0 && difference === 0 && <p className="text-sm text-center text-green-600">O valor conferido bate com o faturamento!</p>}
+                     {countedAmount > 0 && difference > 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é maior que o esperado (Sobra).</p>}
+                     {countedAmount > 0 && difference < 0 && <p className="text-sm text-center text-muted-foreground">O valor contado é menor que o esperado (Falta).</p>}
+                     {countedAmount > 0 && difference === 0 && <p className="text-sm text-center text-green-600">O caixa bate com o esperado!</p>}
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
-                      <Button type="button" variant="outline">Fechar</Button>
+                      <Button type="button" variant="outline" disabled={isClosingDay}>Fechar</Button>
                     </DialogClose>
+                     <Button type="button" onClick={handleConfirmCloseDay} disabled={isClosingDay}>
+                      {isClosingDay ? "Finalizando..." : "Confirmar e Fechar Dia"}
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>

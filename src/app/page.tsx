@@ -24,6 +24,7 @@ import type {
   SaleItem,
   Client,
   PaymentMethod,
+  DailyClosure,
 } from "@/lib/types";
 import { Header } from "@/components/header";
 import { DailySummary } from "@/components/daily-summary";
@@ -47,6 +48,12 @@ import { isAuthenticated, clearAuthentication } from "@/lib/auth";
 import { ClientList } from "@/components/client-list";
 import type { ClientFormValues } from "@/components/add-client-form";
 
+const getStartOfToday = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+};
+
 export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
@@ -59,6 +66,7 @@ export default function Home() {
   const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
+  const [shiftStart, setShiftStart] = useState<Date>(getStartOfToday);
 
 
   useEffect(() => {
@@ -67,14 +75,16 @@ export default function Home() {
       return; // Stop execution if not authenticated
     }
 
-    setIsClient(true); // Assume client-side rendering is happening
+    setIsClient(true);
     setIsLoading(true);
+
+    const startTimestamp = Timestamp.fromDate(shiftStart);
 
     const productsQuery = query(collection(db, 'products'), orderBy("name"));
     const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
       const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(productsList);
-      setIsLoading(false); // Set loading to false after initial product fetch
+      setIsLoading(false);
     }, (error) => {
       console.error("Error fetching products: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar produtos" });
@@ -90,11 +100,7 @@ export default function Home() {
       toast({ variant: "destructive", title: "Erro ao buscar clientes" });
     });
     
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const startOfToday = Timestamp.fromDate(today);
-
-    const salesQuery = query(collection(db, "sales"), where("date", ">=", startOfToday), orderBy("date", "desc"));
+    const salesQuery = query(collection(db, "sales"), where("date", ">=", startTimestamp), orderBy("date", "desc"));
     const unsubscribeSales = onSnapshot(salesQuery, (snapshot) => {
       const salesList = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -110,7 +116,7 @@ export default function Home() {
       toast({ variant: "destructive", title: "Erro ao buscar vendas" });
     });
 
-    const transactionsQuery = query(collection(db, "transactions"), where("date", ">=", startOfToday), orderBy("date", "desc"));
+    const transactionsQuery = query(collection(db, "transactions"), where("date", ">=", startTimestamp), orderBy("date", "desc"));
     const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
       const expensesList: CashTransaction[] = [];
       const cashEntriesList: CashTransaction[] = [];
@@ -134,14 +140,13 @@ export default function Home() {
       toast({ variant: "destructive", title: "Erro ao buscar transações" });
     });
 
-    // Cleanup function to unsubscribe from listeners
     return () => {
       unsubscribeProducts();
       unsubscribeClients();
       unsubscribeSales();
       unsubscribeTransactions();
     };
-  }, [router, toast]);
+  }, [router, toast, shiftStart]);
 
 
   const handleLogout = () => {
@@ -323,10 +328,8 @@ export default function Home() {
     async (values: ProductFormValues): Promise<void> => {
       try {
         await addDoc(collection(db, "products"), values);
-        // O estado será atualizado via onSnapshot
       } catch (error) {
         console.error("Error adding product: ", error);
-        // O erro é relançado para ser tratado no componente do formulário.
         throw error;
       }
     },
@@ -338,7 +341,6 @@ export default function Home() {
       try {
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, values);
-        // O estado será atualizado via onSnapshot
       } catch (error) {
         console.error("Error updating product: ", error);
         toast({
@@ -357,7 +359,6 @@ export default function Home() {
       try {
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, { stock: newStock });
-        // O estado será atualizado via onSnapshot
         toast({
           title: "Estoque atualizado!",
         });
@@ -376,7 +377,6 @@ export default function Home() {
     async (values: ClientFormValues): Promise<void> => {
       try {
         await addDoc(collection(db, "clients"), values);
-        // O estado será atualizado via onSnapshot
       } catch (error) {
         console.error("Error adding client: ", error);
         toast({
@@ -403,7 +403,6 @@ export default function Home() {
 
       try {
         await addDoc(collection(db, 'transactions'), newTransaction);
-        // O estado será atualizado via onSnapshot
         if (type === "expense") {
           toast({ title: "Despesa registrada com sucesso!" });
         } else {
@@ -429,10 +428,36 @@ export default function Home() {
     return { totalRevenue, numberOfSales, averageSaleValue };
   }, [salesHistory]);
 
+  const handleCloseDay = useCallback(async (closureData: Omit<DailyClosure, 'date'>) => {
+    const newClosure: DailyClosure = {
+      date: new Date(),
+      ...closureData,
+    }
+
+    try {
+      await addDoc(collection(db, 'dailySummaries'), newClosure);
+      toast({
+        title: "Dia Fechado com Sucesso!",
+        description: "Um novo turno de vendas foi iniciado."
+      });
+      // Set the start of the new shift to now
+      setShiftStart(new Date());
+      // Reset cart
+      setCartItems([]);
+    } catch(error) {
+       console.error("Error closing day: ", error);
+       toast({
+         variant: "destructive",
+         title: "Erro ao fechar o dia",
+         description: "Não foi possível salvar o resumo diário."
+       });
+       throw error;
+    }
+  }, [toast]);
+
   if (!isClient) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        {/* Renderiza um spinner ou uma página em branco durante o redirecionamento */}
       </div>
     );
   }
@@ -513,6 +538,7 @@ export default function Home() {
               expenses={expenses}
               cashEntries={cashEntries}
               onAddTransaction={handleAddTransaction}
+              onCloseDay={handleCloseDay}
             />
           </TabsContent>
         </Tabs>

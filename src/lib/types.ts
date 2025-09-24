@@ -54,3 +54,14 @@ export type Client = {
   cpf: string;
   phone: string;
 };
+
+export type DailyClosure = {
+  date: Date;
+  totalRevenue: number;
+  totalByPaymentMethod: Record<string, number>;
+  totalExpenses: number;
+  totalCashEntries: number;
+  expectedInCash: number;
+  countedAmount: number;
+  difference: number;
+};
