@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import type {
   Product,
   CartItem,
@@ -26,14 +27,30 @@ import {
   ShoppingCart,
   ClipboardList,
 } from "lucide-react";
+import { isAuthenticated, clearAuthentication } from "@/lib/auth";
 
 export default function Home() {
+  const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    setIsClient(true);
+    if (!isAuthenticated()) {
+      router.replace("/login");
+    }
+  }, [router]);
+
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<CashTransaction[]>([]);
   const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
   const { toast } = useToast();
+
+  const handleLogout = () => {
+    clearAuthentication();
+    router.replace("/login");
+  };
 
   const handleAddProductToCart = useCallback(
     (product: Product) => {
@@ -231,9 +248,17 @@ export default function Home() {
     return { totalRevenue, numberOfSales, averageSaleValue };
   }, [salesHistory]);
 
+  if (!isClient || !isAuthenticated()) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        {/* Render a spinner or a blank page while redirecting */}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header />
+      <Header onLogout={handleLogout} />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs defaultValue="caixa">
           <TabsList className="grid w-full grid-cols-4 mb-6">
