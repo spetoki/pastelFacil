@@ -1,12 +1,43 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/icons";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import type { Page } from "@/app/page";
+import {
+  DollarSign,
+  Package,
+  ShoppingCart,
+  ClipboardList,
+  Users,
+  FileText,
+  Settings,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
 
 type HeaderProps = {
   onLogout: () => void;
+  activePage: Page;
+  onPageChange: (page: Page) => void;
 };
 
-export function Header({ onLogout }: HeaderProps) {
+const navItems: { page: Page; label: string; icon: React.ElementType }[] = [
+  { page: "caixa", label: "Caixa", icon: ShoppingCart },
+  { page: "estoque", label: "Estoque", icon: Package },
+  { page: "clientes", label: "Clientes", icon: Users },
+  { page: "vendas", label: "Vendas", icon: DollarSign },
+  { page: "fechamento", label: "Fechamento", icon: ClipboardList },
+  { page: "relatorios", label: "Relatórios", icon: FileText },
+  { page: "configuracoes", label: "Configurações", icon: Settings },
+];
+
+export function Header({ onLogout, activePage, onPageChange }: HeaderProps) {
   return (
     <header className="bg-card border-b sticky top-0 z-10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,10 +48,29 @@ export function Header({ onLogout }: HeaderProps) {
               Pastelaria Fácil
             </h1>
           </div>
-          <Button variant="ghost" onClick={onLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
+          <div className="flex items-center gap-4">
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                    <Menu className="mr-2 h-4 w-4" />
+                    Menu
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {navItems.map(({ page, label, icon: Icon }) => (
+                  <DropdownMenuItem key={page} onSelect={() => onPageChange(page)} className={cn(activePage === page && "bg-accent")}>
+                    <Icon className="mr-2 h-4 w-4" />
+                    <span>{label}</span>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                 <DropdownMenuItem onSelect={onLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </header>

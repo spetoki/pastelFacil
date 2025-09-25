@@ -35,25 +35,25 @@ import { SalesCart } from "@/components/sales-cart";
 import { AiSuggestions } from "@/components/ai-suggestions";
 import { useToast } from "@/hooks/use-toast";
 import type { ProductFormValues } from "@/components/add-product-form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Inventory } from "@/components/inventory";
 import { SalesHistory as SalesHistoryComponent } from "@/components/sales-history";
 import { DailyClosuresHistory } from "@/components/daily-closures-history";
 import { CashClosing } from "@/components/cash-closing";
-import {
-  DollarSign,
-  Package,
-  ShoppingCart,
-  ClipboardList,
-  Users,
-  FileText,
-  Settings,
-} from "lucide-react";
 import { isAuthenticated, clearAuthentication } from "@/lib/auth";
 import { ClientList } from "@/components/client-list";
 import type { ClientFormValues } from "@/components/add-client-form";
 import { Settings as SettingsComponent } from "@/components/settings";
 import { ReportPinDialog } from "@/components/report-pin-dialog";
+
+export type Page =
+  | "caixa"
+  | "estoque"
+  | "clientes"
+  | "vendas"
+  | "fechamento"
+  | "relatorios"
+  | "configuracoes";
+
 
 const getStartOfToday = () => {
     const today = new Date();
@@ -66,6 +66,7 @@ const STATUS_DOC_ID = "main";
 export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
+  const [activePage, setActivePage] = useState<Page>("caixa");
 
   const [products, setProducts] = useState<Product[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -669,110 +670,92 @@ export default function Home() {
     setIsReportsUnlocked(true);
   };
 
+  const renderContent = () => {
+    switch (activePage) {
+      case "caixa":
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start">
+            <div className="lg:col-span-2 space-y-6">
+              <DailySummary summary={dailySummary} />
+              <ProductList
+                products={products}
+                onAddProductToCart={handleAddProductToCart}
+                isLoading={isLoading}
+                showAddProductButton={false}
+              />
+            </div>
+            <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6">
+              <SalesCart
+                items={cartItems}
+                clients={clients}
+                onUpdateQuantity={handleUpdateQuantity}
+                onRemoveItem={handleRemoveItem}
+                onFinalizeSale={handleFinalizeSale}
+                onAddByBarcode={handleAddByBarcode}
+              />
+              <AiSuggestions cartItems={cartItems} />
+            </div>
+          </div>
+        );
+      case "estoque":
+        return (
+          <Inventory
+            products={products}
+            onAddProduct={handleAddProduct}
+            onUpdateProduct={handleUpdateProduct}
+            onUpdateStock={handleUpdateStock}
+            onDeleteProduct={handleDeleteProduct}
+            isLoading={isLoading}
+          />
+        );
+      case "clientes":
+        return (
+          <ClientList
+            clients={clients}
+            onAddClient={handleAddClient}
+            onPayDebt={handlePayDebt}
+            isLoading={isLoading}
+          />
+        );
+      case "vendas":
+        return <SalesHistoryComponent sales={allSalesForHistory} />;
+      case "fechamento":
+        return (
+          <CashClosing
+            sales={salesHistory}
+            fiadoSales={fiadoSales}
+            expenses={expenses}
+            cashEntries={cashEntries}
+            debtPayments={debtPayments}
+            clients={clients}
+            onAddTransaction={handleAddTransaction}
+            onCloseDay={handleCloseDay}
+            onPayDebt={handlePayDebt}
+          />
+        );
+      case "relatorios":
+        return isReportsUnlocked ? (
+          <DailyClosuresHistory closures={dailyClosures} />
+        ) : (
+          <ReportPinDialog onUnlock={handleUnlockReports} />
+        );
+      case "configuracoes":
+        return <SettingsComponent />;
+      default:
+        return null;
+    }
+  };
+
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header onLogout={handleLogout} />
+       <Header
+        onLogout={handleLogout}
+        activePage={activePage}
+        onPageChange={setActivePage}
+      />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Tabs defaultValue="caixa">
-          <TabsList className="grid w-full grid-cols-7 mb-6">
-            <TabsTrigger value="caixa">
-              <ShoppingCart className="mr-2" />
-              Caixa
-            </TabsTrigger>
-            <TabsTrigger value="estoque">
-              <Package className="mr-2" />
-              Estoque
-            </TabsTrigger>
-            <TabsTrigger value="clientes">
-              <Users className="mr-2" />
-              Clientes
-            </TabsTrigger>
-            <TabsTrigger value="vendas">
-              <DollarSign className="mr-2" />
-              Vendas
-            </TabsTrigger>
-            <TabsTrigger value="fechamento">
-              <ClipboardList className="mr-2" />
-              Fechamento
-            </TabsTrigger>
-             <TabsTrigger value="relatorios">
-              <FileText className="mr-2" />
-              Relatórios
-            </TabsTrigger>
-            <TabsTrigger value="configuracoes">
-              <Settings className="mr-2" />
-              Configurações
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="caixa">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start">
-              <div className="lg:col-span-2 space-y-6">
-                <DailySummary summary={dailySummary} />
-                <ProductList
-                  products={products}
-                  onAddProductToCart={handleAddProductToCart}
-                  isLoading={isLoading}
-                  showAddProductButton={false}
-                />
-              </div>
-              <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6">
-                <SalesCart
-                  items={cartItems}
-                  clients={clients}
-                  onUpdateQuantity={handleUpdateQuantity}
-                  onRemoveItem={handleRemoveItem}
-                  onFinalizeSale={handleFinalizeSale}
-                  onAddByBarcode={handleAddByBarcode}
-                />
-                <AiSuggestions cartItems={cartItems} />
-              </div>
-            </div>
-          </TabsContent>
-          <TabsContent value="estoque">
-            <Inventory
-              products={products}
-              onAddProduct={handleAddProduct}
-              onUpdateProduct={handleUpdateProduct}
-              onUpdateStock={handleUpdateStock}
-              onDeleteProduct={handleDeleteProduct}
-              isLoading={isLoading}
-            />
-          </TabsContent>
-           <TabsContent value="clientes">
-            <ClientList
-              clients={clients}
-              onAddClient={handleAddClient}
-              onPayDebt={handlePayDebt}
-              isLoading={isLoading}
-            />
-          </TabsContent>
-          <TabsContent value="vendas">
-            <SalesHistoryComponent sales={allSalesForHistory} />
-          </TabsContent>
-          <TabsContent value="fechamento">
-            <CashClosing
-              sales={salesHistory}
-              fiadoSales={fiadoSales}
-              expenses={expenses}
-              cashEntries={cashEntries}
-              debtPayments={debtPayments}
-              clients={clients}
-              onAddTransaction={handleAddTransaction}
-              onCloseDay={handleCloseDay}
-              onPayDebt={handlePayDebt}
-            />
-          </TabsContent>
-          <TabsContent value="relatorios">
-            {isReportsUnlocked ? (
-                <DailyClosuresHistory closures={dailyClosures} />
-            ) : (
-                <ReportPinDialog onUnlock={handleUnlockReports} />
-            )}
-            </TabsContent>
-          <TabsContent value="configuracoes">
-            <SettingsComponent />
-          </TabsContent>
-        </Tabs>
+        {renderContent()}
       </main>
     </div>
   );
