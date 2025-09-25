@@ -28,7 +28,6 @@ type HeaderProps = {
 };
 
 const navItems: { page: Page; label: string; icon: React.ElementType }[] = [
-  { page: "caixa", label: "Caixa", icon: ShoppingCart },
   { page: "estoque", label: "Estoque", icon: Package },
   { page: "clientes", label: "Clientes", icon: Users },
   { page: "vendas", label: "Vendas", icon: DollarSign },
@@ -43,10 +42,12 @@ export function Header({ onLogout, activePage, onPageChange }: HeaderProps) {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <Logo className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold font-headline text-foreground">
-              Pastelaria Fácil
-            </h1>
+            <Button variant="ghost" className="px-2" onClick={() => onPageChange('caixa')}>
+              <Logo className="h-8 w-8 text-primary" />
+              <h1 className="text-2xl font-bold font-headline text-foreground ml-2">
+                Pastelaria Fácil
+              </h1>
+            </Button>
           </div>
           <div className="flex items-center gap-4">
              <DropdownMenu>
