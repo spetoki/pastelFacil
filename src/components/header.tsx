@@ -28,6 +28,7 @@ type HeaderProps = {
 };
 
 const navItems: { page: Page; label: string; icon: React.ElementType }[] = [
+  { page: "caixa", label: "Caixa", icon: ShoppingCart },
   { page: "estoque", label: "Estoque", icon: Package },
   { page: "clientes", label: "Clientes", icon: Users },
   { page: "vendas", label: "Vendas", icon: DollarSign },
