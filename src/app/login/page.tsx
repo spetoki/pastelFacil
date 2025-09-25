@@ -26,7 +26,7 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Se o usuário já estiver autenticado, redireciona para a home
+    // Se o usuário já estiver autenticado na sessão, redireciona para a home
     if (isAuthenticated()) {
       router.replace("/");
     }
@@ -106,3 +106,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

@@ -45,7 +45,9 @@ export function Settings() {
       setTheme(storedTheme);
       document.documentElement.classList.toggle("dark", storedTheme === "dark");
     } else {
-      document.documentElement.classList.add("dark");
+        const isSystemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setTheme(isSystemDark ? "dark" : "light");
+        document.documentElement.classList.toggle("dark", isSystemDark);
     }
   }, []);
 
@@ -75,6 +77,7 @@ export function Settings() {
             title: "PIN Incorreto",
             description: "Você não tem permissão para realizar esta ação."
         });
+        setPin("");
         return;
     }
     
@@ -106,6 +109,7 @@ export function Settings() {
             title: "PIN Incorreto",
             description: "Você não tem permissão para realizar esta ação."
         });
+        setPin("");
         return;
     }
     
@@ -172,7 +176,7 @@ export function Settings() {
               <CardDescription>Ações nesta seção são permanentes e não podem ser desfeitas.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col sm:flex-row gap-4">
-            <AlertDialog>
+            <AlertDialog onOpenChange={() => setPin("")}>
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive">Resetar Aplicativo</Button>
                 </AlertDialogTrigger>
@@ -198,7 +202,7 @@ export function Settings() {
                         />
                      </div>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setPin("")}>Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction 
                             onClick={handleResetApp} 
                             disabled={pin !== "2209" || isResetting}
@@ -208,7 +212,7 @@ export function Settings() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            <AlertDialog>
+            <AlertDialog onOpenChange={() => setPin("")}>
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive" className="bg-orange-600 hover:bg-orange-700">Zerar Dados de Fiado</Button>
                 </AlertDialogTrigger>
@@ -233,7 +237,7 @@ export function Settings() {
                         />
                      </div>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setPin("")}>Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction 
                             onClick={handleResetFiado} 
                             disabled={pin !== "2209" || isResettingFiado}
@@ -249,3 +253,5 @@ export function Settings() {
     </div>
   );
 }
+
+    

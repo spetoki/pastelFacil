@@ -1,36 +1,19 @@
 "use client";
 
-const AUTH_KEY = "pastelaria_auth_token";
+// Este é um armazenamento de sessão simples, não um sistema de autenticação real.
+// Ele mantém o usuário "logado" apenas durante a sessão do navegador (até que a aba seja fechada).
+let isAuthenticatedInSession = false;
 
 export const setAuthentication = (): void => {
-  if (typeof window !== "undefined") {
-    try {
-      // O valor do token pode ser qualquer coisa, apenas sua presença importa
-      localStorage.setItem(AUTH_KEY, "true");
-    } catch (error) {
-      console.error("Failed to set authentication in localStorage", error);
-    }
-  }
+  isAuthenticatedInSession = true;
 };
 
 export const isAuthenticated = (): boolean => {
-  if (typeof window !== "undefined") {
-    try {
-      return localStorage.getItem(AUTH_KEY) === "true";
-    } catch (error) {
-      console.error("Failed to check authentication from localStorage", error);
-      return false;
-    }
-  }
-  return false;
+  return isAuthenticatedInSession;
 };
 
 export const clearAuthentication = (): void => {
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.removeItem(AUTH_KEY);
-    } catch (error) {
-      console.error("Failed to clear authentication from localStorage", error);
-    }
-  }
+  isAuthenticatedInSession = false;
 };
+
+    

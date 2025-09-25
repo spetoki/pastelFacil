@@ -9,11 +9,12 @@ import {
   doc,
   writeBatch,
   query,
-  orderBy,
   where,
   Timestamp,
   onSnapshot,
   deleteDoc,
+  getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type {
@@ -60,7 +61,7 @@ const getStartOfToday = () => {
     return today;
 };
 
-const SHIFT_START_KEY = 'shiftStartTimestamp';
+const STATUS_DOC_ID = "main";
 
 export default function Home() {
   const router = useRouter();
@@ -83,21 +84,38 @@ export default function Home() {
   useEffect(() => {
     if (!isAuthenticated()) {
       router.replace("/login");
-      return; 
+      return;
     }
-
     setIsClient(true);
-    
-    // Initialize shiftStart from localStorage or default to today
-    const savedShiftStart = localStorage.getItem(SHIFT_START_KEY);
-    if (savedShiftStart) {
-        setShiftStart(new Date(JSON.parse(savedShiftStart)));
-    } else {
-        const startOfShift = getStartOfToday();
-        setShiftStart(startOfShift);
-        localStorage.setItem(SHIFT_START_KEY, JSON.stringify(startOfShift.toISOString()));
-    }
   }, [router]);
+
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    setIsLoading(true);
+    
+    // Fetch and listen to shift start time from Firestore
+    const statusRef = doc(db, "appStatus", STATUS_DOC_ID);
+    const unsubscribeStatus = onSnapshot(statusRef, async (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            setShiftStart((data.currentShiftStart as Timestamp).toDate());
+        } else {
+            // Document doesn't exist, create it with the start of today
+            const startOfShift = getStartOfToday();
+            await setDoc(statusRef, { currentShiftStart: Timestamp.fromDate(startOfShift) });
+            setShiftStart(startOfShift);
+        }
+    }, (error) => {
+        console.error("Error fetching app status: ", error);
+        toast({ variant: "destructive", title: "Erro ao sincronizar turno" });
+    });
+
+    return () => {
+        unsubscribeStatus();
+    }
+  }, [isClient, toast]);
 
 
   useEffect(() => {
@@ -108,10 +126,10 @@ export default function Home() {
     const startOfTodayTimestamp = Timestamp.fromDate(getStartOfToday());
     const shiftStartTimestamp = Timestamp.fromDate(shiftStart);
 
-    const productsQuery = query(collection(db, 'products'), orderBy("name"));
+    const productsQuery = query(collection(db, 'products'), ("name"));
     const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
       const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-      setProducts(productsList);
+      setProducts(productsList.sort((a, b) => a.name.localeCompare(b.name)));
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching products: ", error);
@@ -119,10 +137,10 @@ export default function Home() {
       setIsLoading(false);
     });
 
-    const clientsQuery = query(collection(db, 'clients'), orderBy("name"));
+    const clientsQuery = query(collection(db, 'clients'), ("name"));
     const unsubscribeClients = onSnapshot(clientsQuery, (snapshot) => {
       const clientsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
-      setClients(clientsList);
+      setClients(clientsList.sort((a,b) => a.name.localeCompare(b.name)));
     }, (error) => {
       console.error("Error fetching clients: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar clientes" });
@@ -217,7 +235,7 @@ export default function Home() {
        toast({ variant: "destructive", title: "Erro ao buscar pagamentos de dívidas" });
     });
 
-    const dailyClosuresQuery = query(collection(db, "dailySummaries"), orderBy("date", "desc"));
+    const dailyClosuresQuery = query(collection(db, "dailySummaries"));
     const unsubscribeDailyClosures = onSnapshot(dailyClosuresQuery, (snapshot) => {
       const closuresList = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -227,7 +245,7 @@ export default function Home() {
           date: (data.date as Timestamp).toDate(),
         } as DailyClosure;
       });
-      setDailyClosures(closuresList);
+      setDailyClosures(closuresList.sort((a,b) => b.date.getTime() - a.date.getTime()));
     }, (error) => {
       console.error("Error fetching daily closures: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar relatórios" });
@@ -616,24 +634,29 @@ export default function Home() {
     }
 
     try {
+      // 1. Save the daily summary report
       await addDoc(collection(db, 'dailySummaries'), newClosure);
+      
+      // 2. Start a new shift by updating the global shift start time
+      const statusRef = doc(db, "appStatus", STATUS_DOC_ID);
+      await updateDoc(statusRef, {
+          currentShiftStart: Timestamp.fromDate(new Date())
+      });
+      
+      // 3. Reset local state
+      setCartItems([]);
+      
       toast({
         title: "Dia Fechado com Sucesso!",
-        description: "Um novo turno de vendas foi iniciado."
+        description: "Um novo turno de vendas foi iniciado em todos os dispositivos."
       });
-      // Set the start of the new shift to now and persist it
-      const newShiftStart = new Date();
-      setShiftStart(newShiftStart);
-      localStorage.setItem(SHIFT_START_KEY, JSON.stringify(newShiftStart.toISOString()));
-      
-      // Reset cart
-      setCartItems([]);
+
     } catch(error) {
        console.error("Error closing day: ", error);
        toast({
          variant: "destructive",
          title: "Erro ao fechar o dia",
-         description: "Não foi possível salvar o resumo diário."
+         description: "Não foi possível salvar o resumo diário e iniciar um novo turno."
        });
        throw error;
     }
@@ -642,6 +665,7 @@ export default function Home() {
   if (!isClient || !shiftStart) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
+        {/* Placeholder for loading state or spinner */}
       </div>
     );
   }

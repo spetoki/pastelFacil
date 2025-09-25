@@ -6,6 +6,9 @@ import {
   writeBatch,
   query,
   where,
+  doc,
+  setDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -16,6 +19,7 @@ export const deleteAllData = async (): Promise<void> => {
     "sales",
     "transactions",
     "dailySummaries",
+    "appStatus" // Also delete app status
   ];
   
   const batch = writeBatch(db);
@@ -27,6 +31,12 @@ export const deleteAllData = async (): Promise<void> => {
       batch.delete(doc.ref);
     });
   }
+
+  // After deleting, create the initial appStatus document
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const statusRef = doc(db, "appStatus", "main");
+  batch.set(statusRef, { currentShiftStart: Timestamp.fromDate(startOfToday) });
 
   await batch.commit();
 };
@@ -57,3 +67,5 @@ export const resetFiadoData = async (): Promise<void> => {
 
   await batch.commit();
 };
+
+    
