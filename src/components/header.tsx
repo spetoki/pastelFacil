@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/icons";
 import { LogOut, Menu } from "lucide-react";
@@ -20,7 +22,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-
 type HeaderProps = {
   onLogout: () => void;
   activePage: Page;
@@ -28,7 +29,6 @@ type HeaderProps = {
 };
 
 const navItems: { page: Page; label: string; icon: React.ElementType }[] = [
-  { page: "caixa", label: "Caixa", icon: ShoppingCart },
   { page: "estoque", label: "Estoque", icon: Package },
   { page: "clientes", label: "Clientes", icon: Users },
   { page: "vendas", label: "Vendas", icon: DollarSign },
@@ -42,12 +42,19 @@ export function Header({ onLogout, activePage, onPageChange }: HeaderProps) {
     <header className="bg-card border-b sticky top-0 z-10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <Button variant="ghost" className="px-2" onClick={() => onPageChange('caixa')}>
               <Logo className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold font-headline text-foreground ml-2">
+              <h1 className="text-2xl font-bold font-headline text-foreground ml-2 hidden sm:block">
                 Pastelaria Fácil
               </h1>
+            </Button>
+             <Button 
+                variant={activePage === 'caixa' ? "secondary" : "ghost"}
+                onClick={() => onPageChange('caixa')}
+              >
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                Caixa
             </Button>
           </div>
           <div className="flex items-center gap-4">
@@ -55,7 +62,7 @@ export function Header({ onLogout, activePage, onPageChange }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                     <Menu className="mr-2 h-4 w-4" />
-                    Menu
+                    <span className="hidden md:block">Menu</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
