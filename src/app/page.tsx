@@ -126,7 +126,7 @@ export default function Home() {
     const startOfTodayTimestamp = Timestamp.fromDate(getStartOfToday());
     const shiftStartTimestamp = Timestamp.fromDate(shiftStart);
 
-    const productsQuery = query(collection(db, 'products'), ("name"));
+    const productsQuery = query(collection(db, 'products'));
     const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
       const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(productsList.sort((a, b) => a.name.localeCompare(b.name)));
@@ -137,7 +137,7 @@ export default function Home() {
       setIsLoading(false);
     });
 
-    const clientsQuery = query(collection(db, 'clients'), ("name"));
+    const clientsQuery = query(collection(db, 'clients'));
     const unsubscribeClients = onSnapshot(clientsQuery, (snapshot) => {
       const clientsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
       setClients(clientsList.sort((a,b) => a.name.localeCompare(b.name)));
@@ -190,12 +190,14 @@ export default function Home() {
         toast({ variant: "destructive", title: "Erro ao buscar vendas fiado" });
     });
 
-
-    // Query shift-specific transactions (expenses, cash entries)
-    const shiftTransactionsQuery = query(collection(db, "transactions"), where("date", ">=", shiftStartTimestamp));
-    const unsubscribeShiftTransactions = onSnapshot(shiftTransactionsQuery, (snapshot) => {
+    // Query day-specific transactions (expenses, cash entries, debtPayments)
+    // We fetch all transactions for the day and filter them on the client
+    const dayTransactionsQuery = query(collection(db, "transactions"), where("date", ">=", startOfTodayTimestamp));
+    const unsubscribeDayTransactions = onSnapshot(dayTransactionsQuery, (snapshot) => {
       const expensesList: CashTransaction[] = [];
       const cashEntriesList: CashTransaction[] = [];
+      const debtPaymentsList: CashTransaction[] = [];
+
       snapshot.forEach(doc => {
         const data = doc.data();
         const transaction = {
@@ -203,37 +205,32 @@ export default function Home() {
           ...data,
           date: (data.date as Timestamp).toDate(),
         } as CashTransaction;
-        if (data.type === 'expense') {
-          expensesList.push(transaction);
-        } else if (data.type === 'cashEntry') {
-          cashEntriesList.push(transaction);
+
+        // Filter based on shift start for expenses and cash entries
+        if (transaction.date >= shiftStart) {
+            if (data.type === 'expense') {
+              expensesList.push(transaction);
+            } else if (data.type === 'cashEntry') {
+              cashEntriesList.push(transaction);
+            }
         }
+        
+        // Debt payments are for the whole day
+        if (data.type === 'debtPayment') {
+            debtPaymentsList.push(transaction);
+        }
+
       });
+      
       setExpenses(expensesList.sort((a,b) => b.date.getTime() - a.date.getTime()));
       setCashEntries(cashEntriesList.sort((a,b) => b.date.getTime() - a.date.getTime()));
+      setDebtPayments(debtPaymentsList.sort((a,b) => b.date.getTime() - a.date.getTime()));
+
     }, (error) => {
-      console.error("Error fetching shift transactions: ", error);
-      toast({ variant: "destructive", title: "Erro ao buscar transações do turno" });
+      console.error("Error fetching day transactions: ", error);
+      toast({ variant: "destructive", title: "Erro ao buscar transações do dia" });
     });
 
-    // Query day-specific debt payments
-    const debtPaymentsQuery = query(collection(db, "transactions"), where("date", ">=", startOfTodayTimestamp), where("type", "==", "debtPayment"));
-    const unsubscribeDebtPayments = onSnapshot(debtPaymentsQuery, (snapshot) => {
-        const paymentsList: CashTransaction[] = [];
-         snapshot.forEach(doc => {
-            const data = doc.data();
-            paymentsList.push({
-                id: doc.id,
-                ...data,
-                date: (data.date as Timestamp).toDate(),
-            } as CashTransaction);
-        });
-        // Sort in client-side
-        setDebtPayments(paymentsList.sort((a,b) => b.date.getTime() - a.date.getTime()));
-    }, (error) => {
-       console.error("Error fetching debt payments: ", error);
-       toast({ variant: "destructive", title: "Erro ao buscar pagamentos de dívidas" });
-    });
 
     const dailyClosuresQuery = query(collection(db, "dailySummaries"));
     const unsubscribeDailyClosures = onSnapshot(dailyClosuresQuery, (snapshot) => {
@@ -256,8 +253,7 @@ export default function Home() {
       unsubscribeClients();
       unsubscribeSales();
       unsubscribeFiadoSales();
-      unsubscribeShiftTransactions();
-      unsubscribeDebtPayments();
+      unsubscribeDayTransactions();
       unsubscribeDailyClosures();
     };
   }, [isClient, toast, shiftStart]);
@@ -781,5 +777,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
