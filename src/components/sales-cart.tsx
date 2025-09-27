@@ -191,7 +191,21 @@ export function SalesCart({
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
-                    <span className="w-6 text-center">{quantity}</span>
+                    <Input
+                      type="number"
+                      className="h-7 w-16 text-center"
+                      value={quantity}
+                      onChange={(e) => {
+                        const newQuantity = Number(e.target.value);
+                        onUpdateQuantity(product.id, newQuantity > 0 ? newQuantity : 1);
+                      }}
+                      onBlur={(e) => {
+                        if (Number(e.target.value) <= 0) {
+                          onUpdateQuantity(product.id, 1);
+                        }
+                      }}
+                      min="1"
+                    />
                     <Button
                       variant="outline"
                       size="icon"
