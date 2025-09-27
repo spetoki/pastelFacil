@@ -138,7 +138,7 @@ export function SalesCart({
         <div className="p-4 border-b">
           <h2 className="text-xl font-headline font-semibold flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
-            Caixa / Venda Atual
+            Retirada Atual
           </h2>
         </div>
 
@@ -165,7 +165,7 @@ export function SalesCart({
           {items.length === 0 ? (
             <div className="text-center text-muted-foreground pt-16">
               <ShoppingCart className="mx-auto h-12 w-12" />
-              <p className="mt-2">O carrinho está vazio</p>
+              <p className="mt-2">A lista de retirada está vazia</p>
             </div>
           ) : (
             items.map(({ product, quantity }) => {
@@ -225,12 +225,12 @@ export function SalesCart({
             <Dialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="w-full h-12 text-base bg-accent hover:bg-accent/90 text-accent-foreground">
-                  Finalizar Venda
+                  Finalizar Retirada
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Finalizar Venda</DialogTitle>
+                  <DialogTitle>Finalizar Retirada</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <p className="text-lg font-bold text-center">{formatCurrency(total)}</p>
@@ -304,7 +304,7 @@ export function SalesCart({
                     </Button>
                   </DialogClose>
                   <Button onClick={handlePrepareSale}>
-                    Confirmar Venda
+                    Confirmar Retirada
                   </Button>
                 </DialogFooter>
               </DialogContent>

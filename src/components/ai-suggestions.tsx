@@ -57,7 +57,7 @@ export function AiSuggestions({ cartItems }: AiSuggestionsProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-accent-foreground/80">
           <Lightbulb className="h-5 w-5" />
-          <span>Sugestões</span>
+          <span>Sugestões Inteligentes</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -83,7 +83,7 @@ export function AiSuggestions({ cartItems }: AiSuggestionsProps) {
         )}
         {!isLoading && !error && !hasSuggestions && cartItems.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            Adicione itens ao carrinho para ver sugestões.
+            Adicione itens à lista para ver sugestões.
           </p>
         )}
         {!isLoading && hasSuggestions && (

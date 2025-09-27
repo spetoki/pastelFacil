@@ -17,7 +17,7 @@ export function DailySummary({ summary }: DailySummaryProps) {
   return (
     <div>
       <h2 className="text-xl font-headline font-semibold mb-4 text-foreground">
-        Resumo de Vendas (Hoje)
+        Resumo de Vendas (Turno Atual)
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -33,7 +33,7 @@ export function DailySummary({ summary }: DailySummaryProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas</CardTitle>
+            <CardTitle className="text-sm font-medium">Vendas/Retiradas</CardTitle>
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -42,7 +42,7 @@ export function DailySummary({ summary }: DailySummaryProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Margem de gasto por cliente</CardTitle>
+            <CardTitle className="text-sm font-medium">Gasto médio por cliente</CardTitle>
             <Hash className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

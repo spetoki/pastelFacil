@@ -59,7 +59,7 @@ export function AddProductForm({
     }
   }, [initialData, form]);
 
-  const buttonText = initialData ? "Salvar Alterações" : "Salvar Produto";
+  const buttonText = initialData ? "Salvar Alterações" : "Salvar Item";
   const submittingButtonText = initialData ? "Salvando..." : "Adicionando...";
 
   return (
@@ -70,9 +70,9 @@ export function AddProductForm({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nome do Produto</FormLabel>
+              <FormLabel>Nome do Item (ex: Muda, Fertilizante)</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Pastel de Vento" {...field} />
+                <Input placeholder="Ex: Muda de Cacau CCN-51" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -85,7 +85,7 @@ export function AddProductForm({
             <FormItem>
               <FormLabel>Descrição (opcional)</FormLabel>
               <FormControl>
-                <Textarea placeholder="Uma breve descrição do produto" {...field} />
+                <Textarea placeholder="Uma breve descrição do item" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -124,7 +124,7 @@ export function AddProductForm({
           name="barcode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Código de Barras</FormLabel>
+              <FormLabel>Código de Barras / SKU</FormLabel>
               <FormControl>
                 <Input placeholder="Ex: 7890123" {...field} />
               </FormControl>

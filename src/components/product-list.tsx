@@ -52,7 +52,7 @@ export function ProductList({
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-headline font-semibold text-foreground">
-          Produtos
+          Itens de Estoque
         </h2>
         {showAddProductButton && onAddProduct && (
           <AddProductDialog onAddProduct={onAddProduct} />
@@ -61,7 +61,7 @@ export function ProductList({
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar produto ou código..."
+          placeholder="Buscar item ou código..."
           className="pl-10"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -115,7 +115,7 @@ export function ProductList({
                   </p>
                   <Button
                     size="icon"
-                    aria-label={`Adicionar ${product.name} ao carrinho`}
+                    aria-label={`Adicionar ${product.name} à lista`}
                     onClick={() => onAddProductToCart(product)}
                     disabled={outOfStock}
                   >
@@ -127,7 +127,7 @@ export function ProductList({
           })
         ) : (
           <div className="col-span-full text-center py-10">
-            <p className="text-muted-foreground">Nenhum produto encontrado.</p>
+            <p className="text-muted-foreground">Nenhum item encontrado.</p>
           </div>
         )}
       </div>

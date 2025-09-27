@@ -3,8 +3,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Pastelaria Fácil",
-  description: "Gerencie sua pastelaria com facilidade.",
+  title: "Cacau Forte",
+  description: "Gerencie seu estoque de mudas de cacau e clientes.",
 };
 
 export default function RootLayout({

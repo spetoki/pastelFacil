@@ -39,11 +39,8 @@ const formatDate = (date: Date) => {
 const ReceiptContent = ({ sale }: { sale: Omit<Sale, "id"> }) => (
   <div className="font-mono text-xs text-black bg-white p-2">
     <div className="text-center space-y-1 mb-2">
-      <h3 className="font-bold text-sm">Pastelaria Fácil</h3>
-      <p>Rua da Pastelaria, 123 - Centro</p>
-      <p>CNPJ: 12.345.678/0001-99</p>
-      <p>--------------------------------</p>
-      <p className="font-bold">CUPOM FISCAL</p>
+      <h3 className="font-bold text-sm">Cacau Forte</h3>
+      <p>Comprovante de Retirada</p>
       <p>--------------------------------</p>
     </div>
     <div className="mb-2">
@@ -77,7 +74,7 @@ const ReceiptContent = ({ sale }: { sale: Omit<Sale, "id"> }) => (
     <Separator className="my-2 border-dashed border-black" />
     <div className="text-center space-y-1">
       <p>{formatDate(sale.date)}</p>
-      <p>Obrigado e volte sempre!</p>
+      <p>Obrigado!</p>
     </div>
   </div>
 );
@@ -96,7 +93,7 @@ export function SaleReceiptDialog({
     setTimeout(() => {
         const printWindow = window.open('', '', 'height=600,width=400');
         if (printWindow) {
-            printWindow.document.write('<html><head><title>Cupom</title>');
+            printWindow.document.write('<html><head><title>Comprovante</title>');
             // Inclui o CSS do Tailwind para impressão (simplificado)
             printWindow.document.write('<style>body { font-family: monospace; font-size: 10px; } .font-bold { font-weight: bold; } .text-center { text-align: center; } .text-right { text-align: right; } .flex { display: flex; } .justify-between { justify-content: space-between; } .grid { display: grid; } .grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); } .col-span-6 { grid-column: span 6 / span 6; } .col-span-4 { grid-column: span 4 / span 4; } .col-span-2 { grid-column: span 2 / span 2; } .my-2 { margin-top: 0.5rem; margin-bottom: 0.5rem; } .mb-2 { margin-bottom: 0.5rem; } .space-y-1 > * + * { margin-top: 0.25rem; } .border-dashed { border-style: dashed; } .border-black { border-color: #000; } </style>');
             printWindow.document.write('</head><body>');
@@ -125,7 +122,7 @@ export function SaleReceiptDialog({
     <Dialog open={!!sale} onOpenChange={(isOpen) => !isOpen && onCancel()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Comprovante de Venda</DialogTitle>
+          <DialogTitle>Comprovante de Retirada</DialogTitle>
           <DialogDescription>
             Confira o comprovante abaixo. Deseja imprimir?
           </DialogDescription>

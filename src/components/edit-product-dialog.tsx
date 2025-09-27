@@ -37,7 +37,7 @@ export function EditProductDialog({
       await onUpdateProduct(product.id, values);
       toast({
         title: "Sucesso!",
-        description: `Produto "${values.name}" atualizado.`,
+        description: `Item "${values.name}" atualizado.`,
       });
       setOpen(false);
     } catch (error) {
@@ -45,7 +45,7 @@ export function EditProductDialog({
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível atualizar o produto.",
+        description: "Não foi possível atualizar o item.",
       });
     } finally {
       setIsSubmitting(false);
@@ -65,9 +65,9 @@ export function EditProductDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Editar Produto</DialogTitle>
+          <DialogTitle className="font-headline">Editar Item</DialogTitle>
           <DialogDescription>
-            Altere as informações do produto abaixo.
+            Altere as informações do item abaixo.
           </DialogDescription>
         </DialogHeader>
         <AddProductForm

@@ -19,7 +19,7 @@ const SuggestRelatedProductsInputSchema = z.object({
       name: z.string().describe('The name of the product in the cart.'),
       description: z.string().optional().describe('A brief description of the product.'),
     })
-  ).describe('The current items in the customer\'s cart.'),
+  ).describe('The current items in the customer\'s list.'),
 });
 export type SuggestRelatedProductsInput = z.infer<typeof SuggestRelatedProductsInputSchema>;
 
@@ -41,14 +41,14 @@ const suggestRelatedProductsPrompt = ai.definePrompt({
   name: 'suggestRelatedProductsPrompt',
   input: {schema: SuggestRelatedProductsInputSchema},
   output: {schema: SuggestRelatedProductsOutputSchema},
-  prompt: `You are a helpful assistant working in a pastry shop. Based on the items currently in the customer's cart, suggest additional products that the cashier can offer to increase the sale.
+  prompt: `You are a helpful assistant in a cocoa seedling nursery. Based on the items currently in the customer's list, suggest additional items that the attendant can offer.
 
-Here are the current items in the cart:
+Here are the current items in the list:
 {{#each cartItems}}
 - {{name}} {{#if description}} ({{description}}){{/if}}
 {{/each}}
 
-Suggest related products that would complement the customer's current selection. Provide a brief reason for each suggestion.
+Suggest related items that would complement the customer's current selection. For example, if they are getting a certain type of seedling, you could suggest a specific fertilizer or soil amendment. Provide a brief reason for each suggestion.
 
 Format your response as a JSON object with a 'suggestions' array. Each object in the array should have a 'name' and a 'reason' field.
 `,

@@ -39,7 +39,7 @@ export function SalesHistory({ sales }: SalesHistoryProps) {
   if (sales.length === 0) {
     return (
       <div className="text-center py-10">
-        <p className="text-muted-foreground">Nenhuma venda registrada hoje.</p>
+        <p className="text-muted-foreground">Nenhuma venda ou retirada registrada hoje.</p>
       </div>
     );
   }
@@ -64,7 +64,7 @@ export function SalesHistory({ sales }: SalesHistoryProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Produto</TableHead>
+                  <TableHead>Item</TableHead>
                   <TableHead className="text-center">Qtd.</TableHead>
                   <TableHead className="text-right">Subtotal</TableHead>
                 </TableRow>

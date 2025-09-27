@@ -72,7 +72,7 @@ function DeleteProductDialog({
       <AlertDialogTrigger asChild>
         <Button size="icon" variant="destructive">
           <Trash className="h-4 w-4" />
-          <span className="sr-only">Excluir Produto</span>
+          <span className="sr-only">Excluir Item</span>
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -80,7 +80,7 @@ function DeleteProductDialog({
           <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
           <AlertDialogDescription>
             Esta ação não pode ser desfeita. Para excluir permanentemente o
-            produto <span className="font-semibold">{product.name}</span>, por
+            item <span className="font-semibold">{product.name}</span>, por
             favor, insira o PIN de proprietário.
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -106,7 +106,7 @@ function DeleteProductDialog({
             className="bg-destructive hover:bg-destructive/90"
             disabled={pin !== CORRECT_PIN}
           >
-            Sim, excluir produto
+            Sim, excluir item
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -134,7 +134,7 @@ export function Inventory({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <Input
-          placeholder="Buscar produto..."
+          placeholder="Buscar item por nome ou código..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -144,8 +144,8 @@ export function Inventory({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Produto</TableHead>
-            <TableHead>Código de Barras</TableHead>
+            <TableHead>Item</TableHead>
+            <TableHead>Código de Barras / SKU</TableHead>
             <TableHead className="text-center">Estoque Atual</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -180,7 +180,7 @@ export function Inventory({
                     >
                       <Button size="icon" variant="outline">
                         <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Editar Produto</span>
+                        <span className="sr-only">Editar Item</span>
                       </Button>
                     </EditProductDialog>
 
@@ -196,7 +196,7 @@ export function Inventory({
           ) : (
             <TableRow>
               <TableCell colSpan={4} className="h-24 text-center">
-                Nenhum produto encontrado.
+                Nenhum item encontrado.
               </TableCell>
             </TableRow>
           )}

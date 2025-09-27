@@ -134,7 +134,7 @@ export default function Home() {
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching products: ", error);
-      toast({ variant: "destructive", title: "Erro ao buscar produtos" });
+      toast({ variant: "destructive", title: "Erro ao buscar itens" });
       setIsLoading(false);
     });
 
@@ -303,7 +303,7 @@ export default function Home() {
       if (!existingItem || existingItem.quantity < product.stock) {
         toast({
           title: `${product.name} adicionado!`,
-          description: "O item foi adicionado ao carrinho.",
+          description: "O item foi adicionado à lista.",
         });
       }
     },
@@ -319,8 +319,8 @@ export default function Home() {
       } else {
         toast({
           variant: "destructive",
-          title: "Produto não encontrado",
-          description: `Nenhum produto com o código de barras "${barcode}".`,
+          title: "Item não encontrado",
+          description: `Nenhum item com o código de barras "${barcode}".`,
         });
         return false;
       }
@@ -404,8 +404,8 @@ export default function Home() {
         console.error("Error: Product in cart is missing an ID.", item.product);
         toast({
           variant: "destructive",
-          title: "Erro no Carrinho",
-          description: `O produto ${item.product.name} está com um problema. Remova-o e adicione novamente.`,
+          title: "Erro na Lista",
+          description: `O item ${item.product.name} está com um problema. Remova-o e adicione novamente.`,
         });
         return;
       }
@@ -424,7 +424,7 @@ export default function Home() {
       setCartItems([]);
   
       toast({
-        title: "Venda Finalizada!",
+        title: "Retirada Finalizada!",
         description: `Total de ${new Intl.NumberFormat("pt-BR", {
           style: "currency",
           currency: "BRL",
@@ -434,8 +434,8 @@ export default function Home() {
       console.error("Error finalizing sale: ", error);
       toast({
         variant: "destructive",
-        title: "Erro ao finalizar venda",
-        description: "Não foi possível salvar a venda ou atualizar o estoque.",
+        title: "Erro ao finalizar retirada",
+        description: "Não foi possível salvar a retirada ou atualizar o estoque.",
       });
     }
   }, [cartItems, toast, clients]);
@@ -461,7 +461,7 @@ export default function Home() {
         console.error("Error updating product: ", error);
         toast({
           variant: "destructive",
-          title: "Erro ao atualizar produto",
+          title: "Erro ao atualizar item",
           description: "Não foi possível salvar as alterações.",
         });
         throw error;
@@ -495,15 +495,15 @@ export default function Home() {
         const productRef = doc(db, "products", productId);
         await deleteDoc(productRef);
         toast({
-          title: "Produto Excluído!",
-          description: "O produto foi removido permanentemente do sistema.",
+          title: "Item Excluído!",
+          description: "O item foi removido permanentemente do sistema.",
         });
       } catch (error) {
         console.error("Error deleting product: ", error);
         toast({
           variant: "destructive",
-          title: "Erro ao excluir produto",
-          description: "Não foi possível remover o produto.",
+          title: "Erro ao excluir item",
+          description: "Não foi possível remover o item.",
         });
         throw error;
       }
@@ -645,7 +645,7 @@ export default function Home() {
       
       toast({
         title: "Dia Fechado com Sucesso!",
-        description: "Um novo turno de vendas foi iniciado em todos os dispositivos."
+        description: "Um novo turno de retiradas foi iniciado em todos os dispositivos."
       });
 
     } catch(error) {

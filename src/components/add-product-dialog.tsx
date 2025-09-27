@@ -29,7 +29,7 @@ export function AddProductDialog({ onAddProduct }: AddProductDialogProps) {
       await onAddProduct(values);
       toast({
         title: "Sucesso!",
-        description: `Produto "${values.name}" adicionado.`,
+        description: `Item "${values.name}" adicionado.`,
       });
       setOpen(false); // Fecha o diálogo em caso de sucesso
     } catch (error) {
@@ -37,7 +37,7 @@ export function AddProductDialog({ onAddProduct }: AddProductDialogProps) {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível adicionar o produto.",
+        description: "Não foi possível adicionar o item.",
       });
     } finally {
       setIsSubmitting(false); // Garante que o estado de submissão seja resetado
@@ -49,12 +49,12 @@ export function AddProductDialog({ onAddProduct }: AddProductDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Adicionar Produto
+          Adicionar Item
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Adicionar Novo Produto</DialogTitle>
+          <DialogTitle className="font-headline">Adicionar Novo Item</DialogTitle>
           <DialogDescription>
             Preencha as informações abaixo para cadastrar um novo item no sistema.
           </DialogDescription>
