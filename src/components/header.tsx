@@ -19,6 +19,7 @@ import {
   Users,
   FileText,
   Settings,
+  FileSignature,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ const navItems: { page: Page; label: string; icon: React.ElementType }[] = [
   { page: "estoque", label: "Estoque", icon: Package },
   { page: "clientes", label: "Clientes", icon: Users },
   { page: "vendas", label: "Vendas", icon: DollarSign },
+  { page: "contratos", label: "Contratos", icon: FileSignature },
   { page: "fechamento", label: "Fechamento", icon: ClipboardList },
   { page: "relatorios", label: "Relatórios", icon: FileText },
   { page: "configuracoes", label: "Configurações", icon: Settings },

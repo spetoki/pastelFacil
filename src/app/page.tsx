@@ -44,12 +44,14 @@ import { ClientList } from "@/components/client-list";
 import type { ClientFormValues } from "@/components/add-client-form";
 import { Settings as SettingsComponent } from "@/components/settings";
 import { ReportPinDialog } from "@/components/report-pin-dialog";
+import { ContractsPage } from "@/components/contracts-page";
 
 export type Page =
   | "caixa"
   | "estoque"
   | "clientes"
   | "vendas"
+  | "contratos"
   | "fechamento"
   | "relatorios"
   | "configuracoes";
@@ -719,6 +721,8 @@ export default function Home() {
         );
       case "vendas":
         return <SalesHistoryComponent sales={allSalesForHistory} />;
+      case "contratos":
+        return <ContractsPage clients={clients} />;
       case "fechamento":
         return (
           <CashClosing
