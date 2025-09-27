@@ -247,7 +247,36 @@ export function ContractsPage({ clients }: ContractsPageProps) {
                 <CardTitle>Dados do Comprador</CardTitle>
               </CardHeader>
               <CardContent>
-                <FormField control={form.control} name="buyerId" render={({ field }) => ( <FormItem> <FormLabel>Selecione o Cliente</FormLabel> <Select onValueChange={(value) => { field.onChange(value); onBuyerChange(value); }} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Selecione um cliente cadastrado" /> </SelectTrigger> </FormControl> <SelectContent> {clients.map(client => ( <SelectItem key={client.id} value={client.id}>{client.name} - {client.cpf}</SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )} />
+                <FormField
+                  control={form.control}
+                  name="buyerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Selecione o Cliente</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            onBuyerChange(value);
+                          }}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um cliente cadastrado" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {clients.map((client) => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.name} - {client.cpf}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 
