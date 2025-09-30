@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Cacau Forte",
+  title: "Viveiro Andurá",
   description: "Gerencie seu estoque de mudas de cacau e clientes.",
 };
 

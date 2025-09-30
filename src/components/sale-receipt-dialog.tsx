@@ -39,7 +39,7 @@ const formatDate = (date: Date) => {
 const ReceiptContent = ({ sale }: { sale: Omit<Sale, "id"> }) => (
   <div className="font-mono text-xs text-black bg-white p-2">
     <div className="text-center space-y-1 mb-2">
-      <h3 className="font-bold text-sm">Cacau Forte</h3>
+      <h3 className="font-bold text-sm">Viveiro Andurá</h3>
       <p>Comprovante de Retirada</p>
       <p>--------------------------------</p>
     </div>

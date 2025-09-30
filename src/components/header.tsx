@@ -48,7 +48,7 @@ export function Header({ onLogout, activePage, onPageChange }: HeaderProps) {
             <Button variant="ghost" className="px-2" onClick={() => onPageChange('caixa')}>
               <Logo className="h-8 w-8 text-primary" />
               <h1 className="text-2xl font-bold font-headline text-foreground ml-2 hidden sm:block">
-                Cacau Forte
+                Viveiro Andurá
               </h1>
             </Button>
              <Button 
