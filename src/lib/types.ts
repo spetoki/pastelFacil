@@ -68,3 +68,8 @@ export type DailyClosure = {
   countedAmount: number;
   difference: number;
 };
+
+export type AppBanner = {
+    base64: string;
+    updatedAt: Date;
+}

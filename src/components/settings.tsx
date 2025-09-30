@@ -27,8 +27,12 @@ import {
 import { Input } from "./ui/input";
 import { deleteAllData } from "@/lib/db-utils";
 import { ImageOff } from "lucide-react";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 type Theme = "light" | "dark";
+const BANNER_DOC_ID = "main-banner";
+const BANNER_COLLECTION_ID = "appConfig";
 
 export function Settings() {
   const { toast } = useToast();
@@ -70,15 +74,22 @@ export function Settings() {
     });
   };
   
-    const handleRestoreBanner = () => {
-        localStorage.removeItem("customBannerImage");
-        toast({
-            title: "Banner Restaurado",
-            description: "O banner padrão foi restaurado. A alteração será visível ao recarregar a página."
-        });
-         setTimeout(() => {
-            window.location.reload();
-        }, 1500);
+    const handleRestoreBanner = async () => {
+        try {
+            const bannerRef = doc(db, BANNER_COLLECTION_ID, BANNER_DOC_ID);
+            await deleteDoc(bannerRef);
+            toast({
+                title: "Banner Restaurado",
+                description: "O banner padrão foi restaurado com sucesso."
+            });
+        } catch (error) {
+            console.error("Error restoring banner:", error);
+            toast({
+                variant: "destructive",
+                title: "Erro ao Restaurar",
+                description: "Não foi possível apagar o banner personalizado."
+            });
+        }
     }
 
   const handleResetApp = async () => {

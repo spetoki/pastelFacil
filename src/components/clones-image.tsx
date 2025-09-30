@@ -5,8 +5,12 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { doc, getDoc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type { AppBanner } from "@/lib/types";
 
-const LOCAL_STORAGE_KEY = "customBannerImage";
+const BANNER_DOC_ID = "main-banner";
+const BANNER_COLLECTION_ID = "appConfig";
 
 export function ClonesImage() {
   const [imageSrc, setImageSrc] = useState("/clones.jpg");
@@ -16,17 +20,25 @@ export function ClonesImage() {
 
   useEffect(() => {
     setIsMounted(true);
-    const savedImage = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedImage) {
-      setImageSrc(savedImage);
-    }
+
+    const bannerRef = doc(db, BANNER_COLLECTION_ID, BANNER_DOC_ID);
+    const unsubscribe = onSnapshot(bannerRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const bannerData = docSnap.data() as AppBanner;
+            setImageSrc(bannerData.base64);
+        } else {
+            setImageSrc("/clones.jpg");
+        }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleEditClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) { // Limite de 2MB
@@ -39,11 +51,12 @@ export function ClonesImage() {
       }
 
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const result = event.target?.result as string;
         try {
-            localStorage.setItem(LOCAL_STORAGE_KEY, result);
-            setImageSrc(result);
+            const bannerRef = doc(db, BANNER_COLLECTION_ID, BANNER_DOC_ID);
+            await setDoc(bannerRef, { base64: result, updatedAt: new Date() });
+
             toast({
               title: "Banner atualizado!",
               description: "A nova imagem foi salva com sucesso.",
@@ -53,7 +66,7 @@ export function ClonesImage() {
             toast({
                 variant: "destructive",
                 title: "Erro ao salvar",
-                description: "Não foi possível salvar a imagem. O armazenamento pode estar cheio."
+                description: "Não foi possível salvar a imagem no banco de dados."
             })
         }
       };
