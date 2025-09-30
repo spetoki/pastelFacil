@@ -73,6 +73,8 @@ export function ContractsPage({ clients }: ContractsPageProps) {
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractSchema),
     defaultValues: {
+      contratanteId: "",
+      contratanteAddress: "",
       contratadoName: "Viveiro Andurá",
       contratadoRepresentante: "SANDRA RITA BARTNIK QUARESMA",
       contratadoRepresentanteId: "680.584 SSP/RO",
@@ -84,6 +86,12 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       dataEntregaFim: "abril de 2026",
       prazoContratoMeses: 15,
       clones: [{name: "", quantity: 0}],
+      valorTotal: 0,
+      valorUnitario: 0,
+      contractDate: "",
+      contractCity: "",
+      testemunha1Name: "",
+      testemunha2Name: "",
     },
   });
 
