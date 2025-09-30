@@ -17,7 +17,8 @@ export const deleteAllData = async (): Promise<void> => {
     "sales",
     "transactions",
     "dailySummaries",
-    "appStatus" // Also delete app status
+    "appStatus",
+    "appConfig"
   ];
   
   const batch = writeBatch(db);

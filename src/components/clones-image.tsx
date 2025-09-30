@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { doc, getDoc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { AppBanner } from "@/lib/types";
 
@@ -20,19 +20,28 @@ export function ClonesImage() {
 
   useEffect(() => {
     setIsMounted(true);
-
     const bannerRef = doc(db, BANNER_COLLECTION_ID, BANNER_DOC_ID);
+    
     const unsubscribe = onSnapshot(bannerRef, (docSnap) => {
         if (docSnap.exists()) {
             const bannerData = docSnap.data() as AppBanner;
             setImageSrc(bannerData.base64);
         } else {
+            // Document does not exist or was deleted, use default
             setImageSrc("/clones.jpg");
         }
+    }, (error) => {
+        console.error("Error fetching banner:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao carregar banner",
+            description: "Não foi possível sincronizar o banner do banco de dados."
+        });
+        setImageSrc("/clones.jpg"); // Fallback to default on error
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   const handleEditClick = () => {
     fileInputRef.current?.click();
@@ -77,7 +86,7 @@ export function ClonesImage() {
   if (!isMounted) {
       return (
         <div className="my-6 flex justify-center">
-            <div className="relative w-[500px] h-[400px] rounded-lg bg-muted animate-pulse" />
+            <div className="relative w-full max-w-[500px] aspect-[5/4] rounded-lg bg-muted animate-pulse" />
         </div>
       );
   }
