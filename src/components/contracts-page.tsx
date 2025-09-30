@@ -48,7 +48,8 @@ const contractSchema = z.object({
   contratanteRg: z.string().optional(),
   contratanteCpf: z.string().optional(),
   contratanteAddress: z.string().optional(),
-  contratanteContato: z.string().optional(),
+  contratanteTelefone: z.string().optional(),
+  contratanteEmail: z.string().email({ message: "Formato de e-mail inválido." }).optional().or(z.literal('')),
   
   // Pessoa Jurídica
   contratanteIsPJ: z.boolean().default(false),
@@ -84,7 +85,7 @@ const contractSchema = z.object({
   contractCity: z.string().min(2, { message: "A cidade é obrigatória." }),
 
   testemunha1Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
-  testemunha2Name: z.string().min(2, { message: "O nome da testemunha é obrigatória." }),
+  testemunha2Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
 }).refine(data => {
     if (data.contratanteIsPJ) {
         return data.contratanteRazaoSocial && data.contratanteCnpj && data.contratanteSedeAddress && data.contratanteRepLegalNome;
@@ -111,7 +112,8 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       contratanteRg: "",
       contratanteCpf: "",
       contratanteAddress: "",
-      contratanteContato: "",
+      contratanteTelefone: "",
+      contratanteEmail: "",
 
       contratanteIsPJ: false,
       contratanteRazaoSocial: "",
@@ -165,7 +167,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
 
     let contratanteHtml = `
       <p>
-        <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto}, ${values.contratanteNacionalidade}, ${values.contratanteEstadoCivil}, ${values.contratanteProfissao}, portador(a) do documento de identidade RG nº ${values.contratanteRg}, inscrito(a) no C.P.F. sob o nº ${values.contratanteCpf}, com endereço declarado: ${values.contratanteAddress}, contato: ${values.contratanteContato};
+        <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto}, ${values.contratanteNacionalidade}, ${values.contratanteEstadoCivil}, ${values.contratanteProfissao}, portador(a) do documento de identidade RG nº ${values.contratanteRg}, inscrito(a) no C.P.F. sob o nº ${values.contratanteCpf}, com endereço declarado: ${values.contratanteAddress}, telefone: ${values.contratanteTelefone || 'não informado'}, e-mail: ${values.contratanteEmail || 'não informado'};
       </p>
     `;
     
@@ -293,7 +295,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       form.setValue("contratanteNomeCompleto", contratante.name);
       form.setValue("contratanteCpf", contratante.cpf);
       form.setValue("contratanteAddress", contratante.address);
-      form.setValue("contratanteContato", contratante.phone);
+      form.setValue("contratanteTelefone", contratante.phone);
       // Also set the values for the PJ fields in case user switches
       form.setValue("contratanteRepLegalNome", contratante.name);
     }
@@ -420,7 +422,10 @@ export function ContractsPage({ clients }: ContractsPageProps) {
                       <FormField control={form.control} name="contratanteCpf" render={({ field }) => ( <FormItem> <FormLabel>CPF</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                     </div>
                      <FormField control={form.control} name="contratanteAddress" render={({ field }) => ( <FormItem> <FormLabel>Endereço Completo</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                     <FormField control={form.control} name="contratanteContato" render={({ field }) => ( <FormItem> <FormLabel>Telefone / E-mail para contato</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                     <div className="grid md:grid-cols-2 gap-4">
+                        <FormField control={form.control} name="contratanteTelefone" render={({ field }) => ( <FormItem> <FormLabel>Telefone</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="contratanteEmail" render={({ field }) => ( <FormItem> <FormLabel>E-mail</FormLabel> <FormControl><Input type="email" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                     </div>
                   </div>
                 )}
               </CardContent>
@@ -503,3 +508,5 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     </Card>
   );
 }
+
+    
