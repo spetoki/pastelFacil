@@ -32,7 +32,7 @@ import { Header } from "@/components/header";
 import { DailySummary } from "@/components/daily-summary";
 import { ProductList } from "@/components/product-list";
 import { SalesCart } from "@/components/sales-cart";
-import { AiSuggestions } from "@/components/ai-suggestions";
+import { Calculator } from "@/components/calculator";
 import { useToast } from "@/hooks/use-toast";
 import type { ProductFormValues } from "@/components/add-product-form";
 import { Inventory } from "@/components/inventory";
@@ -124,7 +124,6 @@ export default function Home() {
 
     setIsLoading(true);
 
-    const startOfTodayTimestamp = Timestamp.fromDate(getStartOfToday());
     const shiftStartTimestamp = Timestamp.fromDate(shiftStart);
 
     const productsQuery = query(collection(db, 'products'));
@@ -608,7 +607,7 @@ export default function Home() {
                 onFinalizeSale={handleFinalizeSale}
                 onAddByBarcode={handleAddByBarcode}
               />
-              <AiSuggestions cartItems={cartItems} />
+              <Calculator />
             </div>
           </div>
         );
