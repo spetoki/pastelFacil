@@ -28,7 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { FileSignature, PlusCircle, Trash } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
@@ -42,14 +41,14 @@ const contractSchema = z.object({
   contratanteId: z.string().min(1, { message: "Selecione um contratante." }),
   
   // Pessoa Física
-  contratanteNomeCompleto: z.string().min(3, { message: "Nome é obrigatório."}),
-  contratanteNacionalidade: z.string().min(3, { message: "Nacionalidade é obrigatória."}),
-  contratanteEstadoCivil: z.string().min(3, { message: "Estado civil é obrigatório."}),
-  contratanteProfissao: z.string().min(3, { message: "Profissão é obrigatória."}),
-  contratanteRg: z.string().min(5, { message: "RG/Documento é obrigatório."}),
-  contratanteCpf: z.string().min(11, { message: "CPF é obrigatório."}),
-  contratanteAddress: z.string().min(5, {message: "O endereço do contratante é obrigatório."}),
-  contratanteContato: z.string().min(5, {message: "O contato é obrigatório."}),
+  contratanteNomeCompleto: z.string().optional(),
+  contratanteNacionalidade: z.string().optional(),
+  contratanteEstadoCivil: z.string().optional(),
+  contratanteProfissao: z.string().optional(),
+  contratanteRg: z.string().optional(),
+  contratanteCpf: z.string().optional(),
+  contratanteAddress: z.string().optional(),
+  contratanteContato: z.string().optional(),
   
   // Pessoa Jurídica
   contratanteIsPJ: z.boolean().default(false),
@@ -85,8 +84,17 @@ const contractSchema = z.object({
   contractCity: z.string().min(2, { message: "A cidade é obrigatória." }),
 
   testemunha1Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
-  testemunha2Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
+  testemunha2Name: z.string().min(2, { message: "O nome da testemunha é obrigatória." }),
+}).refine(data => {
+    if (data.contratanteIsPJ) {
+        return data.contratanteRazaoSocial && data.contratanteCnpj && data.contratanteSedeAddress && data.contratanteRepLegalNome;
+    }
+    return data.contratanteNomeCompleto && data.contratanteCpf && data.contratanteAddress && data.contratanteRg;
+}, {
+    message: "Preencha todos os campos obrigatórios para o tipo de pessoa selecionado.",
+    path: ['contratanteIsPJ'], // You can associate the error with a general path
 });
+
 
 type ContractFormValues = z.infer<typeof contractSchema>;
 
@@ -152,7 +160,9 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     `).join('');
 
     const totalClones = values.clones.reduce((sum, clone) => sum + clone.quantity, 0);
-    
+    const valorTotalPorExtenso = "REPLACE_ME"; // TODO: Implement number to words
+    const valorUnitarioPorExtenso = "REPLACE_ME"; // TODO: Implement number to words
+
     let contratanteHtml = `
       <p>
         <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto}, ${values.contratanteNacionalidade}, ${values.contratanteEstadoCivil}, ${values.contratanteProfissao}, portador(a) do documento de identidade RG nº ${values.contratanteRg}, inscrito(a) no C.P.F. sob o nº ${values.contratanteCpf}, com endereço declarado: ${values.contratanteAddress}, contato: ${values.contratanteContato};
@@ -227,7 +237,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <p><strong>Cláusula 9ª.</strong> O CONTRATANTE fica responsável por providenciar sombreamento provisório para plantio das mudas correspondendo a sombra de 80% bem como sistema de irrigação a fim de garantir pegamento das mudas, na ausência destes o CONTRATADO não se responsabiliza por índices de pegamento inferiores.</p>
           
           <p class="clausula-title">DA REMUNERAÇÃO</p>
-          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE se compromete a pagar ao CONTRATADO a quantia de R$ ${values.valorTotal.toFixed(2)} (${new Date().toLocaleDateString('pt-BR') /*TODO*/}), referente a quantidade de ${totalClones} mudas de cacau clonal por enxertia, com valor unitário de R$ ${values.valorUnitario.toFixed(2)} (${new Date().toLocaleDateString('pt-BR')}), sendo 50% do valor combinado como adiantamento na reserva (Assinatura do contrato) e o restante 50% na entrega das mudas.</p>
+          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE se compromete a pagar ao CONTRATADO a quantia de R$ ${values.valorTotal.toFixed(2)} (${valorTotalPorExtenso}), referente a quantidade de ${totalClones} mudas de cacau clonal por enxertia, com valor unitário de R$ ${values.valorUnitario.toFixed(2)} (${valorUnitarioPorExtenso}), sendo 50% do valor combinado como adiantamento na reserva (Assinatura do contrato) e o restante 50% na entrega das mudas.</p>
           
           <p class="clausula-title">DO PRAZO</p>
           <p><strong>Cláusula 11ª.</strong> O presente instrumento terá prazo de ${values.prazoContratoMeses} meses, passando a valer a partir da assinatura pelas partes.</p>
@@ -237,7 +247,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           
           <p class="no-indent" style="margin-top: 30px;">Por estarem assim justos e contratados, firmam o presente instrumento, em duas vias de igual teor, juntamente com 2 (duas) testemunhas.</p>
           
-          <p style="text-align: right; text-indent: 0; margin-top: 30px;">${values.contractCity}, ${new Date(values.contractDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>
+          <p style="text-align: right; text-indent: 0; margin-top: 30px;">${values.contractCity}, ${new Date(values.contractDate + 'T00:00:00-03:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>
 
           <div class="signatures">
             <div class="signature-line">
@@ -284,6 +294,8 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       form.setValue("contratanteCpf", contratante.cpf);
       form.setValue("contratanteAddress", contratante.address);
       form.setValue("contratanteContato", contratante.phone);
+      // Also set the values for the PJ fields in case user switches
+      form.setValue("contratanteRepLegalNome", contratante.name);
     }
   }
 
