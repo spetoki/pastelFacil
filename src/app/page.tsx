@@ -366,7 +366,6 @@ export default function Home() {
     paymentMethod: PaymentMethod,
     clientId?: string,
     overrideTotal?: number,
-    andThen?: 'navigateToContracts' | undefined,
   ) => {
     if (cartItems.length === 0) return;
 
@@ -435,10 +434,6 @@ export default function Home() {
           currency: "BRL",
         }).format(total)} em ${paymentMethod}.`,
       });
-
-      if (andThen === 'navigateToContracts') {
-        setActivePage('contratos');
-      }
 
     } catch (error) {
       console.error("Error finalizing sale: ", error);

@@ -36,7 +36,6 @@ type SalesCartProps = {
     paymentMethod: PaymentMethod,
     clientId?: string,
     overrideTotal?: number,
-    andThen?: 'navigateToContracts'
   ) => Promise<void>;
   onAddByBarcode: (barcode: string) => boolean;
 };
@@ -96,7 +95,7 @@ export function SalesCart({
     }
   };
 
-  const handleConfirmSale = async (andThen?: 'navigateToContracts') => {
+  const handleConfirmSale = async () => {
      if (paymentMethod === "Fiado" && !selectedClientId) {
       toast({
         variant: "destructive",
@@ -107,7 +106,7 @@ export function SalesCart({
     }
 
     setIsSubmitting(true);
-    await onFinalizeSale(paymentMethod, selectedClientId, total, andThen);
+    await onFinalizeSale(paymentMethod, selectedClientId, total);
     setIsSubmitting(false);
     setIsFinalizeDialogOpen(false);
     setManualTotal(undefined);
@@ -315,18 +314,14 @@ export function SalesCart({
                     </div>
                   )}
                 </div>
-                <DialogFooter className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <DialogClose asChild className="sm:col-span-1">
+                <DialogFooter>
+                  <DialogClose asChild>
                     <Button type="button" variant="outline" disabled={isSubmitting}>
                       Cancelar
                     </Button>
                   </DialogClose>
-                  <Button onClick={() => handleConfirmSale()} disabled={isSubmitting} className="sm:col-span-1">
+                  <Button onClick={() => handleConfirmSale()} disabled={isSubmitting}>
                     {isSubmitting ? 'Confirmando...' : 'Confirmar Retirada'}
-                  </Button>
-                  <Button onClick={() => handleConfirmSale('navigateToContracts')} disabled={isSubmitting} variant="secondary" className="sm:col-span-1">
-                    <FileSignature className="mr-2 h-4 w-4" />
-                    {isSubmitting ? 'Confirmando...' : 'Confirmar e Criar Contrato'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
