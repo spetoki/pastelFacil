@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -139,6 +140,7 @@ export function AddProductForm({
                   <SelectItem value="Outro">Outro (especificar)</SelectItem>
                 </SelectContent>
               </Select>
+              <FormDescription>Mudas Verde e amarelo</FormDescription>
               <FormMessage />
             </FormItem>
           )}
