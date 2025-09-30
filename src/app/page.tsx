@@ -445,7 +445,12 @@ export default function Home() {
   const handleAddProduct = useCallback(
     async (values: Omit<ProductFormValues, 'type'>): Promise<void> => {
       try {
-        await addDoc(collection(db, "products"), values);
+        const newProduct = {
+          ...values,
+          price: 0,
+          stock: 0,
+        };
+        await addDoc(collection(db, "products"), newProduct);
       } catch (error) {
         console.error("Error adding product: ", error);
         throw error;
@@ -455,7 +460,7 @@ export default function Home() {
   );
   
   const handleUpdateProduct = useCallback(
-    async (productId: string, values: Omit<ProductFormValues, 'type'>): Promise<void> => {
+    async (productId: string, values: Partial<Omit<ProductFormValues, 'type'>>): Promise<void> => {
       try {
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, values as any);

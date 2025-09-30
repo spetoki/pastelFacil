@@ -17,7 +17,7 @@ type EditProductDialogProps = {
   product: Product;
   onUpdateProduct: (
     productId: string,
-    values: Omit<ProductFormValues, 'type'>
+    values: Partial<Omit<ProductFormValues, 'type'>>
   ) => Promise<void>;
   children: ReactNode;
 };
@@ -55,8 +55,6 @@ export function EditProductDialog({
   const initialData = {
     name: product.name,
     description: product.description,
-    price: product.price,
-    stock: product.stock,
     barcode: product.barcode,
   };
 

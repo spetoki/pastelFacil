@@ -35,12 +35,10 @@ const subOptions: Record<string, string[]> = {
   "Roxo e alaranjado": ["BN 34", "CEPEC 2004", "CCN 51", "PH16", "PS 1319", "SJ 02"],
 };
 
-const formSchema = (initialStock = 0) => z.object({
+const formSchema = z.object({
   type: z.string().min(1, { message: "Selecione um tipo." }),
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
   description: z.string().optional(),
-  price: z.coerce.number().min(0, { message: "O preço não pode ser negativo." }),
-  stock: z.coerce.number().int().min(initialStock, { message: `O estoque não pode ser menor que ${initialStock}.` }),
   barcode: z.string().min(1, { message: "O código de barras é obrigatório." }),
 }).refine(data => {
     if (data.type === 'Outro') {
@@ -66,7 +64,7 @@ const formSchema = (initialStock = 0) => z.object({
 });
 
 
-export type ProductFormValues = z.infer<ReturnType<typeof formSchema>>;
+export type ProductFormValues = z.infer<typeof formSchema>;
 
 type AddProductFormProps = {
   onSubmit: (values: Omit<ProductFormValues, 'type'>) => void;
@@ -82,15 +80,12 @@ export function AddProductForm({
   initialData,
 }: AddProductFormProps) {
   const isEditing = !!initialData;
-  const currentStock = initialData?.stock || 0;
 
   const getInitialFormValues = () => {
     const defaultValues = {
       type: "",
       name: "",
       description: "",
-      price: 0,
-      stock: 0,
       barcode: "",
     };
 
@@ -115,7 +110,7 @@ export function AddProductForm({
   }
 
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(formSchema(currentStock)),
+    resolver: zodResolver(formSchema),
     defaultValues: getInitialFormValues(),
   });
   
@@ -239,34 +234,7 @@ export function AddProductForm({
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Preço (R$)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-           <FormField
-            control={form.control}
-            name="stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estoque</FormLabel>
-                <FormControl>
-                  <Input type="number" step="1" {...field} min={isEditing ? currentStock : 0}/>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        
         <FormField
           control={form.control}
           name="barcode"
