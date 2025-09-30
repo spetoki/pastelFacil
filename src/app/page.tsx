@@ -479,6 +479,13 @@ export default function Home() {
   
   const handleUpdateStock = useCallback(
     async (productId: string, newStock: number) => {
+      if (newStock < 0 || isNaN(newStock)) {
+         toast({
+          variant: "destructive",
+          title: "Valor de estoque inválido",
+        });
+        return;
+      }
       try {
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, { stock: newStock });

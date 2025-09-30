@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -67,10 +66,10 @@ const formSchema = z.object({
 export type ProductFormValues = z.infer<typeof formSchema>;
 
 type AddProductFormProps = {
-  onSubmit: (values: Omit<ProductFormValues, 'type'>) => void;
+  onSubmit: (values: Partial<Omit<ProductFormValues, 'type'>>) => void;
   onCancel: () => void;
   isSubmitting: boolean;
-  initialData?: Partial<Omit<ProductFormValues, 'type'> & {name: string}>;
+  initialData?: Partial<Omit<ProductFormValues, 'type'> & {name: string, price: number, stock: number}>;
 };
 
 export function AddProductForm({
@@ -125,16 +124,20 @@ export function AddProductForm({
   
   useEffect(() => {
     // Reset name when type changes if it's a cascading type
-    if (subOptions[selectedType]?.length > 0) {
+    if (subOptions[selectedType]?.length > 0 && !isEditing) {
         form.setValue("name", "");
     }
-  }, [selectedType, form]);
+  }, [selectedType, form, isEditing]);
 
 
   const handleFormSubmit = (values: ProductFormValues) => {
     let finalName = values.name;
+    // This logic might not be needed anymore if name is always correct from the sub-options
     if (values.type !== 'Outro' && subOptions[values.type] && !subOptions[values.type].includes(values.name)) {
-        finalName = values.type;
+        // If type implies sub-options but name isn't one of them, it might be the type itself.
+        if (predefinedNames.includes(values.type)) {
+            finalName = values.type;
+        }
     }
     
     const submissionValues = {

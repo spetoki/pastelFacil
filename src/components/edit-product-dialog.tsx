@@ -31,13 +31,13 @@ export function EditProductDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (values: Omit<ProductFormValues, 'type'>) => {
+  const handleSubmit = async (values: Partial<Omit<ProductFormValues, 'type'>>) => {
     setIsSubmitting(true);
     try {
       await onUpdateProduct(product.id, values);
       toast({
         title: "Sucesso!",
-        description: `Item "${values.name}" atualizado.`,
+        description: `Item "${values.name || product.name}" atualizado.`,
       });
       setOpen(false);
     } catch (error) {
@@ -56,6 +56,8 @@ export function EditProductDialog({
     name: product.name,
     description: product.description,
     barcode: product.barcode,
+    price: product.price,
+    stock: product.stock
   };
 
   return (
@@ -65,7 +67,7 @@ export function EditProductDialog({
         <DialogHeader>
           <DialogTitle className="font-headline">Editar Item</DialogTitle>
           <DialogDescription>
-            Altere as informações do item abaixo.
+            Altere as informações do item abaixo. O estoque é atualizado na tela principal.
           </DialogDescription>
         </DialogHeader>
         <AddProductForm

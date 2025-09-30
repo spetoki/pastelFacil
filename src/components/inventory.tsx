@@ -12,11 +12,10 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import type { ProductFormValues } from "./add-product-form";
 import { AddProductDialog } from "./add-product-dialog";
 import { EditProductDialog } from "./edit-product-dialog";
-import { Pencil, Trash } from "lucide-react";
+import { Pencil, Trash, Save } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import {
   AlertDialog,
@@ -36,7 +35,7 @@ type InventoryProps = {
   onAddProduct: (values: Omit<ProductFormValues, 'type'>) => Promise<void>;
   onUpdateProduct: (
     productId: string,
-    values: Omit<ProductFormValues, 'type'>
+    values: Partial<Omit<ProductFormValues, 'type'>>
   ) => Promise<void>;
   onUpdateStock: (productId: string, newStock: number) => Promise<void>;
   onDeleteProduct: (productId: string) => Promise<void>;
@@ -119,16 +118,30 @@ export function Inventory({
   products,
   onAddProduct,
   onUpdateProduct,
+  onUpdateStock,
   onDeleteProduct,
   isLoading,
 }: InventoryProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [stockValues, setStockValues] = useState<Record<string, number>>({});
 
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.barcode && product.barcode.includes(searchTerm))
   );
+
+  const handleStockChange = (productId: string, value: string) => {
+    const numberValue = Number(value);
+    setStockValues(prev => ({ ...prev, [productId]: numberValue >= 0 ? numberValue : 0 }));
+  }
+
+  const handleSaveStock = (productId: string) => {
+    const newStock = stockValues[productId];
+    if (newStock !== undefined) {
+      onUpdateStock(productId, newStock);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -156,7 +169,7 @@ export function Inventory({
               <TableRow key={i}>
                 <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                <TableCell className="text-center"><Skeleton className="h-6 w-12 mx-auto" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-9 w-32 mx-auto" /></TableCell>
                 <TableCell className="text-right"><Skeleton className="h-9 w-24 ml-auto" /></TableCell>
               </TableRow>
             ))
@@ -165,12 +178,25 @@ export function Inventory({
               <TableRow key={product.id}>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.barcode}</TableCell>
-                <TableCell className="text-center">
-                  <Badge
-                    variant={product.stock <= 10 ? "destructive" : "secondary"}
-                  >
-                    {product.stock}
-                  </Badge>
+                <TableCell>
+                  <div className="flex items-center gap-2 justify-center">
+                    <Input 
+                      type="number"
+                      className="w-24 h-9 text-center"
+                      value={stockValues[product.id] ?? product.stock}
+                      onChange={(e) => handleStockChange(product.id, e.target.value)}
+                    />
+                    <Button 
+                      size="icon" 
+                      variant="outline"
+                      className="h-9 w-9"
+                      onClick={() => handleSaveStock(product.id)}
+                      disabled={stockValues[product.id] === undefined || stockValues[product.id] === product.stock}
+                    >
+                      <Save className="h-4 w-4" />
+                      <span className="sr-only">Salvar Estoque</span>
+                    </Button>
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex gap-2 justify-end">
