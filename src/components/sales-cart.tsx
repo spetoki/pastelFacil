@@ -1,10 +1,10 @@
 "use client";
 
-import type { CartItem, Client, PaymentMethod, Sale } from "@/lib/types";
+import type { CartItem, Client, PaymentMethod } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Barcode, Minus, Plus, ShoppingCart, Trash2, CreditCard, Landmark, CircleDollarSign, User } from "lucide-react";
+import { Barcode, Minus, Plus, ShoppingCart, Trash2, CreditCard, Landmark, CircleDollarSign, User, FileSignature } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -26,15 +26,18 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { SaleReceiptDialog } from "./sale-receipt-dialog";
-
 
 type SalesCartProps = {
   items: CartItem[];
   clients: Client[];
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onRemoveItem: (productId: string) => void;
-  onFinalizeSale: (paymentMethod: PaymentMethod, clientId?: string, overrideTotal?: number) => Promise<void>;
+  onFinalizeSale: (
+    paymentMethod: PaymentMethod,
+    clientId?: string,
+    overrideTotal?: number,
+    andThen?: 'navigateToContracts'
+  ) => Promise<void>;
   onAddByBarcode: (barcode: string) => boolean;
 };
 
@@ -60,7 +63,6 @@ export function SalesCart({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
-  const [pendingSale, setPendingSale] = useState<Omit<Sale, 'id'> | null>(null);
   const [manualTotal, setManualTotal] = useState<number | undefined>();
 
 
@@ -75,6 +77,13 @@ export function SalesCart({
     // Reset manual total when cart items change
     setManualTotal(undefined);
   }, [items]);
+  
+  useEffect(() => {
+    if (!isFinalizeDialogOpen) {
+      setPaymentMethod("Dinheiro");
+      setSelectedClientId(undefined);
+    }
+  }, [isFinalizeDialogOpen]);
 
 
   const handleBarcodeScan = (e: React.FormEvent) => {
@@ -87,7 +96,7 @@ export function SalesCart({
     }
   };
 
-  const handlePrepareSale = () => {
+  const handleConfirmSale = async (andThen?: 'navigateToContracts') => {
      if (paymentMethod === "Fiado" && !selectedClientId) {
       toast({
         variant: "destructive",
@@ -97,43 +106,11 @@ export function SalesCart({
       return;
     }
 
-    const saleItems = items.map(item => ({
-      productId: item.product.id,
-      name: item.product.name,
-      price: item.product.price,
-      quantity: item.quantity,
-    }));
-    
-    const client = clients.find(c => c.id === selectedClientId);
-
-    const saleToProcess: Omit<Sale, 'id'> = {
-      items: saleItems,
-      total,
-      date: new Date(),
-      paymentMethod,
-      clientId: selectedClientId,
-      clientName: client?.name,
-    };
-    
-    setPendingSale(saleToProcess);
-    setIsFinalizeDialogOpen(false);
-  }
-
-  const handleConfirmFinalizeSale = async () => {
-    if (!pendingSale) return;
-
     setIsSubmitting(true);
-    await onFinalizeSale(pendingSale.paymentMethod, pendingSale.clientId, pendingSale.total);
+    await onFinalizeSale(paymentMethod, selectedClientId, total, andThen);
     setIsSubmitting(false);
-    setPendingSale(null);
-    // Reset state for next sale
-    setPaymentMethod("Dinheiro");
-    setSelectedClientId(undefined);
+    setIsFinalizeDialogOpen(false);
     setManualTotal(undefined);
-  };
-  
-  const handleCancelReceipt = () => {
-    setPendingSale(null);
   }
 
   const paymentOptions: { value: PaymentMethod; label: string, icon: React.FC<any> }[] = [
@@ -182,7 +159,7 @@ export function SalesCart({
             items.map(({ product, quantity }) => {
               return (
                 <div key={product.id} className="flex items-center gap-4">
-                  <div className="w-16 h-12 bg-muted rounded-md flex items-center justify-center">
+                   <div className="w-16 h-12 bg-muted rounded-md flex items-center justify-center">
                       <ShoppingCart className="w-6 h-6 text-muted-foreground" />
                     </div>
                   <div className="flex-1">
@@ -338,14 +315,18 @@ export function SalesCart({
                     </div>
                   )}
                 </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button type="button" variant="outline">
+                <DialogFooter className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <DialogClose asChild className="sm:col-span-1">
+                    <Button type="button" variant="outline" disabled={isSubmitting}>
                       Cancelar
                     </Button>
                   </DialogClose>
-                  <Button onClick={handlePrepareSale}>
-                    Confirmar Retirada
+                  <Button onClick={() => handleConfirmSale()} disabled={isSubmitting} className="sm:col-span-1">
+                    {isSubmitting ? 'Confirmando...' : 'Confirmar Retirada'}
+                  </Button>
+                  <Button onClick={() => handleConfirmSale('navigateToContracts')} disabled={isSubmitting} variant="secondary" className="sm:col-span-1">
+                    <FileSignature className="mr-2 h-4 w-4" />
+                    {isSubmitting ? 'Confirmando...' : 'Confirmar e Criar Contrato'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -353,15 +334,6 @@ export function SalesCart({
           </div>
         )}
       </div>
-
-       {pendingSale && (
-        <SaleReceiptDialog
-          sale={pendingSale}
-          onConfirm={handleConfirmFinalizeSale}
-          onCancel={handleCancelReceipt}
-          isSubmitting={isSubmitting}
-        />
-      )}
     </>
   );
 }
