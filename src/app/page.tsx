@@ -364,14 +364,16 @@ export default function Home() {
 
   const handleFinalizeSale = useCallback(async (
     paymentMethod: PaymentMethod,
-    clientId?: string
+    clientId?: string,
+    overrideTotal?: number
   ) => {
     if (cartItems.length === 0) return;
 
-    const total = cartItems.reduce(
+    const calculatedTotal = cartItems.reduce(
       (sum, item) => sum + item.product.price * item.quantity,
       0
     );
+    const total = overrideTotal !== undefined ? overrideTotal : calculatedTotal;
   
     const saleItems: SaleItem[] = cartItems.map(item => ({
       productId: item.product.id,

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Barcode, Minus, Plus, ShoppingCart, Trash2, CreditCard, Landmark, CircleDollarSign, User } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +34,7 @@ type SalesCartProps = {
   clients: Client[];
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onRemoveItem: (productId: string) => void;
-  onFinalizeSale: (paymentMethod: PaymentMethod, clientId?: string) => Promise<void>;
+  onFinalizeSale: (paymentMethod: PaymentMethod, clientId?: string, overrideTotal?: number) => Promise<void>;
   onAddByBarcode: (barcode: string) => boolean;
 };
 
@@ -61,11 +61,21 @@ export function SalesCart({
   const { toast } = useToast();
   
   const [pendingSale, setPendingSale] = useState<Omit<Sale, 'id'> | null>(null);
+  const [manualTotal, setManualTotal] = useState<number | undefined>();
 
-  const total = items.reduce(
+
+  const calculatedTotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
+  
+  const total = manualTotal !== undefined ? manualTotal : calculatedTotal;
+  
+  useEffect(() => {
+    // Reset manual total when cart items change
+    setManualTotal(undefined);
+  }, [items]);
+
 
   const handleBarcodeScan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,12 +123,13 @@ export function SalesCart({
     if (!pendingSale) return;
 
     setIsSubmitting(true);
-    await onFinalizeSale(pendingSale.paymentMethod, pendingSale.clientId);
+    await onFinalizeSale(pendingSale.paymentMethod, pendingSale.clientId, pendingSale.total);
     setIsSubmitting(false);
     setPendingSale(null);
     // Reset state for next sale
     setPaymentMethod("Dinheiro");
     setSelectedClientId(undefined);
+    setManualTotal(undefined);
   };
   
   const handleCancelReceipt = () => {
@@ -232,8 +243,24 @@ export function SalesCart({
         {items.length > 0 && (
           <div className="p-4 border-t mt-auto space-y-4">
             <Separator />
-            <div className="flex justify-between items-center text-lg font-semibold">
-              <span>Total:</span>
+            <div className="flex justify-between items-center text-lg">
+              <span>Total Calculado:</span>
+              <span>{formatCurrency(calculatedTotal)}</span>
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="manual-total">Total Manual (R$)</Label>
+              <Input
+                id="manual-total"
+                type="number"
+                placeholder="Deixar em branco para usar o total calculado"
+                value={manualTotal === undefined ? "" : manualTotal}
+                onChange={(e) => setManualTotal(e.target.value === "" ? undefined : Number(e.target.value))}
+                className="text-right"
+              />
+            </div>
+            <Separator />
+             <div className="flex justify-between items-center text-xl font-semibold">
+              <span>Total Final:</span>
               <span>{formatCurrency(total)}</span>
             </div>
             <Dialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
