@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { FileSignature, PlusCircle, Trash } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Separator } from "./ui/separator";
 
 type ContractsPageProps = {
   clients: Client[];
