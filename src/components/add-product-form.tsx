@@ -26,14 +26,8 @@ import {
 
 
 const predefinedNames = [
-  "Muda de Cacau CCN-51",
-  "Muda de Cacau CEPEC 2002",
-  "EEOP 07",
-  "EEOP 26",
-  "EEOP 34",
-  "EEOP 50",
-  "EEOP 63",
-  "EET 397",
+  "Verde e Amarelo",
+  "Roxo e alaranjado",
 ];
 
 const formSchema = (initialStock = 0) => z.object({
@@ -140,7 +134,6 @@ export function AddProductForm({
                   <SelectItem value="Outro">Outro (especificar)</SelectItem>
                 </SelectContent>
               </Select>
-              <FormDescription>Mudas Verde e amarelo</FormDescription>
               <FormMessage />
             </FormItem>
           )}
