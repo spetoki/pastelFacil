@@ -32,7 +32,7 @@ const predefinedNames = [
 
 const subOptions: Record<string, string[]> = {
   "Verde e Amarelo": ["EEOP 07", "EEOP 26", "EEOP 34", "EEOP 50", "EEOP 63", "EET 397", "CEPEC 2002"],
-  "Roxo e alaranjado": []
+  "Roxo e alaranjado": ["BN 34", "CEPEC 2004", "CCN 51", "PH16", "PS 1319", "SJ 02"],
 };
 
 const formSchema = (initialStock = 0) => z.object({
