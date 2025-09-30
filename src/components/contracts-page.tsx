@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { FileSignature, PlusCircle, Trash } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 type ContractsPageProps = {
   clients: Client[];
@@ -38,7 +39,26 @@ type ContractsPageProps = {
 
 const contractSchema = z.object({
   contratanteId: z.string().min(1, { message: "Selecione um contratante." }),
+  
+  // Pessoa Física
+  contratanteNomeCompleto: z.string().min(3, { message: "Nome é obrigatório."}),
+  contratanteNacionalidade: z.string().min(3, { message: "Nacionalidade é obrigatória."}),
+  contratanteEstadoCivil: z.string().min(3, { message: "Estado civil é obrigatório."}),
+  contratanteProfissao: z.string().min(3, { message: "Profissão é obrigatória."}),
+  contratanteRg: z.string().min(5, { message: "RG/Documento é obrigatório."}),
+  contratanteCpf: z.string().min(11, { message: "CPF é obrigatório."}),
   contratanteAddress: z.string().min(5, {message: "O endereço do contratante é obrigatório."}),
+  contratanteContato: z.string().min(5, {message: "O contato é obrigatório."}),
+  
+  // Pessoa Jurídica
+  contratanteIsPJ: z.boolean().default(false),
+  contratanteRazaoSocial: z.string().optional(),
+  contratanteCnpj: z.string().optional(),
+  contratanteIE: z.string().optional(),
+  contratanteSedeAddress: z.string().optional(),
+  contratanteRepLegalNome: z.string().optional(),
+  contratanteRepLegalDados: z.string().optional(),
+
 
   contratadoName: z.string().default("Viveiro Andurá"),
   contratadoRepresentante: z.string().default("SANDRA RITA BARTNIK QUARESMA"),
@@ -74,7 +94,24 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     resolver: zodResolver(contractSchema),
     defaultValues: {
       contratanteId: "",
+      
+      contratanteNomeCompleto: "",
+      contratanteNacionalidade: "Brasileiro(a)",
+      contratanteEstadoCivil: "",
+      contratanteProfissao: "Produtor Rural",
+      contratanteRg: "",
+      contratanteCpf: "",
       contratanteAddress: "",
+      contratanteContato: "",
+
+      contratanteIsPJ: false,
+      contratanteRazaoSocial: "",
+      contratanteCnpj: "",
+      contratanteIE: "",
+      contratanteSedeAddress: "",
+      contratanteRepLegalNome: "",
+      contratanteRepLegalDados: "",
+
       contratadoName: "Viveiro Andurá",
       contratadoRepresentante: "SANDRA RITA BARTNIK QUARESMA",
       contratadoRepresentanteId: "680.584 SSP/RO",
@@ -99,6 +136,8 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     control: form.control,
     name: "clones",
   });
+  
+  const isPJ = form.watch("contratanteIsPJ");
 
   const handleGenerateContract = (values: ContractFormValues) => {
     const contratante = clients.find((c) => c.id === values.contratanteId);
@@ -112,6 +151,23 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     `).join('');
 
     const totalClones = values.clones.reduce((sum, clone) => sum + clone.quantity, 0);
+    
+    let contratanteHtml = `
+      <p>
+        <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto}, ${values.contratanteNacionalidade}, ${values.contratanteEstadoCivil}, ${values.contratanteProfissao}, portador(a) do documento de identidade RG nº ${values.contratanteRg}, inscrito(a) no C.P.F. sob o nº ${values.contratanteCpf}, com endereço declarado: ${values.contratanteAddress}, contato: ${values.contratanteContato};
+      </p>
+    `;
+    
+    let contratanteAssinatura = `<p>${values.contratanteNomeCompleto}</p><p>(Contratante)</p>`;
+
+    if(values.contratanteIsPJ) {
+      contratanteHtml = `
+        <p>
+          <strong>CONTRATANTE:</strong> ${values.contratanteRazaoSocial}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${values.contratanteCnpj}, Inscrição Estadual/Municipal nº ${values.contratanteIE || 'não aplicável'}, com sede em ${values.contratanteSedeAddress}, neste ato representada por ${values.contratanteRepLegalNome}, (dados do representante: ${values.contratanteRepLegalDados});
+        </p>
+      `;
+      contratanteAssinatura = `<p>${values.contratanteRepLegalNome}</p><p>p/p ${values.contratanteRazaoSocial}</p><p>(Contratante)</p>`;
+    }
 
     const contractHtml = `
       <html>
@@ -133,9 +189,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <h2>CONTRATO DE FORNECIMENTO DE MUDAS CLONAIS DE CACAU</h2>
           <h1>IDENTIFICAÇÃO DAS PARTES CONTRATANTES</h1>
           
-          <p>
-            <strong>CONTRATANTE:</strong> ${contratante.name}, brasileiro, Produtor Rural, C.P.F. nº ${contratante.cpf}, com endereço declarado: ${values.contratanteAddress};
-          </p>
+          ${contratanteHtml}
 
           <p>
             <strong>CONTRATADO:</strong> ${values.contratadoName} – Renasem nº ${values.contratadoRenasem} localizado na ${values.contratadoLocalizacao}, aqui representado por: ${values.contratadoRepresentante}, brasileira, casada, engenheira agrônoma e viveirista, Carteira de Identidade nº ${values.contratadoRepresentanteId}, C.P.F. nº ${values.contratadoRepresentanteCpf}, residente e domiciliada na ${values.contratadoAddress}.
@@ -193,8 +247,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
             </div>
             <div class="signature-line">
               <div class="signature-line-inner">
-                 <p>${contratante.name}</p>
-                 <p>(Contratante)</p>
+                 ${contratanteAssinatura}
               </div>
             </div>
             <div class="signature-line">
@@ -226,7 +279,10 @@ export function ContractsPage({ clients }: ContractsPageProps) {
   const onContratanteChange = (contratanteId: string) => {
     const contratante = clients.find((c) => c.id === contratanteId);
     if(contratante) {
+      form.setValue("contratanteNomeCompleto", contratante.name);
+      form.setValue("contratanteCpf", contratante.cpf);
       form.setValue("contratanteAddress", contratante.address);
+      form.setValue("contratanteContato", contratante.phone);
     }
   }
 
@@ -274,11 +330,11 @@ export function ContractsPage({ clients }: ContractsPageProps) {
                   name="contratanteId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Selecione o Cliente</FormLabel>
+                      <FormLabel>Selecione um Cliente Cadastrado</FormLabel>
                       <FormControl>
                         <Select onValueChange={(value) => { field.onChange(value); onContratanteChange(value); }} defaultValue={field.value}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione um cliente cadastrado" />
+                            <SelectValue placeholder="Puxar dados de um cliente..." />
                           </SelectTrigger>
                           <SelectContent>
                             {clients.map((client) => (
@@ -293,7 +349,67 @@ export function ContractsPage({ clients }: ContractsPageProps) {
                     </FormItem>
                   )}
                 />
-                 <FormField control={form.control} name="contratanteAddress" render={({ field }) => ( <FormItem> <FormLabel>Endereço Completo</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                 <FormField
+                  control={form.control}
+                  name="contratanteIsPJ"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Tipo de Pessoa</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={(value) => field.onChange(value === 'true')}
+                          defaultValue={String(field.value)}
+                          className="flex space-x-4"
+                        >
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="false" id="type-pf" />
+                            </FormControl>
+                            <FormLabel htmlFor="type-pf" className="font-normal">Pessoa Física</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="true" id="type-pj" />
+                            </FormControl>
+                            <FormLabel htmlFor="type-pj" className="font-normal">Pessoa Jurídica</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <Separator />
+                
+                {isPJ ? (
+                  // Campos Pessoa Jurídica
+                  <div className="space-y-4">
+                    <FormField control={form.control} name="contratanteRazaoSocial" render={({ field }) => ( <FormItem> <FormLabel>Razão Social</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="contratanteCnpj" render={({ field }) => ( <FormItem> <FormLabel>CNPJ</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                      <FormField control={form.control} name="contratanteIE" render={({ field }) => ( <FormItem> <FormLabel>Inscrição Estadual/Municipal</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                    </div>
+                    <FormField control={form.control} name="contratanteSedeAddress" render={({ field }) => ( <FormItem> <FormLabel>Endereço Completo da Sede</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                    <FormField control={form.control} name="contratanteRepLegalNome" render={({ field }) => ( <FormItem> <FormLabel>Nome do Representante Legal</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                    <FormField control={form.control} name="contratanteRepLegalDados" render={({ field }) => ( <FormItem> <FormLabel>Dados do Representante (CPF, RG)</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  </div>
+                ) : (
+                  // Campos Pessoa Física
+                  <div className="space-y-4">
+                    <FormField control={form.control} name="contratanteNomeCompleto" render={({ field }) => ( <FormItem> <FormLabel>Nome Completo (sem abreviações)</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <FormField control={form.control} name="contratanteNacionalidade" render={({ field }) => ( <FormItem> <FormLabel>Nacionalidade</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                      <FormField control={form.control} name="contratanteEstadoCivil" render={({ field }) => ( <FormItem> <FormLabel>Estado Civil</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                      <FormField control={form.control} name="contratanteProfissao" render={({ field }) => ( <FormItem> <FormLabel>Profissão</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="contratanteRg" render={({ field }) => ( <FormItem> <FormLabel>RG / Documento de Identificação</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                      <FormField control={form.control} name="contratanteCpf" render={({ field }) => ( <FormItem> <FormLabel>CPF</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                    </div>
+                     <FormField control={form.control} name="contratanteAddress" render={({ field }) => ( <FormItem> <FormLabel>Endereço Completo</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                     <FormField control={form.control} name="contratanteContato" render={({ field }) => ( <FormItem> <FormLabel>Telefone / E-mail para contato</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
