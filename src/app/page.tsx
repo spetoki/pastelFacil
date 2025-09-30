@@ -74,10 +74,8 @@ export default function Home() {
   const [clients, setClients] = useState<Client[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
-  const [fiadoSales, setFiadoSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<CashTransaction[]>([]);
   const [cashEntries, setCashEntries] = useState<CashTransaction[]>([]);
-  const [debtPayments, setDebtPayments] = useState<CashTransaction[]>([]);
   const [dailyClosures, setDailyClosures] = useState<DailyClosure[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
@@ -149,7 +147,6 @@ export default function Home() {
       toast({ variant: "destructive", title: "Erro ao buscar clientes" });
     });
     
-    // Query for sales of the current shift (Dinheiro, Pix, Cartão)
     const shiftSalesQuery = query(
       collection(db, "sales"), 
       where("date", ">=", shiftStartTimestamp), 
@@ -158,48 +155,23 @@ export default function Home() {
       const salesList: Sale[] = [];
       snapshot.forEach(doc => {
         const data = doc.data();
-        // Separate fiado sales to be handled by their own query
-        if (data.paymentMethod !== 'Fiado') {
-            salesList.push({
-              id: doc.id,
-              ...data,
-              date: (data.date as Timestamp).toDate(),
-            } as Sale);
-        }
+        salesList.push({
+          id: doc.id,
+          ...data,
+          date: (data.date as Timestamp).toDate(),
+        } as Sale);
       });
       setSalesHistory(salesList.sort((a,b) => b.date.getTime() - a.date.getTime()));
     }, (error) => {
       console.error("Error fetching shift sales: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar vendas do turno" });
     });
-    
-    // Query for all fiado sales of the entire day
-    const fiadoSalesQuery = query(
-        collection(db, "sales"),
-        where("date", ">=", startOfTodayTimestamp)
-    );
-    const unsubscribeFiadoSales = onSnapshot(fiadoSalesQuery, (snapshot) => {
-        const fiadoList = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                date: (data.date as Timestamp).toDate(),
-            } as Sale;
-        }).filter(sale => sale.paymentMethod === 'Fiado');
-        setFiadoSales(fiadoList.sort((a,b) => b.date.getTime() - a.date.getTime()));
-    }, (error) => {
-        console.error("Error fetching fiado sales: ", error);
-        toast({ variant: "destructive", title: "Erro ao buscar vendas fiado" });
-    });
 
-    // Query day-specific transactions (expenses, cash entries, debtPayments)
-    // We fetch all transactions for the day and filter them on the client
-    const dayTransactionsQuery = query(collection(db, "transactions"), where("date", ">=", startOfTodayTimestamp));
+    // Query day-specific transactions (expenses, cash entries)
+    const dayTransactionsQuery = query(collection(db, "transactions"), where("date", ">=", shiftStartTimestamp));
     const unsubscribeDayTransactions = onSnapshot(dayTransactionsQuery, (snapshot) => {
       const expensesList: CashTransaction[] = [];
       const cashEntriesList: CashTransaction[] = [];
-      const debtPaymentsList: CashTransaction[] = [];
 
       snapshot.forEach(doc => {
         const data = doc.data();
@@ -209,25 +181,15 @@ export default function Home() {
           date: (data.date as Timestamp).toDate(),
         } as CashTransaction;
 
-        // Filter based on shift start for expenses and cash entries
-        if (transaction.date >= shiftStart) {
-            if (data.type === 'expense') {
-              expensesList.push(transaction);
-            } else if (data.type === 'cashEntry') {
-              cashEntriesList.push(transaction);
-            }
+        if (data.type === 'expense') {
+          expensesList.push(transaction);
+        } else if (data.type === 'cashEntry') {
+          cashEntriesList.push(transaction);
         }
-        
-        // Debt payments are for the whole day
-        if (data.type === 'debtPayment') {
-            debtPaymentsList.push(transaction);
-        }
-
       });
       
       setExpenses(expensesList.sort((a,b) => b.date.getTime() - a.date.getTime()));
       setCashEntries(cashEntriesList.sort((a,b) => b.date.getTime() - a.date.getTime()));
-      setDebtPayments(debtPaymentsList.sort((a,b) => b.date.getTime() - a.date.getTime()));
 
     }, (error) => {
       console.error("Error fetching day transactions: ", error);
@@ -255,13 +217,10 @@ export default function Home() {
       unsubscribeProducts();
       unsubscribeClients();
       unsubscribeSales();
-      unsubscribeFiadoSales();
       unsubscribeDayTransactions();
       unsubscribeDailyClosures();
     };
   }, [isClient, toast, shiftStart]);
-
-  const allSalesForHistory = useMemo(() => [...salesHistory, ...fiadoSales].sort((a,b) => b.date.getTime() - a.date.getTime()), [salesHistory, fiadoSales]);
 
   const handleLogout = () => {
     clearAuthentication();
@@ -364,7 +323,6 @@ export default function Home() {
 
   const handleFinalizeSale = useCallback(async (
     paymentMethod: PaymentMethod,
-    clientId?: string,
     overrideTotal?: number,
   ) => {
     if (cartItems.length === 0) return;
@@ -390,18 +348,6 @@ export default function Home() {
     };
 
     const batch = writeBatch(db);
-
-    if (paymentMethod === "Fiado" && clientId) {
-      const client = clients.find(c => c.id === clientId);
-      if (client) {
-        newSale.clientId = clientId;
-        newSale.clientName = client.name;
-        
-        const clientRef = doc(db, "clients", clientId);
-        const newDebt = (client.debt || 0) + total;
-        batch.update(clientRef, { debt: newDebt });
-      }
-    }
   
     for (const item of cartItems) {
       if (!item.product.id) {
@@ -443,7 +389,7 @@ export default function Home() {
         description: "Não foi possível salvar a retirada ou atualizar o estoque.",
       });
     }
-  }, [cartItems, toast, clients]);
+  }, [cartItems, toast]);
 
   const handleAddProduct = useCallback(
     async (values: Omit<ProductFormValues, 'type'>): Promise<void> => {
@@ -543,64 +489,6 @@ export default function Home() {
       }
     },
     [toast]
-  );
-
-  const handlePayDebt = useCallback(
-    async (
-      clientId: string,
-      amount: number,
-      paymentMethod: PaymentMethod
-    ): Promise<void> => {
-      const client = clients.find((c) => c.id === clientId);
-      if (!client) {
-        toast({ variant: "destructive", title: "Cliente não encontrado." });
-        throw new Error("Client not found");
-      }
-
-      if (amount <= 0) {
-        toast({ variant: "destructive", title: "Valor inválido." });
-        throw new Error("Invalid amount");
-      }
-
-      const newDebt = client.debt - amount;
-      if (newDebt < 0) {
-         toast({ variant: "destructive", title: "Valor excede a dívida.", description: `O cliente deve apenas ${client.debt}` });
-         throw new Error("Amount exceeds debt");
-      }
-
-      const batch = writeBatch(db);
-
-      // 1. Update client's debt
-      const clientRef = doc(db, "clients", clientId);
-      batch.update(clientRef, { debt: newDebt });
-
-      // 2. Add transaction for the cash entry
-      const transaction: Omit<CashTransaction, "id"> = {
-        date: new Date(),
-        type: "debtPayment",
-        description: `Pagamento de dívida - ${client.name}`,
-        amount: amount,
-        paymentMethod: paymentMethod,
-      };
-      const transactionRef = doc(collection(db, "transactions"));
-      batch.set(transactionRef, transaction);
-      
-      try {
-        await batch.commit();
-        toast({
-          title: "Pagamento recebido!",
-          description: `${new Intl.NumberFormat("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          }).format(amount)} recebido de ${client.name}.`
-        });
-      } catch (error) {
-        console.error("Error processing debt payment: ", error);
-        toast({ variant: "destructive", title: "Erro ao processar pagamento" });
-        throw error;
-      }
-    },
-    [toast, clients]
   );
 
   const handleAddTransaction = useCallback(
@@ -715,7 +603,6 @@ export default function Home() {
             <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6">
               <SalesCart
                 items={cartItems}
-                clients={clients}
                 onUpdateQuantity={handleUpdateQuantity}
                 onRemoveItem={handleRemoveItem}
                 onFinalizeSale={handleFinalizeSale}
@@ -741,26 +628,21 @@ export default function Home() {
           <ClientList
             clients={clients}
             onAddClient={handleAddClient}
-            onPayDebt={handlePayDebt}
             isLoading={isLoading}
           />
         );
       case "vendas":
-        return <SalesHistoryComponent sales={allSalesForHistory} />;
+        return <SalesHistoryComponent sales={salesHistory} />;
       case "contratos":
         return <ContractsPage clients={clients} />;
       case "fechamento":
         return (
           <CashClosing
             sales={salesHistory}
-            fiadoSales={fiadoSales}
             expenses={expenses}
             cashEntries={cashEntries}
-            debtPayments={debtPayments}
-            clients={clients}
             onAddTransaction={handleAddTransaction}
             onCloseDay={handleCloseDay}
-            onPayDebt={handlePayDebt}
           />
         );
       case "relatorios":

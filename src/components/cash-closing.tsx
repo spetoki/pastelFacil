@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { Sale, CashTransaction, DailyClosure, Client, PaymentMethod } from "@/lib/types";
+import type { Sale, CashTransaction, DailyClosure, PaymentMethod } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -49,13 +49,10 @@ import {
   CircleDollarSign,
   CreditCard,
   Landmark,
-  Wallet,
   DollarSign,
   Calculator,
-  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PayDebtDialog } from "./pay-debt-dialog";
 import {
   Select,
   SelectContent,
@@ -68,17 +65,13 @@ import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 type CashClosingProps = {
   sales: Sale[];
-  fiadoSales: Sale[];
   expenses: CashTransaction[];
   cashEntries: CashTransaction[];
-  debtPayments: CashTransaction[];
-  clients: Client[];
   onAddTransaction: (
     type: "expense" | "cashEntry",
     values: { description: string; amount: number, paymentMethod?: PaymentMethod }
   ) => Promise<void>;
   onCloseDay: (closureData: Omit<DailyClosure, 'id' | 'date'>) => Promise<void>;
-  onPayDebt: (clientId: string, amount: number, paymentMethod: PaymentMethod) => Promise<void>;
 };
 
 const formatCurrency = (value: number) => {
@@ -112,20 +105,14 @@ const paymentOptions: { value: PaymentMethod; label: string, icon: React.FC<any>
 
 export function CashClosing({
   sales,
-  fiadoSales,
   expenses,
   cashEntries,
-  debtPayments,
-  clients,
   onAddTransaction,
   onCloseDay,
-  onPayDebt
 }: CashClosingProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClosingDay, setIsClosingDay] = useState(false);
   const [isConferenceOpen, setIsConferenceOpen] = useState(false);
-  const [isPayDebtOpen, setIsPayDebtOpen] = useState(false);
-  const [selectedClientForPayment, setSelectedClientForPayment] = useState<Client | undefined>();
   const [countedAmount, setCountedAmount] = useState(0);
 
   const form = useForm<TransactionFormValues>({
@@ -162,14 +149,6 @@ export function CashClosing({
         combinedTotalByPaymentMethod[method] = (shiftSalesTotalByPayment[method] || 0) + (cashEntryTotalByPayment[method] || 0);
     });
 
-    // Total for fiado sales for the whole day
-    const totalFiadoToday = fiadoSales.reduce((sum, sale) => sum + sale.total, 0);
-
-    const totalByPaymentMethod = {
-      ...combinedTotalByPaymentMethod,
-      "Fiado": totalFiadoToday,
-    }
-
     const totalExpenses = expenses.reduce(
       (sum, exp) => sum + exp.amount,
       0
@@ -179,39 +158,25 @@ export function CashClosing({
       (sum, entry) => sum + entry.amount,
       0
     );
-    const totalDebtPayments = debtPayments.reduce(
-      (sum, entry) => sum + entry.amount,
-      0
-    );
     
-    // Total revenue of the shift (doesn't include fiado)
-    const totalRevenue = Object.entries(combinedTotalByPaymentMethod)
-        .reduce((sum, [method, total]) => {
-            if (method !== 'Fiado') {
-                return sum + total;
-            }
-            return sum;
-        }, 0);
+    // Total revenue of the shift
+    const totalRevenue = Object.values(combinedTotalByPaymentMethod).reduce((sum, total) => sum + total, 0);
 
 
     // Revenue for cash closing (only what came in during the shift)
     const revenueForClosure = totalRevenue;
 
-    const expectedInCash = (combinedTotalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries + totalDebtPayments - totalExpenses;
-
-    const fiadoBalanceToday = totalFiadoToday - totalDebtPayments;
+    const expectedInCash = (combinedTotalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries - totalExpenses;
 
     return {
-      totalByPaymentMethod,
+      totalByPaymentMethod: combinedTotalByPaymentMethod,
       totalExpenses,
       totalCashEntries,
-      totalDebtPayments,
       totalRevenue,
       revenueForClosure,
       expectedInCash,
-      fiadoBalanceToday
     };
-  }, [sales, fiadoSales, expenses, cashEntries, debtPayments]);
+  }, [sales, expenses, cashEntries]);
 
   const handleFormSubmit = async (type: "expense" | "cashEntry", values: TransactionFormValues) => {
       setIsSubmitting(true);
@@ -231,18 +196,14 @@ export function CashClosing({
   const handleConfirmCloseDay = async () => {
     setIsClosingDay(true);
     try {
-      // The full revenue for the report includes shift sales + fiado sales for the day
-      const fullTotalRevenue = Object.values(dailyData.totalByPaymentMethod).reduce((sum, total) => sum + total, 0);
-
       await onCloseDay({
-        totalRevenue: fullTotalRevenue,
+        totalRevenue: dailyData.totalRevenue,
         totalByPaymentMethod: dailyData.totalByPaymentMethod,
         totalExpenses: dailyData.totalExpenses,
         totalCashEntries: dailyData.totalCashEntries,
-        totalDebtPayments: dailyData.totalDebtPayments,
         expectedInCash: dailyData.expectedInCash,
         countedAmount,
-        difference: countedAmount - dailyData.revenueForClosure,
+        difference: countedAmount - dailyData.expectedInCash,
       });
       setIsConferenceOpen(false);
       setCountedAmount(0);
@@ -253,24 +214,7 @@ export function CashClosing({
     }
   }
 
-  const handleSelectClientForPayment = (clientId: string) => {
-    const client = clients.find(c => c.id === clientId);
-    setSelectedClientForPayment(client);
-  }
-
-  const handleOpenPayDebtDialog = () => {
-    if (selectedClientForPayment) {
-      setIsPayDebtOpen(true);
-    }
-  }
-  
-  const handlePayDebtDialogClose = () => {
-      setIsPayDebtOpen(false);
-      // Timeout to avoid seeing client change before dialog closes
-      setTimeout(() => setSelectedClientForPayment(undefined), 100);
-  }
-
-  const difference = countedAmount - dailyData.revenueForClosure;
+  const difference = countedAmount - dailyData.expectedInCash;
 
   return (
     <>
@@ -299,20 +243,10 @@ export function CashClosing({
               value={dailyData.totalByPaymentMethod["Cartão"] || 0}
               icon={CreditCard}
             />
-             <FinancialCard
-              title="Balanço (Fiado - Dia)"
-              value={dailyData.fiadoBalanceToday}
-              icon={User}
-            />
             <FinancialCard
               title="Entradas (Avulso)"
               value={dailyData.totalCashEntries}
               icon={ArrowUpCircle}
-            />
-            <FinancialCard
-              title="Recebimentos (Fiado)"
-              value={dailyData.totalDebtPayments}
-              icon={Wallet}
             />
             <FinancialCard
               title="Despesas / Retiradas"
@@ -353,15 +287,6 @@ export function CashClosing({
             </CardContent>
           </Card>
         </div>
-         <Card>
-            <CardHeader>
-                <CardTitle>Recebimentos de Fiado</CardTitle>
-                <CardDescription>Pagamentos de dívidas recebidos neste turno.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <TransactionTable transactions={debtPayments} />
-            </CardContent>
-        </Card>
       </div>
 
       <div className="space-y-6">
@@ -384,33 +309,17 @@ export function CashClosing({
                   <DialogHeader>
                     <DialogTitle>Conferência de Fechamento</DialogTitle>
                     <DialogDescription>
-                      Confira os valores com base no faturamento do turno (sem fiado).
+                      Confira os valores em dinheiro com base nas movimentações do turno.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4 space-y-4">
                     <div className="flex justify-between items-center bg-muted p-3 rounded-md">
-                      <span className="font-medium">Faturamento do Turno para Conferência</span>
-                      <span className="font-bold text-lg">{formatCurrency(dailyData.revenueForClosure)}</span>
+                      <span className="font-medium">Valor Esperado em Caixa</span>
+                      <span className="font-bold text-lg">{formatCurrency(dailyData.expectedInCash)}</span>
                     </div>
-
-                     <div className="grid grid-cols-3 gap-2 text-sm text-center">
-                        <div>
-                            <p className="text-muted-foreground">Dinheiro</p>
-                            <p className="font-medium">{formatCurrency(dailyData.totalByPaymentMethod['Dinheiro'] || 0)}</p>
-                        </div>
-                        <div>
-                            <p className="text-muted-foreground">Pix</p>
-                            <p className="font-medium">{formatCurrency(dailyData.totalByPaymentMethod['Pix'] || 0)}</p>
-                        </div>
-                        <div>
-                            <p className="text-muted-foreground">Cartão</p>
-                            <p className="font-medium">{formatCurrency(dailyData.totalByPaymentMethod['Cartão'] || 0)}</p>
-                        </div>
-                    </div>
-                    <Separator/>
 
                      <div className="space-y-2">
-                       <Label htmlFor="counted-amount">Valor para Conferência (R$)</Label>
+                       <Label htmlFor="counted-amount">Valor Contado em Caixa (R$)</Label>
                        <Input
                          id="counted-amount"
                          type="number"
@@ -440,43 +349,6 @@ export function CashClosing({
                 </DialogContent>
               </Dialog>
            </CardContent>
-        </Card>
-      
-        <Card>
-          <CardHeader>
-            <CardTitle>Ações do Cliente</CardTitle>
-            <CardDescription>Receba pagamentos de dívidas de clientes.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="client-select-payment">Selecionar Cliente</Label>
-               <Select onValueChange={handleSelectClientForPayment} value={selectedClientForPayment?.id}>
-                  <SelectTrigger id="client-select-payment">
-                    <SelectValue placeholder="Escolha um cliente para pagar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.filter(c => c.debt > 0).length > 0 ? (
-                      clients.filter(c => c.debt > 0).map(client => (
-                        <SelectItem key={client.id} value={client.id}>
-                          <div className="flex justify-between w-full">
-                            <span>{client.name}</span>
-                            <span className="text-muted-foreground">{formatCurrency(client.debt)}</span>
-                          </div>
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-sm text-muted-foreground">
-                        Nenhum cliente com dívidas.
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-            </div>
-             <Button className="w-full" onClick={handleOpenPayDebtDialog} disabled={!selectedClientForPayment}>
-                <Wallet className="mr-2"/>
-                Receber Pagamento Fiado
-            </Button>
-          </CardContent>
         </Card>
 
         <Card>
@@ -570,14 +442,6 @@ export function CashClosing({
         </Card>
       </div>
     </div>
-    {selectedClientForPayment && (
-       <PayDebtDialog
-          isOpen={isPayDebtOpen}
-          onOpenChange={handlePayDebtDialogClose}
-          client={selectedClientForPayment}
-          onPayDebt={onPayDebt}
-       />
-    )}
     </>
   );
 }

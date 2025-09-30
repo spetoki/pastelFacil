@@ -1,10 +1,10 @@
 "use client";
 
-import type { CartItem, Client, PaymentMethod } from "@/lib/types";
+import type { CartItem, PaymentMethod } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Barcode, Minus, Plus, ShoppingCart, Trash2, CreditCard, Landmark, CircleDollarSign, User, FileSignature } from "lucide-react";
+import { Barcode, Minus, Plus, ShoppingCart, Trash2, CreditCard, Landmark, CircleDollarSign } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -15,26 +15,16 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 type SalesCartProps = {
   items: CartItem[];
-  clients: Client[];
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onFinalizeSale: (
     paymentMethod: PaymentMethod,
-    clientId?: string,
     overrideTotal?: number,
   ) => Promise<void>;
   onAddByBarcode: (barcode: string) => boolean;
@@ -49,7 +39,6 @@ const formatCurrency = (value: number) => {
 
 export function SalesCart({
   items,
-  clients,
   onUpdateQuantity,
   onRemoveItem,
   onFinalizeSale,
@@ -58,9 +47,7 @@ export function SalesCart({
   const [barcode, setBarcode] = useState("");
   const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Dinheiro");
-  const [selectedClientId, setSelectedClientId] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
   
   const [manualTotal, setManualTotal] = useState<number | undefined>();
 
@@ -80,7 +67,6 @@ export function SalesCart({
   useEffect(() => {
     if (!isFinalizeDialogOpen) {
       setPaymentMethod("Dinheiro");
-      setSelectedClientId(undefined);
     }
   }, [isFinalizeDialogOpen]);
 
@@ -96,17 +82,8 @@ export function SalesCart({
   };
 
   const handleConfirmSale = async () => {
-     if (paymentMethod === "Fiado" && !selectedClientId) {
-      toast({
-        variant: "destructive",
-        title: "Cliente não selecionado",
-        description: "Por favor, selecione um cliente para vendas em fiado.",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
-    await onFinalizeSale(paymentMethod, selectedClientId, total);
+    await onFinalizeSale(paymentMethod, total);
     setIsSubmitting(false);
     setIsFinalizeDialogOpen(false);
     setManualTotal(undefined);
@@ -116,7 +93,6 @@ export function SalesCart({
     { value: "Dinheiro", label: "Dinheiro", icon: CircleDollarSign },
     { value: "Pix", label: "Pix", icon: Landmark },
     { value: "Cartão", label: "Cartão", icon: CreditCard },
-    { value: "Fiado", label: "Fiado", icon: User },
   ];
 
   return (
@@ -254,14 +230,9 @@ export function SalesCart({
                   <RadioGroup
                     value={paymentMethod}
                     onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
-                    className="grid grid-cols-2 gap-4"
+                    className="grid grid-cols-3 gap-4"
                   >
-                    {paymentOptions.map((option) => {
-                      const isFiado = option.value === "Fiado";
-                      const noClients = clients.length === 0;
-                      const isDisabled = isFiado && noClients;
-
-                      return (
+                    {paymentOptions.map((option) => (
                         <Label
                           key={option.value}
                           htmlFor={option.value}
@@ -270,49 +241,21 @@ export function SalesCart({
                             {
                               "border-primary": paymentMethod === option.value,
                               "border-muted": paymentMethod !== option.value,
-                              "hover:bg-accent/50 hover:text-accent-foreground cursor-pointer":
-                                !isDisabled,
-                              "opacity-50 cursor-not-allowed": isDisabled,
+                              "hover:bg-accent/50 hover:text-accent-foreground cursor-pointer": true,
                             }
                           )}
-                          title={isDisabled ? "Cadastre um cliente para usar esta opção" : ""}
                         >
                           <RadioGroupItem
                             value={option.value}
                             id={option.value}
                             className="sr-only"
-                            disabled={isDisabled}
                           />
                           <option.icon className="h-6 w-6" />
                           <span>{option.label}</span>
                         </Label>
-                      );
-                    })}
+                      )
+                    )}
                   </RadioGroup>
-
-                  {paymentMethod === "Fiado" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="client-select">Selecionar Cliente</Label>
-                      <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                          <SelectTrigger id="client-select">
-                            <SelectValue placeholder="Escolha um cliente" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {clients.length > 0 ? (
-                              clients.map(client => (
-                                <SelectItem key={client.id} value={client.id}>
-                                  {client.name}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <div className="p-4 text-center text-sm text-muted-foreground">
-                                Nenhum cliente cadastrado.
-                              </div>
-                            )}
-                          </SelectContent>
-                        </Select>
-                    </div>
-                  )}
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>

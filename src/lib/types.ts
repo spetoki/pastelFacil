@@ -21,7 +21,7 @@ export type SaleItem = {
   quantity: number;
 };
 
-export type PaymentMethod = "Dinheiro" | "Pix" | "Cartão" | "Fiado";
+export type PaymentMethod = "Dinheiro" | "Pix" | "Cartão";
 
 export type Sale = {
   id: string;
@@ -44,7 +44,7 @@ export type CashTransaction = {
   description: string;
   amount: number;
   date: Date;
-  type?: "expense" | "cashEntry" | "debtPayment";
+  type?: "expense" | "cashEntry";
   paymentMethod?: PaymentMethod;
 };
 
@@ -64,7 +64,6 @@ export type DailyClosure = {
   totalByPaymentMethod: Record<string, number>;
   totalExpenses: number;
   totalCashEntries: number;
-  totalDebtPayments: number;
   expectedInCash: number;
   countedAmount: number;
   difference: number;

@@ -55,7 +55,7 @@ export function SalesHistory({ sales }: SalesHistoryProps) {
                 <span className="text-sm text-muted-foreground">{formatDate(sale.date)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline">{sale.paymentMethod}{sale.clientName ? `: ${sale.clientName}`: ''}</Badge>
+                <Badge variant="outline">{sale.paymentMethod}</Badge>
                 <Badge>{formatCurrency(sale.total)}</Badge>
               </div>
             </div>
