@@ -6,58 +6,114 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CalculatorIcon } from "lucide-react";
 
+type Operator = "+" | "-" | "x" | "÷";
+
 export function Calculator() {
-  const [input, setInput] = useState("");
-  const [result, setResult] = useState<number | string>("");
+  const [currentValue, setCurrentValue] = useState("0");
+  const [previousValue, setPreviousValue] = useState<string | null>(null);
+  const [operator, setOperator] = useState<Operator | null>(null);
+  const [isNewEntry, setIsNewEntry] = useState(true);
 
-  // Function to safely evaluate mathematical expressions
-  const safeEval = (expr: string): number => {
-    // Replace user-friendly symbols with JavaScript Math functions
-    let safeExpr = expr
-      .replace(/x/g, '*')
-      .replace(/÷/g, '/')
-      .replace(/π/g, 'Math.PI')
-      .replace(/\^/g, '**')
-      // Handle square root
-      .replace(/√\(([^)]+)\)/g, 'Math.sqrt($1)')
-      // Handle trig and log functions
-      .replace(/sin\(([^)]+)\)/g, 'Math.sin(Math.PI / 180 * $1)') // Assuming degrees
-      .replace(/cos\(([^)]+)\)/g, 'Math.cos(Math.PI / 180 * $1)') // Assuming degrees
-      .replace(/tan\(([^)]+)\)/g, 'Math.tan(Math.PI / 180 * $1)') // Assuming degrees
-      .replace(/ln\(([^)]+)\)/g, 'Math.log($1)');
+  const calculate = () => {
+    if (!previousValue || !operator) return parseFloat(currentValue);
 
-    // Use a Function constructor for safer evaluation than direct eval()
-    return new Function('return ' + safeExpr)();
+    const prev = parseFloat(previousValue);
+    const current = parseFloat(currentValue);
+
+    switch (operator) {
+      case "+":
+        return prev + current;
+      case "-":
+        return prev - current;
+      case "x":
+        return prev * current;
+      case "÷":
+        return prev / current;
+      default:
+        return current;
+    }
   };
 
-  const handleButtonClick = (value: string) => {
-    if (value === "C") {
-      setInput("");
-      setResult("");
-    } else if (value === "=") {
-      if (!input) return;
-      try {
-        const evalResult = safeEval(input);
-        setResult(evalResult);
-        setInput(String(evalResult));
-      } catch (error) {
-        setResult("Erro");
-      }
-    } else if (value === "Del") {
-      setInput((prev) => prev.slice(0, -1));
+  const handleNumberClick = (value: string) => {
+    if (isNewEntry) {
+      setCurrentValue(value);
+      setIsNewEntry(false);
     } else {
-      setInput((prev) => prev + value);
+      if (currentValue === "0" && value !== ".") {
+        setCurrentValue(value);
+      } else if (value === "." && currentValue.includes(".")) {
+        return; // No duplicate dots
+      } else {
+        setCurrentValue((prev) => prev + value);
+      }
+    }
+  };
+
+  const handleOperatorClick = (op: Operator) => {
+    if (previousValue && operator && !isNewEntry) {
+      const result = calculate();
+      setPreviousValue(String(result));
+      setCurrentValue(String(result));
+    } else {
+      setPreviousValue(currentValue);
+    }
+    setOperator(op);
+    setIsNewEntry(true);
+  };
+
+  const handleEqualsClick = () => {
+    if (!previousValue || !operator) return;
+    const result = calculate();
+    setCurrentValue(String(result));
+    setPreviousValue(null);
+    setOperator(null);
+    setIsNewEntry(true);
+  };
+
+  const handlePercentageClick = () => {
+    const current = parseFloat(currentValue);
+    setCurrentValue(String(current / 100));
+  };
+  
+  const handleClearClick = (allClear: boolean = false) => {
+    if (allClear) {
+        setPreviousValue(null);
+        setOperator(null);
+    }
+    setCurrentValue("0");
+    setIsNewEntry(true);
+  };
+
+  const handleDeleteClick = () => {
+    if (currentValue.length > 1) {
+        setCurrentValue(prev => prev.slice(0, -1));
+    } else {
+        setCurrentValue("0");
+        setIsNewEntry(true);
     }
   };
 
   const buttons = [
-    "(", ")", "ln", "Del",
-    "sin", "cos", "tan", "π",
-    "7", "8", "9", "÷",
-    "4", "5", "6", "x",
-    "1", "2", "3", "-",
-    "0", ".", "^", "+",
-    "√(",
+    { label: "C", handler: () => handleClearClick(false), variant: "outline" as const, className: "" },
+    { label: "%", handler: handlePercentageClick, variant: "outline" as const, className: "" },
+    { label: "Del", handler: handleDeleteClick, variant: "outline" as const, className: "" },
+    { label: "÷", handler: () => handleOperatorClick("÷"), variant: "secondary" as const, className: "text-lg" },
+    { label: "7", handler: () => handleNumberClick("7"), variant: "outline" as const, className: "text-lg" },
+    { label: "8", handler: () => handleNumberClick("8"), variant: "outline" as const, className: "text-lg" },
+    { label: "9", handler: () => handleNumberClick("9"), variant: "outline" as const, className: "text-lg" },
+    { label: "x", handler: () => handleOperatorClick("x"), variant: "secondary" as const, className: "text-lg" },
+    { label: "4", handler: () => handleNumberClick("4"), variant: "outline" as const, className: "text-lg" },
+    { label: "5", handler: () => handleNumberClick("5"), variant: "outline" as const, className: "text-lg" },
+    { label: "6", handler: () => handleNumberClick("6"), variant: "outline" as const, className: "text-lg" },
+    { label: "-", handler: () => handleOperatorClick("-"), variant: "secondary" as const, className: "text-lg" },
+    { label: "1", handler: () => handleNumberClick("1"), variant: "outline" as const, className: "text-lg" },
+    { label: "2", handler: () => handleNumberClick("2"), variant: "outline" as const, className: "text-lg" },
+    { label: "3", handler: () => handleNumberClick("3"), variant: "outline" as const, className: "text-lg" },
+    { label: "+", handler: () => handleOperatorClick("+"), variant: "secondary" as const, className: "text-lg" },
+    { label: "AC", handler: () => handleClearClick(true), variant: "destructive" as const, className: "text-lg" },
+    { label: "0", handler: () => handleNumberClick("0"), variant: "outline" as const, className: "text-lg" },
+    { label: ".", handler: () => handleNumberClick("."), variant: "outline" as const, className: "text-lg" },
+    { label: "=", handler: handleEqualsClick, variant: "default" as const, className: "text-lg" },
   ];
 
   return (
@@ -65,39 +121,26 @@ export function Calculator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CalculatorIcon className="h-5 w-5" />
-          Calculadora Científica
+          Calculadora
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Input
           type="text"
           readOnly
-          value={input}
-          className="text-right text-2xl font-mono h-14"
+          value={currentValue}
+          className="text-right text-3xl font-mono h-16"
           placeholder="0"
         />
         <div className="grid grid-cols-4 gap-2">
-          <Button
-            variant="outline"
-            className="col-span-3"
-            onClick={() => handleButtonClick("C")}
-          >
-            Limpar (C)
-          </Button>
-           <Button
-            variant="destructive"
-            onClick={() => handleButtonClick("=")}
-          >
-            =
-          </Button>
           {buttons.map((btn) => (
             <Button
-              key={btn}
-              variant="outline"
-              className="h-12 text-lg"
-              onClick={() => handleButtonClick(btn)}
+              key={btn.label}
+              variant={btn.variant}
+              className={`h-14 text-xl ${btn.className}`}
+              onClick={btn.handler}
             >
-              {btn}
+              {btn.label}
             </Button>
           ))}
         </div>
