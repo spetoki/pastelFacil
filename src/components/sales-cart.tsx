@@ -28,6 +28,7 @@ type SalesCartProps = {
     overrideTotal?: number,
   ) => Promise<void>;
   onAddByBarcode: (barcode: string) => boolean;
+  children?: React.ReactNode;
 };
 
 const formatCurrency = (value: number) => {
@@ -43,6 +44,7 @@ export function SalesCart({
   onRemoveItem,
   onFinalizeSale,
   onAddByBarcode,
+  children,
 }: SalesCartProps) {
   const [barcode, setBarcode] = useState("");
   const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = useState(false);
@@ -269,6 +271,7 @@ export function SalesCart({
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            {children}
           </div>
         )}
       </div>

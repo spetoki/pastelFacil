@@ -606,8 +606,11 @@ export default function Home() {
                 onRemoveItem={handleRemoveItem}
                 onFinalizeSale={handleFinalizeSale}
                 onAddByBarcode={handleAddByBarcode}
-              />
-              <Calculator />
+              >
+                <div className="mt-6">
+                  <Calculator />
+                </div>
+              </SalesCart>
             </div>
           </div>
         );
