@@ -240,7 +240,11 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <p><strong>Cláusula 2ª.</strong> As mudas deverão ser RETIRADAS NO VIVEIRO após a avaliação e concordância do CONTRATANTE, devendo as mesmas estar em boas condições de desenvolvimento e sanidade, soldadura do porta enxerto consolidada, folhas maduras e expandidas em número não inferior a 3 pares.</p>
           <p><strong>Cláusula 3ª.</strong> As mudas na entrega deverão estar separadas conforme o clone, em perfeito estado para plantio e livres de doenças ou pragas que prejudiquem seu desenvolvimento.</p>
           <p><strong>Cláusula 4ª.</strong> A entrega das mudas se realizará a partir de ${values.dataEntregaInicio} até a data limite de ${values.dataEntregaFim}, de acordo ordem de pedidos, e de forma acordada entre o CONTRATANTE e CONTRATADO, o qual deverá agendar com antecedência de 5 dias a retirada junto ao CONTRATADO.</p>
-          <p><strong>Cláusula 5ª.</strong> O CONTRATADO não se responsabilizará por atraso na entrega caso este seja ocasionado por força maior.</p>
+          
+          <p class="clausula-title">CLÁUSULA 5ª – DO ATRASO POR FORÇA MAIOR</p>
+          <p>Não será considerada inadimplência da CONTRATADA o atraso na entrega das mudas quando decorrente de força maior ou caso fortuito, compreendendo-se como tais os eventos imprevisíveis ou inevitáveis, tais como catástrofes naturais, pragas, epidemias, incêndios, enchentes, acidentes, greves, restrições governamentais ou quaisquer outros fatos alheios à vontade da CONTRATADA.</p>
+          <p>Nessas hipóteses, a CONTRATADA terá o prazo máximo de 6 (seis) meses, contados da data originalmente prevista para a entrega, para regularizar a situação e efetuar a entrega das mudas pendentes, sem que isso gere penalidades, desde que o CONTRATANTE seja devidamente comunicado e informado sobre a ocorrência e a nova previsão de entrega.</p>
+          
           <p><strong>Cláusula 6ª.</strong> Caso as mudas sejam entregues, não respeitando as especificações previstas na Cláusula 2ª, serão devolvidas ao CONTRATADO, devendo este repô-las por outras que atendam às especificações.</p>
           <p><strong>Cláusula 7ª.</strong> Correrão por conta do CONTRATANTE as despesas com o transporte na entrega das mudas, devendo ser feita em veículo que comporte adequadamente a fim de evitar danos e prejuízos no pegamento das mudas.</p>
 
@@ -254,8 +258,18 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <p class="clausula-title">DO PRAZO</p>
           <p><strong>Cláusula 11ª.</strong> O presente instrumento terá prazo de ${values.prazoContratoMeses} meses, passando a valer a partir da assinatura pelas partes.</p>
           
-          <p class="clausula-title">DO FORO</p>
-          <p><strong>Cláusula 12ª.</strong> Para dirimir quaisquer controvérsias oriundas do CONTRATO, as partes elegem o foro da comarca de ${values.contractCity};</p>
+          <p class="clausula-title">CLÁUSULA 12ª – DA RESCISÃO CONTRATUAL</p>
+          <p>Na hipótese de rescisão total do presente contrato, por iniciativa de qualquer das partes, será aplicada ao responsável pela quebra contratual uma multa de 10% (dez por cento) sobre o valor total remanescente do contrato a ser pago na data da rescisão.</p>
+          <p>Além da multa rescisória, incidirão também:</p>
+          <ul>
+            <li>Juros de 1% (um por cento) ao mês;</li>
+            <li>Correção monetária pelo índice oficial vigente;</li>
+            <li>Multa de mora de 2% (dois por cento);</li>
+          </ul>
+          <p>nos termos do Código de Defesa do Consumidor (Lei nº 8.078/1990).</p>
+          
+          <p class="clausula-title">CLÁUSULA 13ª – DO FORO</p>
+          <p>Para dirimir quaisquer controvérsias oriundas do CONTRATO, as partes elegem o foro da comarca de ${values.contractCity};</p>
           
           <p class="no-indent" style="margin-top: 30px;">Por estarem assim justos e contratados, firmam o presente instrumento, em duas vias de igual teor, juntamente com 2 (duas) testemunhas.</p>
           
@@ -550,6 +564,8 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     </Card>
   );
 }
+
+    
 
     
 
