@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "./ui/input";
 import { deleteAllData, resetFiadoData } from "@/lib/db-utils";
+import { ImageOff } from "lucide-react";
 
 type Theme = "light" | "dark";
 
@@ -70,6 +71,17 @@ export function Settings() {
     });
   };
   
+    const handleRestoreBanner = () => {
+        localStorage.removeItem("customBannerImage");
+        toast({
+            title: "Banner Restaurado",
+            description: "O banner padrão foi restaurado. A alteração será visível ao recarregar a página."
+        });
+         setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+    }
+
   const handleResetApp = async () => {
     if (pin !== "2209") {
         toast({
@@ -167,6 +179,15 @@ export function Settings() {
               onCheckedChange={handleThemeChange}
             />
           </div>
+          <div>
+            <Label>Banner da Tela de Retiradas</Label>
+            <div className="flex items-center gap-2 mt-2">
+                <Button variant="outline" onClick={handleRestoreBanner}>
+                    <ImageOff className="mr-2"/>
+                    Restaurar Banner Padrão
+                </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -253,5 +274,3 @@ export function Settings() {
     </div>
   );
 }
-
-    

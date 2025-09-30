@@ -22,7 +22,7 @@ import { ClonesImage } from "./clones-image";
 type ProductListProps = {
   products: Product[];
   onAddProductToCart: (product: Product) => void;
-  onAddProduct?: (values: ProductFormValues) => Promise<void>;
+  onAddProduct?: (values: Omit<ProductFormValues, 'type'>) => Promise<void>;
   isLoading: boolean;
   showAddProductButton?: boolean;
 };
