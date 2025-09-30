@@ -269,7 +269,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <p>nos termos do Código de Defesa do Consumidor (Lei nº 8.078/1990).</p>
           
           <p class="clausula-title">CLÁUSULA 13ª – DO FORO</p>
-          <p>Para dirimir quaisquer controvérsias oriundas do CONTRATO, as partes elegem o foro da comarca de ${values.contractCity};</p>
+          <p>Para dirimir quaisquer controvérsias oriundas do CONTRATO, as partes elegem o foro da comarca de Cacoal – Rondônia;</p>
           
           <p class="no-indent" style="margin-top: 30px;">Por estarem assim justos e contratados, firmam o presente instrumento, em duas vias de igual teor, juntamente com 2 (duas) testemunhas.</p>
           
@@ -564,6 +564,8 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     </Card>
   );
 }
+
+    
 
     
 
