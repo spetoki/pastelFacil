@@ -71,21 +71,18 @@ export function ProductList({
 
       <ClonesImage />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="flex flex-col gap-3">
         {isLoading ? (
             Array.from({ length: 8 }).map((_, i) => (
-              <Card key={i} className="flex flex-col overflow-hidden">
-                <CardHeader className="p-4">
-                  <Skeleton className="h-6 w-3/4" />
-                </CardHeader>
-                <CardContent className="p-4 pt-0 flex-1">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-1/2 mt-2" />
-                </CardContent>
-                <CardFooter className="p-4 flex justify-between items-center">
-                  <Skeleton className="h-7 w-20" />
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                </CardFooter>
+              <Card key={i} className="flex items-center p-3">
+                 <div className="flex-1 space-y-1">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                 </div>
+                 <div className="flex items-center gap-4">
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-9 w-9 rounded-md" />
+                 </div>
               </Card>
             ))
         ) : filteredProducts.length > 0 ? (
@@ -94,26 +91,20 @@ export function ProductList({
             return (
               <Card
                 key={product.id}
-                className={`flex flex-col overflow-hidden transition-shadow hover:shadow-lg ${outOfStock ? 'opacity-50' : ''}`}
+                className={`flex items-center p-3 transition-shadow hover:shadow-md ${outOfStock ? 'opacity-50' : ''}`}
               >
-                <CardHeader className="p-4 relative">
-                  <CardTitle className="text-lg font-headline">
-                    {product.name}
-                  </CardTitle>
-                  <div className="absolute top-2 right-2 flex gap-1">
+                <div className="flex-1">
+                    <p className="font-semibold">{product.name}</p>
+                    <p className="text-sm text-muted-foreground">{product.description || 'Sem descrição'}</p>
+                     <div className="flex gap-1 mt-1">
                       {outOfStock && (
                         <Badge variant="destructive">Esgotado</Badge>
                       )}
                       <Badge variant="secondary">{product.stock} em estoque</Badge>
                   </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 flex-1">
-                  <CardDescription className="text-sm mt-1 h-10">
-                    {product.description}
-                  </CardDescription>
-                </CardContent>
-                <CardFooter className="p-4 flex justify-between items-center">
-                  <p className="font-semibold text-lg">
+                </div>
+                <div className="flex items-center gap-4">
+                  <p className="font-semibold text-lg w-24 text-right">
                     {formatCurrency(product.price)}
                   </p>
                   <Button
@@ -124,7 +115,7 @@ export function ProductList({
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
-                </CardFooter>
+                </div>
               </Card>
             );
           })
