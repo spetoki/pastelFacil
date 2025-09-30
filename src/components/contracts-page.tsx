@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { Client } from "@/lib/types";
@@ -30,37 +30,41 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { FileSignature } from "lucide-react";
+import { FileSignature, PlusCircle, Trash } from "lucide-react";
 
 type ContractsPageProps = {
   clients: Client[];
 };
 
 const contractSchema = z.object({
-  sellerName: z.string().default("Sandra Bartnik"),
-  sellerCpf: z.string().default("123.456.789-00 (fictício)"),
-  sellerRg: z.string().default("1.234.567 SSP/EX (fictício)"),
-  sellerAddress: z.string().default("Rua das Flores, nº 100, Bairro Jardim, Cidade Exemplo, Estado EX, CEP 00000-000 (fictício)"),
-  buyerId: z.string().min(1, { message: "Selecione um comprador." }),
-  objectVariety: z.string().min(2, { message: "A variedade é obrigatória." }),
-  objectQuantity: z.coerce.number().positive(),
-  objectHeight: z.coerce.number().positive(),
-  objectAge: z.coerce.number().positive(),
-  objectCondition: z.string().default("mudas em saquinhos, prontas para plantio, livres de pragas e em padrão fitossanitário adequado."),
-  priceTotal: z.coerce.number().positive(),
-  priceUnit: z.coerce.number().positive(),
-  paymentSignal: z.coerce.number().min(0),
-  paymentRest: z.coerce.number().min(0),
-  deliveryAddress: z.string().min(5, { message: "O endereço de entrega é obrigatório." }),
-  deliveryDeadline: z.coerce.number().positive(),
-  warrantyDays: z.coerce.number().positive().default(15),
-  breachPenalty: z.coerce.number().positive().default(10),
-  contractDate: z.string(),
+  contratanteId: z.string().min(1, { message: "Selecione um contratante." }),
+  contratanteAddress: z.string().min(5, {message: "O endereço do contratante é obrigatório."}),
+
+  contratadoName: z.string().default("Viveiro Andurá"),
+  contratadoRepresentante: z.string().default("SANDRA RITA BARTNIK QUARESMA"),
+  contratadoRepresentanteId: z.string().default("680.584 SSP/RO"),
+  contratadoRepresentanteCpf: z.string().default("761.158.872-91"),
+  contratadoAddress: z.string().default("Avenida dos Lírios, nº 2793, bairro Embratel, Cep 76.966-294, Cidade Cacoal, no Estado de Rondônia"),
+  contratadoRenasem: z.string().default("RO-02010/2022"),
+  contratadoLocalizacao: z.string().default("Lh 13, Lote 29-B, Gleba 13, sentido Funai"),
+
+  clones: z.array(z.object({
+    name: z.string().min(2, { message: "Nome do clone obrigatório."}),
+    quantity: z.coerce.number().positive({ message: "Qtd. deve ser > 0"}),
+  })).min(1, { message: "Adicione pelo menos um clone."}),
+  
+  valorTotal: z.coerce.number().positive(),
+  valorUnitario: z.coerce.number().positive(),
+  dataEntregaInicio: z.string().default("dezembro 2025"),
+  dataEntregaFim: z.string().default("abril de 2026"),
+
+  prazoContratoMeses: z.coerce.number().positive().default(15),
+  
+  contractDate: z.string().min(1, { message: "A data do contrato é obrigatória."}),
   contractCity: z.string().min(2, { message: "A cidade é obrigatória." }),
-  witness1Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
-  witness1Cpf: z.string().min(11, { message: "O CPF da testemunha é obrigatório." }),
-  witness2Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
-  witness2Cpf: z.string().min(11, { message: "O CPF da testemunha é obrigatório." }),
+
+  testemunha1Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
+  testemunha2Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
 });
 
 type ContractFormValues = z.infer<typeof contractSchema>;
@@ -69,125 +73,135 @@ export function ContractsPage({ clients }: ContractsPageProps) {
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractSchema),
     defaultValues: {
-      sellerName: "Sandra Bartnik",
-      sellerCpf: "123.456.789-00 (fictício)",
-      sellerRg: "1.234.567 SSP/EX (fictício)",
-      sellerAddress: "Rua das Flores, nº 100, Bairro Jardim, Cidade Exemplo, Estado EX, CEP 00000-000 (dados fictícios)",
-      objectCondition: "mudas em saquinhos, prontas para plantio, livres de pragas e em padrão fitossanitário adequado.",
-      warrantyDays: 15,
-      breachPenalty: 10,
+      contratadoName: "Viveiro Andurá",
+      contratadoRepresentante: "SANDRA RITA BARTNIK QUARESMA",
+      contratadoRepresentanteId: "680.584 SSP/RO",
+      contratadoRepresentanteCpf: "761.158.872-91",
+      contratadoAddress: "Avenida dos Lírios, nº 2793, bairro Embratel, Cep 76.966-294, Cidade Cacoal, no Estado de Rondônia",
+      contratadoRenasem: "RO-02010/2022",
+      contratadoLocalizacao: "Lh 13, Lote 29-B, Gleba 13, sentido Funai",
+      dataEntregaInicio: "dezembro 2025",
+      dataEntregaFim: "abril de 2026",
+      prazoContratoMeses: 15,
+      clones: [{name: "", quantity: 0}],
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "clones",
+  });
+
   const handleGenerateContract = (values: ContractFormValues) => {
-    const buyer = clients.find((c) => c.id === values.buyerId);
-    if (!buyer) return;
+    const contratante = clients.find((c) => c.id === values.contratanteId);
+    if (!contratante) return;
+
+    const clonesHtml = values.clones.map(clone => `
+      <tr>
+        <td style="text-align: center; border: 1px solid black; padding: 5px;">${clone.quantity}</td>
+        <td style="text-align: center; border: 1px solid black; padding: 5px;">${clone.name}</td>
+      </tr>
+    `).join('');
+
+    const totalClones = values.clones.reduce((sum, clone) => sum + clone.quantity, 0);
 
     const contractHtml = `
       <html>
         <head>
-          <title>Contrato de Compra e Venda de Mudas de Cacau</title>
+          <title>Contrato de Fornecimento de Mudas Clonais de Cacau</title>
           <style>
-            body { font-family: 'Times New Roman', serif; line-height: 1.5; margin: 40px; }
-            h1 { text-align: center; font-size: 16px; }
-            p { text-indent: 2em; text-align: justify; margin-bottom: 1em;}
-            .clause { margin-bottom: 1em; }
-            .clause-title { font-weight: bold; }
-            .signatures { margin-top: 50px; }
-            .signature-line { border-top: 1px solid black; width: 300px; margin-top: 40px; text-align: center; }
+            body { font-family: 'Times New Roman', serif; line-height: 1.5; margin: 40px; font-size: 12pt; }
+            h1, h2 { text-align: center; font-size: 12pt; margin-bottom: 20px; text-transform: uppercase; font-weight: bold; }
+            p { text-indent: 2em; text-align: justify; margin-bottom: 1em; }
+            .no-indent { text-indent: 0; }
+            .clausula { margin-bottom: 1em; }
+            .clausula-title { font-weight: bold; text-align: center; text-indent: 0; margin-bottom: 0.5em;}
+            .signatures { margin-top: 50px; text-align: center; }
+            .signature-line { margin-top: 60px; display: inline-block; width: 45%; }
+            .signature-line-inner { border-top: 1px solid black; padding-top: 5px; }
           </style>
         </head>
         <body>
-          <h1>CONTRATO DE COMPRA E VENDA DE MUDAS DE CACAU</h1>
-          <p>Pelo presente instrumento particular de Contrato de Compra e Venda, de um lado:</p>
-          <p><strong>VENDEDORA:</strong> ${values.sellerName}, brasileira, solteira, produtora rural, portadora do CPF nº ${values.sellerCpf}, RG nº ${values.sellerRg}, residente e domiciliada à ${values.sellerAddress}.</p>
-          <p><strong>COMPRADOR:</strong> ${buyer.name}, brasileiro, casado, agricultor, portador do CPF nº ${buyer.cpf}, RG nº 7.654.321 SSP/EX (fictício), residente e domiciliado à ${buyer.address}.</p>
-          <p>As partes acima qualificadas têm entre si justo e contratado o que segue, que mutuamente aceitam e outorgam:</p>
-
-          <div class="clause">
-            <p class="clause-title">CLÁUSULA 1 — DO OBJETO</p>
-            <p>O presente contrato tem por objeto a compra e venda de mudas de cacau (Theobroma cacao), da variedade ${values.objectVariety}, com as seguintes especificações:</p>
-            <ul>
-              <li>Quantidade: ${values.objectQuantity} mudas;</li>
-              <li>Altura média: ${values.objectHeight} cm;</li>
-              <li>Idade: ${values.objectAge} dias;</li>
-              <li>Condição: ${values.objectCondition}.</li>
-            </ul>
-          </div>
-
-          <div class="clause">
-            <p class="clause-title">CLÁUSULA 2 — DO PREÇO E FORMA DE PAGAMENTO</p>
-            <p>O preço total ajustado é de R$ ${values.priceTotal.toFixed(2)} (correspondente a R$ ${values.priceUnit.toFixed(2)} por muda).</p>
-            <p>Forma de pagamento:<br/>
-            a) R$ ${values.paymentSignal.toFixed(2)} a título de sinal na assinatura deste contrato;<br/>
-            b) R$ ${values.paymentRest.toFixed(2)} no ato da entrega das mudas, via transferência bancária (PIX).</p>
-          </div>
+          <h2>CONTRATO DE FORNECIMENTO DE MUDAS CLONAIS DE CACAU</h2>
+          <h1>IDENTIFICAÇÃO DAS PARTES CONTRATANTES</h1>
           
-          <div class="clause">
-            <p class="clause-title">CLÁUSULA 3 — DA ENTREGA</p>
-            <p>A entrega das mudas será realizada no endereço do COMPRADOR, sito à ${values.deliveryAddress}, no prazo máximo de ${values.deliveryDeadline} dias corridos contados da assinatura deste contrato.</p>
-            <p>Os custos de transporte e frete ficam sob responsabilidade da VENDEDORA, já inclusos no preço total.</p>
-          </div>
+          <p>
+            <strong>CONTRATANTE:</strong> ${contratante.name}, brasileiro, Produtor Rural, C.P.F. nº ${contratante.cpf}, com endereço declarado: ${values.contratanteAddress};
+          </p>
 
-          <div class="clause">
-            <p class="clause-title">CLÁUSULA 4 — DA RESPONSABILIDADE E GARANTIA</p>
-            <p>4.1 A VENDEDORA declara que as mudas entregues estarão em condições normais de cultivo, livres de pragas e doenças aparentes.</p>
-            <p>4.2 A VENDEDORA garante a qualidade das mudas por ${values.warrantyDays} dias após a entrega, desde que mantidas em condições adequadas de plantio.</p>
-            <p>4.3 Não serão cobertas por garantia perdas ocasionadas por manejo inadequado, transporte indevido após a entrega, pragas ou doenças posteriores, fatores climáticos ou má conservação por parte do COMPRADOR.</p>
-          </div>
+          <p>
+            <strong>CONTRATADO:</strong> ${values.contratadoName} – Renasem nº ${values.contratadoRenasem} localizado na ${values.contratadoLocalizacao}, aqui representado por: ${values.contratadoRepresentante}, brasileira, casada, engenheira agrônoma e viveirista, Carteira de Identidade nº ${values.contratadoRepresentanteId}, C.P.F. nº ${values.contratadoRepresentanteCpf}, residente e domiciliada na ${values.contratadoAddress}.
+          </p>
           
-          <div class="clause">
-            <p class="clause-title">CLÁUSULA 5 — OBRIGAÇÕES DAS PARTES</p>
-            <p>a) VENDEDORA: fornecer as mudas conforme descrito, dentro do prazo acordado, e prestar orientações básicas de plantio, se solicitado.</p>
-            <p>b) COMPRADOR: efetuar o pagamento integral nas condições estipuladas, receber as mudas no prazo combinado e zelar pelo plantio e manejo após a entrega.</p>
-          </div>
-
-          <div class="clause">
-            <p class="clause-title">CLÁUSULA 6 — TRANSFERÊNCIA DE PROPRIEDADE</p>
-            <p>A propriedade das mudas será transferida ao COMPRADOR somente após a entrega e quitação integral do preço.</p>
-          </div>
+          <p class="no-indent">
+            As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Fornecimento de Mudas Clonais de Cacau Enxertadas, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente.
+          </p>
           
-          <div class="clause">
-            <p class="clause-title">CLÁUSULA 7 — RESCISÃO E MULTA</p>
-            <p>7.1 Em caso de inadimplemento contratual por qualquer das partes, a parte prejudicada poderá rescindir o contrato mediante notificação prévia de 90 (noventa) dias para regularização.</p>
-            <p>7.2 Caso a irregularidade não seja sanada dentro do prazo estipulado, o contrato será rescindido e a parte inadimplente deverá pagar à parte prejudicada multa equivalente a ${values.breachPenalty}% do valor restante do contrato, além de eventuais perdas e danos comprovados.</p>
-          </div>
+          <p class="clausula-title">DO OBJETO DO CONTRATO</p>
+          <p><strong>Cláusula 1ª.</strong> O presente contrato tem como OBJETO, o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau enxertado. Sendo dos Seguintes Clones e quantidades por clone:</p>
+          <table style="width: 50%; margin: 20px auto; border-collapse: collapse;">
+            <thead style="font-weight: bold;">
+              <tr>
+                <td style="text-align: center; border: 1px solid black; padding: 5px;">Quantidade</td>
+                <td style="text-align: center; border: 1px solid black; padding: 5px;">Clone</td>
+              </tr>
+            </thead>
+            <tbody>
+              ${clonesHtml}
+            </tbody>
+          </table>
 
-          <div class="clause">
-            <p class="clause-title">CLÁUSULA 8 — DISPOSIÇÕES GERAIS</p>
-            <p>8.1 Este contrato é firmado em caráter irrevogável e irretratável, obrigando herdeiros e sucessores.</p>
-            <p>8.2 Alterações somente terão validade se realizadas por escrito e assinadas por ambas as partes.</p>
-          </div>
+          <p class="clausula-title">DA ENTREGA</p>
+          <p><strong>Cláusula 2ª.</strong> As mudas deverão ser RETIRADAS NO VIVEIRO após a avaliação e concordância do CONTRATANTE, devendo as mesmas estar em boas condições de desenvolvimento e sanidade, soldadura do porta enxerto consolidada, folhas maduras e expandidas em número não inferior a 3 pares.</p>
+          <p><strong>Cláusula 3ª.</strong> As mudas na entrega deverão estar separadas conforme o clone, em perfeito estado para plantio e livres de doenças ou pragas que prejudiquem seu desenvolvimento.</p>
+          <p><strong>Cláusula 4ª.</strong> A entrega das mudas se realizará a partir de ${values.dataEntregaInicio} até a data limite de ${values.dataEntregaFim}, de acordo ordem de pedidos, e de forma acordada entre o CONTRATANTE e CONTRATADO, o qual deverá agendar com antecedência de 5 dias a retirada junto ao CONTRATADO.</p>
+          <p><strong>Cláusula 5ª.</strong> O CONTRATADO não se responsabilizará por atraso na entrega caso este seja ocasionado por força maior.</p>
+          <p><strong>Cláusula 6ª.</strong> Caso as mudas sejam entregues, não respeitando as especificações previstas na Cláusula 2ª, serão devolvidas ao CONTRATADO, devendo este repô-las por outras que atendam às especificações.</p>
+          <p><strong>Cláusula 7ª.</strong> Correrão por conta do CONTRATANTE as despesas com o transporte na entrega das mudas, devendo ser feita em veículo que comporte adequadamente a fim de evitar danos e prejuízos no pegamento das mudas.</p>
 
-          <div class="clause">
-            <p class="clause-title">CLÁUSULA 9 — FORO</p>
-            <p>Fica eleito o foro da Comarca de ${values.contractCity}, para dirimir quaisquer litígios oriundos deste contrato, com renúncia a qualquer outro, por mais privilegiado que seja.</p>
-          </div>
-
-          <p style="text-align: center; margin-top: 30px;">E, por estarem assim justas e contratadas, as partes assinam este instrumento em duas vias de igual teor e forma, juntamente com duas testemunhas.</p>
-
-          <p style="text-align: center; margin-top: 30px;">${values.contractCity}, ${new Date(values.contractDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>
+          <p class="clausula-title">DO CULTIVO</p>
+          <p><strong>Cláusula 8ª.</strong> As mudas deverão ser cultivadas de acordo com as recomendações técnicas para a cultura do cacau, em solo corrigido caso necessário, com disponibilidade hídrica e nutrição mineral adequada, bem como o manejo de plantio e pós plantio adequados a fim garantir pegamento de 80% conforme literatura técnica.</p>
+          <p><strong>Cláusula 9ª.</strong> O CONTRATANTE fica responsável por providenciar sombreamento provisório para plantio das mudas correspondendo a sombra de 80% bem como sistema de irrigação a fim de garantir pegamento das mudas, na ausência destes o CONTRATADO não se responsabiliza por índices de pegamento inferiores.</p>
+          
+          <p class="clausula-title">DA REMUNERAÇÃO</p>
+          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE se compromete a pagar ao CONTRATADO a quantia de R$ ${values.valorTotal.toFixed(2)} (${new Date().toLocaleDateString('pt-BR') /*TODO*/}), referente a quantidade de ${totalClones} mudas de cacau clonal por enxertia, com valor unitário de R$ ${values.valorUnitario.toFixed(2)} (${new Date().toLocaleDateString('pt-BR')}), sendo 50% do valor combinado como adiantamento na reserva (Assinatura do contrato) e o restante 50% na entrega das mudas.</p>
+          
+          <p class="clausula-title">DO PRAZO</p>
+          <p><strong>Cláusula 11ª.</strong> O presente instrumento terá prazo de ${values.prazoContratoMeses} meses, passando a valer a partir da assinatura pelas partes.</p>
+          
+          <p class="clausula-title">DO FORO</p>
+          <p><strong>Cláusula 12ª.</strong> Para dirimir quaisquer controvérsias oriundas do CONTRATO, as partes elegem o foro da comarca de ${values.contractCity};</p>
+          
+          <p class="no-indent" style="margin-top: 30px;">Por estarem assim justos e contratados, firmam o presente instrumento, em duas vias de igual teor, juntamente com 2 (duas) testemunhas.</p>
+          
+          <p style="text-align: right; text-indent: 0; margin-top: 30px;">${values.contractCity}, ${new Date(values.contractDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>
 
           <div class="signatures">
             <div class="signature-line">
-              <p>${values.sellerName}</p>
-              <p>CPF: ${values.sellerCpf}</p>
-              <p>VENDEDORA</p>
+              <div class="signature-line-inner">
+                <p>${values.contratadoRepresentante} (Viveiro Andurá)</p>
+                <p>(Contratado)</p>
+              </div>
             </div>
             <div class="signature-line">
-              <p>${buyer.name}</p>
-              <p>CPF: ${buyer.cpf}</p>
-              <p>COMPRADOR</p>
+              <div class="signature-line-inner">
+                 <p>${contratante.name}</p>
+                 <p>(Contratante)</p>
+              </div>
             </div>
             <div class="signature-line">
-              <p>Nome: ${values.witness1Name}</p>
-              <p>CPF: ${values.witness1Cpf}</p>
-              <p>Testemunha 1</p>
+              <div class="signature-line-inner">
+                <p>${values.testemunha1Name}</p>
+                <p>(Nome, RG e assinatura)</p>
+                <p>Testemunha 1</p>
+              </div>
             </div>
-            <div class="signature-line">
-              <p>Nome: ${values.witness2Name}</p>
-              <p>CPF: ${values.witness2Cpf}</p>
-              <p>Testemunha 2</p>
+             <div class="signature-line">
+              <div class="signature-line-inner">
+                <p>${values.testemunha2Name}</p>
+                <p>(Nome, RG e assinatura)</p>
+                <p>Testemunha 2</p>
+              </div>
             </div>
           </div>
         </body>
@@ -201,10 +215,10 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     printWindow?.print();
   };
   
-  const onBuyerChange = (buyerId: string) => {
-    const buyer = clients.find((c) => c.id === buyerId);
-    if(buyer) {
-      form.setValue("deliveryAddress", buyer.address);
+  const onContratanteChange = (contratanteId: string) => {
+    const contratante = clients.find((c) => c.id === contratanteId);
+    if(contratante) {
+      form.setValue("contratanteAddress", contratante.address);
     }
   }
 
@@ -216,8 +230,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           Gerador de Contratos
         </CardTitle>
         <CardDescription>
-          Preencha as informações abaixo para gerar um novo contrato de compra e
-          venda.
+          Preencha as informações abaixo para gerar um novo contrato de fornecimento.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -226,41 +239,36 @@ export function ContractsPage({ clients }: ContractsPageProps) {
             onSubmit={form.handleSubmit(handleGenerateContract)}
             className="space-y-8"
           >
-            {/* Vendedor */}
+            {/* Contratado */}
             <Card>
-              <CardHeader>
-                <CardTitle>Dados da Vendedora</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Dados do Contratado (Vendedor)</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="sellerName" render={({ field }) => ( <FormItem> <FormLabel>Nome</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="sellerCpf" render={({ field }) => ( <FormItem> <FormLabel>CPF</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="sellerRg" render={({ field }) => ( <FormItem> <FormLabel>RG</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="sellerAddress" render={({ field }) => ( <FormItem> <FormLabel>Endereço</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="contratadoName" render={({ field }) => ( <FormItem> <FormLabel>Nome Fantasia</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="contratadoRenasem" render={({ field }) => ( <FormItem> <FormLabel>Nº Renasem</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 </div>
+                <FormField control={form.control} name="contratadoLocalizacao" render={({ field }) => ( <FormItem> <FormLabel>Localização</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                 <FormField control={form.control} name="contratadoRepresentante" render={({ field }) => ( <FormItem> <FormLabel>Representante Legal</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField control={form.control} name="contratadoRepresentanteCpf" render={({ field }) => ( <FormItem> <FormLabel>CPF do Representante</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="contratadoRepresentanteId" render={({ field }) => ( <FormItem> <FormLabel>RG do Representante</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                </div>
+                 <FormField control={form.control} name="contratadoAddress" render={({ field }) => ( <FormItem> <FormLabel>Endereço do Representante</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
               </CardContent>
             </Card>
             
-            {/* Comprador */}
+            {/* Contratante */}
              <Card>
-              <CardHeader>
-                <CardTitle>Dados do Comprador</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <CardHeader><CardTitle>Dados do Contratante (Comprador)</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="buyerId"
+                  name="contratanteId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Selecione o Cliente</FormLabel>
                       <FormControl>
-                        <Select
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            onBuyerChange(value);
-                          }}
-                          defaultValue={field.value}
-                        >
+                        <Select onValueChange={(value) => { field.onChange(value); onContratanteChange(value); }} defaultValue={field.value}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um cliente cadastrado" />
                           </SelectTrigger>
@@ -277,61 +285,73 @@ export function ContractsPage({ clients }: ContractsPageProps) {
                     </FormItem>
                   )}
                 />
+                 <FormField control={form.control} name="contratanteAddress" render={({ field }) => ( <FormItem> <FormLabel>Endereço Completo</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
               </CardContent>
             </Card>
 
             {/* Objeto */}
             <Card>
-              <CardHeader>
-                <CardTitle>Objeto do Contrato</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Objeto do Contrato</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-4 gap-4">
-                  <FormField control={form.control} name="objectVariety" render={({ field }) => ( <FormItem> <FormLabel>Variedade</FormLabel> <FormControl><Input {...field} placeholder="Ex: PS 1319" /></FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="objectQuantity" render={({ field }) => ( <FormItem> <FormLabel>Quantidade</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="objectHeight" render={({ field }) => ( <FormItem> <FormLabel>Altura (cm)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="objectAge" render={({ field }) => ( <FormItem> <FormLabel>Idade (dias)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                </div>
-                <FormField control={form.control} name="objectCondition" render={({ field }) => ( <FormItem> <FormLabel>Condição</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                 <div>
+                    {fields.map((field, index) => (
+                      <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end mb-2">
+                        <FormField
+                          control={form.control}
+                          name={`clones.${index}.name`}
+                          render={({ field }) => (
+                            <FormItem><FormLabel>Clone</FormLabel><FormControl><Input {...field} placeholder="Ex: PH16" /></FormControl><FormMessage /></FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`clones.${index}.quantity`}
+                          render={({ field }) => (
+                            <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                          )}
+                        />
+                        <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}><Trash/></Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => append({ name: "", quantity: 0 })}
+                    >
+                      <PlusCircle className="mr-2"/>
+                      Adicionar Clone
+                    </Button>
+                  </div>
               </CardContent>
             </Card>
 
              {/* Pagamento e Entrega */}
             <Card>
-              <CardHeader>
-                <CardTitle>Preço, Pagamento e Entrega</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Valores e Prazos</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-4 gap-4">
-                   <FormField control={form.control} name="priceTotal" render={({ field }) => ( <FormItem> <FormLabel>Preço Total (R$)</FormLabel> <FormControl><Input type="number" step="0.01" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                   <FormField control={form.control} name="priceUnit" render={({ field }) => ( <FormItem> <FormLabel>Preço Unitário (R$)</FormLabel> <FormControl><Input type="number" step="0.01" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                   <FormField control={form.control} name="paymentSignal" render={({ field }) => ( <FormItem> <FormLabel>Sinal (R$)</FormLabel> <FormControl><Input type="number" step="0.01" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                   <FormField control={form.control} name="paymentRest" render={({ field }) => ( <FormItem> <FormLabel>Restante (R$)</FormLabel> <FormControl><Input type="number" step="0.01" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <div className="grid md:grid-cols-2 gap-4">
+                   <FormField control={form.control} name="valorTotal" render={({ field }) => ( <FormItem> <FormLabel>Valor Total (R$)</FormLabel> <FormControl><Input type="number" step="0.01" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                   <FormField control={form.control} name="valorUnitario" render={({ field }) => ( <FormItem> <FormLabel>Valor Unitário (R$)</FormLabel> <FormControl><Input type="number" step="0.01" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                   <FormField control={form.control} name="dataEntregaInicio" render={({ field }) => ( <FormItem> <FormLabel>Início da Entrega</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                   <FormField control={form.control} name="dataEntregaFim" render={({ field }) => ( <FormItem> <FormLabel>Fim da Entrega</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                   <FormField control={form.control} name="prazoContratoMeses" render={({ field }) => ( <FormItem> <FormLabel>Prazo do Contrato (meses)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 </div>
-                <FormField control={form.control} name="deliveryAddress" render={({ field }) => ( <FormItem> <FormLabel>Endereço de Entrega</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                <FormField control={form.control} name="deliveryDeadline" render={({ field }) => ( <FormItem> <FormLabel>Prazo de Entrega (dias)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
               </CardContent>
             </Card>
             
-            {/* Cláusulas Finais e Assinaturas */}
+            {/* Assinaturas */}
              <Card>
-              <CardHeader>
-                <CardTitle>Cláusulas Finais e Assinaturas</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Local e Testemunhas</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-3 gap-4">
-                  <FormField control={form.control} name="warrantyDays" render={({ field }) => ( <FormItem> <FormLabel>Garantia (dias)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="breachPenalty" render={({ field }) => ( <FormItem> <FormLabel>Multa por Rescisão (%)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                </div>
                  <div className="grid md:grid-cols-2 gap-4">
                    <FormField control={form.control} name="contractCity" render={({ field }) => ( <FormItem> <FormLabel>Cidade do Contrato</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                    <FormField control={form.control} name="contractDate" render={({ field }) => ( <FormItem> <FormLabel>Data do Contrato</FormLabel> <FormControl><Input type="date" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="witness1Name" render={({ field }) => ( <FormItem> <FormLabel>Nome Testemunha 1</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="witness1Cpf" render={({ field }) => ( <FormItem> <FormLabel>CPF Testemunha 1</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="witness2Name" render={({ field }) => ( <FormItem> <FormLabel>Nome Testemunha 2</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="witness2Cpf" render={({ field }) => ( <FormItem> <FormLabel>CPF Testemunha 2</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="testemunha1Name" render={({ field }) => ( <FormItem> <FormLabel>Nome Testemunha 1</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="testemunha2Name" render={({ field }) => ( <FormItem> <FormLabel>Nome Testemunha 2</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 </div>
               </CardContent>
             </Card>
