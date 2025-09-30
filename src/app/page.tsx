@@ -603,13 +603,17 @@ export default function Home() {
   const handleAddTransaction = useCallback(
     async (
       type: "expense" | "cashEntry",
-      values: { description: string; amount: number }
+      values: { description: string; amount: number; paymentMethod?: PaymentMethod }
     ) => {
-      const newTransaction = {
+      const newTransaction: Omit<CashTransaction, "id"> = {
         date: new Date(),
         type: type,
-        ...values,
+        description: values.description,
+        amount: values.amount,
       };
+      if (type === "cashEntry" && values.paymentMethod) {
+        newTransaction.paymentMethod = values.paymentMethod;
+      }
 
       try {
         await addDoc(collection(db, 'transactions'), newTransaction);
@@ -630,13 +634,20 @@ export default function Home() {
   );
 
   const dailySummary: DailySummaryData = useMemo(() => {
-    const totalRevenue = salesHistory.reduce((sum, sale) => sum + sale.total, 0);
-    const numberOfSales = salesHistory.length;
+    const totalSalesRevenue = salesHistory.reduce((sum, sale) => sum + sale.total, 0);
+    // Include cash entries with a payment method as part of the revenue
+    const totalCashEntryRevenue = cashEntries
+      .filter(entry => entry.paymentMethod)
+      .reduce((sum, entry) => sum + entry.amount, 0);
+
+    const totalRevenue = totalSalesRevenue + totalCashEntryRevenue;
+    
+    const numberOfSales = salesHistory.length + cashEntries.filter(e => e.paymentMethod).length;
     const averageSaleValue =
       numberOfSales > 0 ? totalRevenue / numberOfSales : 0;
 
     return { totalRevenue, numberOfSales, averageSaleValue };
-  }, [salesHistory]);
+  }, [salesHistory, cashEntries]);
 
   const handleCloseDay = useCallback(async (closureData: Omit<DailyClosure, 'id' | 'date'>) => {
     const newClosure = {

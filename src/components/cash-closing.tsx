@@ -63,6 +63,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 
 type CashClosingProps = {
@@ -74,7 +75,7 @@ type CashClosingProps = {
   clients: Client[];
   onAddTransaction: (
     type: "expense" | "cashEntry",
-    values: { description: string; amount: number }
+    values: { description: string; amount: number, paymentMethod?: PaymentMethod }
   ) => Promise<void>;
   onCloseDay: (closureData: Omit<DailyClosure, 'id' | 'date'>) => Promise<void>;
   onPayDebt: (clientId: string, amount: number, paymentMethod: PaymentMethod) => Promise<void>;
@@ -98,9 +99,16 @@ const transactionSchema = z.object({
   amount: z.coerce
     .number()
     .positive({ message: "O valor deve ser positivo." }),
+  paymentMethod: z.string().optional(),
 });
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
+
+const paymentOptions: { value: PaymentMethod; label: string, icon: React.FC<any> }[] = [
+    { value: "Dinheiro", label: "Dinheiro", icon: CircleDollarSign },
+    { value: "Pix", label: "Pix", icon: Landmark },
+    { value: "Cartão", label: "Cartão", icon: CreditCard },
+];
 
 export function CashClosing({
   sales,
@@ -122,12 +130,12 @@ export function CashClosing({
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: { description: "", amount: 0 },
+    defaultValues: { description: "", amount: 0, paymentMethod: "Dinheiro" },
   });
 
   const dailyData = useMemo(() => {
-    // Totals for the current shift (Dinheiro, Pix, Cartão)
-    const shiftTotalByPaymentMethod = sales.reduce(
+    // Totals for the current shift (Dinheiro, Pix, Cartão) from Sales
+    const shiftSalesTotalByPayment = sales.reduce(
       (acc, sale) => {
         acc[sale.paymentMethod] = (acc[sale.paymentMethod] || 0) + sale.total;
         return acc;
@@ -135,11 +143,30 @@ export function CashClosing({
       {} as Record<string, number>
     );
 
+    // Totals for cash entries (manual sales)
+    const cashEntryTotalByPayment = cashEntries.reduce(
+      (acc, entry) => {
+        if (entry.paymentMethod) {
+            acc[entry.paymentMethod] = (acc[entry.paymentMethod] || 0) + entry.amount;
+        }
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+    
+    // Combine sales and cash entries totals
+    const combinedTotalByPaymentMethod: Record<string, number> = {};
+    const allPaymentMethods = new Set([...Object.keys(shiftSalesTotalByPayment), ...Object.keys(cashEntryTotalByPayment)]);
+
+    allPaymentMethods.forEach(method => {
+        combinedTotalByPaymentMethod[method] = (shiftSalesTotalByPayment[method] || 0) + (cashEntryTotalByPayment[method] || 0);
+    });
+
     // Total for fiado sales for the whole day
     const totalFiadoToday = fiadoSales.reduce((sum, sale) => sum + sale.total, 0);
 
     const totalByPaymentMethod = {
-      ...shiftTotalByPaymentMethod,
+      ...combinedTotalByPaymentMethod,
       "Fiado": totalFiadoToday,
     }
 
@@ -147,7 +174,8 @@ export function CashClosing({
       (sum, exp) => sum + exp.amount,
       0
     );
-    const totalCashEntries = cashEntries.reduce(
+    // Cash entries that are just money input, not sales
+    const totalCashEntries = cashEntries.filter(e => !e.paymentMethod).reduce(
       (sum, entry) => sum + entry.amount,
       0
     );
@@ -157,14 +185,19 @@ export function CashClosing({
     );
     
     // Total revenue of the shift (doesn't include fiado)
-    const totalRevenue = sales
-      .filter(sale => sale.paymentMethod !== 'Fiado')
-      .reduce((sum, sale) => sum + sale.total, 0);
+    const totalRevenue = Object.entries(combinedTotalByPaymentMethod)
+        .reduce((sum, [method, total]) => {
+            if (method !== 'Fiado') {
+                return sum + total;
+            }
+            return sum;
+        }, 0);
+
 
     // Revenue for cash closing (only what came in during the shift)
-    const revenueForClosure = (shiftTotalByPaymentMethod["Dinheiro"] || 0) + (shiftTotalByPaymentMethod["Pix"] || 0) + (shiftTotalByPaymentMethod["Cartão"] || 0);
+    const revenueForClosure = totalRevenue;
 
-    const expectedInCash = (shiftTotalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries + totalDebtPayments - totalExpenses;
+    const expectedInCash = (combinedTotalByPaymentMethod["Dinheiro"] || 0) + totalCashEntries + totalDebtPayments - totalExpenses;
 
     const fiadoBalanceToday = totalFiadoToday - totalDebtPayments;
 
@@ -183,7 +216,10 @@ export function CashClosing({
   const handleFormSubmit = async (type: "expense" | "cashEntry", values: TransactionFormValues) => {
       setIsSubmitting(true);
       try {
-        await onAddTransaction(type, values);
+        await onAddTransaction(type, {
+            ...values,
+            paymentMethod: values.paymentMethod as PaymentMethod | undefined,
+        });
         form.reset();
       } catch (error) {
         // Toast de erro já é mostrado na função principal
@@ -269,7 +305,7 @@ export function CashClosing({
               icon={User}
             />
             <FinancialCard
-              title="Entradas no Caixa"
+              title="Entradas (Avulso)"
               value={dailyData.totalCashEntries}
               icon={ArrowUpCircle}
             />
@@ -302,7 +338,7 @@ export function CashClosing({
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Entradas de Caixa Avulsas</CardTitle>
+              <CardTitle>Vendas Manuais e Entradas</CardTitle>
             </CardHeader>
             <CardContent>
               <TransactionTable transactions={cashEntries} />
@@ -447,7 +483,7 @@ export function CashClosing({
           <CardHeader>
             <CardTitle>Adicionar Transação Manual</CardTitle>
             <CardDescription>
-              Registre uma nova despesa ou uma entrada de dinheiro avulsa (ex: troco inicial).
+              Registre uma despesa ou uma venda/entrada de caixa avulsa (ex: troco, venda sem item).
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -479,6 +515,35 @@ export function CashClosing({
                     </FormItem>
                   )}
                 />
+                 <FormField
+                  control={form.control}
+                  name="paymentMethod"
+                  render={({ field }) => (
+                     <FormItem>
+                      <FormLabel>Forma de Pagamento (para Entradas/Vendas)</FormLabel>
+                       <FormControl>
+                        <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-3 gap-2"
+                        >
+                            {paymentOptions.map(opt => (
+                                <FormItem key={opt.value}>
+                                    <FormControl>
+                                        <RadioGroupItem value={opt.value} id={`manual-${opt.value}`} className="sr-only" />
+                                    </FormControl>
+                                    <Label htmlFor={`manual-${opt.value}`} className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground", field.value === opt.value && "border-primary")}>
+                                        <opt.icon className="mb-1" />
+                                        {opt.label}
+                                    </Label>
+                                </FormItem>
+                            ))}
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </form>
             </Form>
           </CardContent>
@@ -493,7 +558,7 @@ export function CashClosing({
               Registrar Entrada
             </Button>
             <Button
-              onClick={form.handleSubmit((values) => handleFormSubmit("expense", values))}
+              onClick={form.handleSubmit((values) => handleFormSubmit("expense", {...values, paymentMethod: undefined}))}
               disabled={!form.formState.isValid || isSubmitting}
               className="flex-1"
               variant="destructive"
