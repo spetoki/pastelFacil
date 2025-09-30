@@ -33,10 +33,10 @@ import { Label } from "./ui/label";
 
 type InventoryProps = {
   products: Product[];
-  onAddProduct: (values: ProductFormValues) => Promise<void>;
+  onAddProduct: (values: Omit<ProductFormValues, 'type'>) => Promise<void>;
   onUpdateProduct: (
     productId: string,
-    values: ProductFormValues
+    values: Omit<ProductFormValues, 'type'>
   ) => Promise<void>;
   onUpdateStock: (productId: string, newStock: number) => Promise<void>;
   onDeleteProduct: (productId: string) => Promise<void>;

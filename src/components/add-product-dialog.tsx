@@ -15,7 +15,7 @@ import { PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type AddProductDialogProps = {
-  onAddProduct: (values: ProductFormValues) => Promise<void>;
+  onAddProduct: (values: Omit<ProductFormValues, 'type'>) => Promise<void>;
 };
 
 export function AddProductDialog({ onAddProduct }: AddProductDialogProps) {
@@ -23,7 +23,7 @@ export function AddProductDialog({ onAddProduct }: AddProductDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (values: ProductFormValues) => {
+  const handleSubmit = async (values: Omit<ProductFormValues, 'type'>) => {
     setIsSubmitting(true);
     try {
       await onAddProduct(values);

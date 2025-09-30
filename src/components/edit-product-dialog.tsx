@@ -17,7 +17,7 @@ type EditProductDialogProps = {
   product: Product;
   onUpdateProduct: (
     productId: string,
-    values: Omit<ProductFormValues, 'otherName'>
+    values: Omit<ProductFormValues, 'type'>
   ) => Promise<void>;
   children: ReactNode;
 };
@@ -31,7 +31,7 @@ export function EditProductDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (values: Omit<ProductFormValues, 'otherName'>) => {
+  const handleSubmit = async (values: Omit<ProductFormValues, 'type'>) => {
     setIsSubmitting(true);
     try {
       await onUpdateProduct(product.id, values);

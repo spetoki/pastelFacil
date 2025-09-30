@@ -443,7 +443,7 @@ export default function Home() {
   }, [cartItems, toast, clients]);
 
   const handleAddProduct = useCallback(
-    async (values: ProductFormValues): Promise<void> => {
+    async (values: Omit<ProductFormValues, 'type'>): Promise<void> => {
       try {
         await addDoc(collection(db, "products"), values);
       } catch (error) {
@@ -455,10 +455,10 @@ export default function Home() {
   );
   
   const handleUpdateProduct = useCallback(
-    async (productId: string, values: ProductFormValues): Promise<void> => {
+    async (productId: string, values: Omit<ProductFormValues, 'type'>): Promise<void> => {
       try {
         const productRef = doc(db, "products", productId);
-        await updateDoc(productRef, values);
+        await updateDoc(productRef, values as any);
       } catch (error) {
         console.error("Error updating product: ", error);
         toast({
