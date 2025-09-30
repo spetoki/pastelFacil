@@ -71,8 +71,17 @@ export function Calculator() {
   };
 
   const handlePercentageClick = () => {
-    const current = parseFloat(currentValue);
-    setCurrentValue(String(current / 100));
+    if (previousValue && operator) {
+      // Calculates percentage based on the previous value (e.g., 100 + 10% = 110)
+      const prev = parseFloat(previousValue);
+      const current = parseFloat(currentValue);
+      const percentageValue = (prev * current) / 100;
+      setCurrentValue(String(percentageValue));
+    } else {
+      // Just converts the number to its percentage representation (e.g., 50 -> 0.5)
+      const current = parseFloat(currentValue);
+      setCurrentValue(String(current / 100));
+    }
   };
   
   const handleClearClick = (allClear: boolean = false) => {
@@ -94,25 +103,28 @@ export function Calculator() {
   };
 
   const buttons = [
+    { label: "AC", handler: () => handleClearClick(true), variant: "destructive" as const, className: "col-span-2" },
     { label: "C", handler: () => handleClearClick(false), variant: "outline" as const, className: "" },
-    { label: "%", handler: handlePercentageClick, variant: "outline" as const, className: "" },
-    { label: "Del", handler: handleDeleteClick, variant: "outline" as const, className: "" },
     { label: "÷", handler: () => handleOperatorClick("÷"), variant: "secondary" as const, className: "text-lg" },
+    
     { label: "7", handler: () => handleNumberClick("7"), variant: "outline" as const, className: "text-lg" },
     { label: "8", handler: () => handleNumberClick("8"), variant: "outline" as const, className: "text-lg" },
     { label: "9", handler: () => handleNumberClick("9"), variant: "outline" as const, className: "text-lg" },
     { label: "x", handler: () => handleOperatorClick("x"), variant: "secondary" as const, className: "text-lg" },
+    
     { label: "4", handler: () => handleNumberClick("4"), variant: "outline" as const, className: "text-lg" },
     { label: "5", handler: () => handleNumberClick("5"), variant: "outline" as const, className: "text-lg" },
     { label: "6", handler: () => handleNumberClick("6"), variant: "outline" as const, className: "text-lg" },
     { label: "-", handler: () => handleOperatorClick("-"), variant: "secondary" as const, className: "text-lg" },
+    
     { label: "1", handler: () => handleNumberClick("1"), variant: "outline" as const, className: "text-lg" },
     { label: "2", handler: () => handleNumberClick("2"), variant: "outline" as const, className: "text-lg" },
     { label: "3", handler: () => handleNumberClick("3"), variant: "outline" as const, className: "text-lg" },
     { label: "+", handler: () => handleOperatorClick("+"), variant: "secondary" as const, className: "text-lg" },
-    { label: "AC", handler: () => handleClearClick(true), variant: "destructive" as const, className: "text-lg" },
+    
     { label: "0", handler: () => handleNumberClick("0"), variant: "outline" as const, className: "text-lg" },
     { label: ".", handler: () => handleNumberClick("."), variant: "outline" as const, className: "text-lg" },
+    { label: "%", handler: handlePercentageClick, variant: "secondary" as const, className: "" },
     { label: "=", handler: handleEqualsClick, variant: "default" as const, className: "text-lg" },
   ];
 
