@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Product } from "@/lib/types";
+import type { Product, GroupedProducts } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,9 +18,10 @@ import type { ProductFormValues } from "./add-product-form";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "./ui/skeleton";
 import { ClonesImage } from "./clones-image";
+import { Separator } from "./ui/separator";
 
 type ProductListProps = {
-  products: Product[];
+  groupedProducts: GroupedProducts;
   onAddProductToCart: (product: Product) => void;
   onAddProduct?: (values: Omit<ProductFormValues, 'type'>) => Promise<void>;
   isLoading: boolean;
@@ -35,7 +36,7 @@ const formatCurrency = (value: number) => {
 };
 
 export function ProductList({
-  products,
+  groupedProducts,
   onAddProductToCart,
   onAddProduct,
   isLoading,
@@ -43,11 +44,20 @@ export function ProductList({
 }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.barcode && product.barcode.includes(searchTerm))
-  );
+  const filteredGroupedProducts: GroupedProducts = Object.keys(groupedProducts)
+    .sort() // Sort group keys alphabetically
+    .reduce((acc, group) => {
+      const filteredProducts = groupedProducts[group].filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (product.barcode && product.barcode.includes(searchTerm))
+      );
+      if (filteredProducts.length > 0) {
+        acc[group] = filteredProducts;
+      }
+      return acc;
+    }, {} as GroupedProducts);
+
 
   return (
     <div>
@@ -71,61 +81,75 @@ export function ProductList({
 
       <ClonesImage />
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="space-y-8">
         {isLoading ? (
-            Array.from({ length: 8 }).map((_, i) => (
-               <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-5 w-3/4" />
-                   <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-6 w-20" />
-                </CardContent>
-                <CardFooter>
-                  <Skeleton className="h-9 w-full" />
-                </CardFooter>
-              </Card>
+            Array.from({ length: 2 }).map((_, i) => (
+              <div key={i}>
+                 <Skeleton className="h-6 w-1/4 mb-4" />
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {Array.from({ length: 4 }).map((_, j) => (
+                        <Card key={j}>
+                            <CardHeader>
+                            <Skeleton className="h-5 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                            </CardHeader>
+                            <CardContent>
+                            <Skeleton className="h-6 w-20" />
+                            </CardContent>
+                            <CardFooter>
+                            <Skeleton className="h-9 w-full" />
+                            </CardFooter>
+                        </Card>
+                    ))}
+                 </div>
+              </div>
             ))
-        ) : filteredProducts.length > 0 ? (
-          filteredProducts.map((product) => {
-            const outOfStock = product.stock <= 0;
-            return (
-              <Card
-                key={product.id}
-                className={`flex flex-col ${outOfStock ? 'opacity-50' : ''}`}
-              >
-                <CardHeader className="flex-1">
-                  <CardTitle>{product.name}</CardTitle>
-                  <CardDescription>
-                    {product.description || "Sem descrição"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="font-semibold text-lg">
-                    {formatCurrency(product.price)}
-                  </p>
-                  <div className="flex gap-1 mt-1">
-                    {outOfStock && (
-                      <Badge variant="destructive">Esgotado</Badge>
-                    )}
-                     <Badge variant="secondary">{product.stock} em estoque</Badge>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    className="w-full"
-                    aria-label={`Adicionar ${product.name} à lista`}
-                    onClick={() => onAddProductToCart(product)}
-                    disabled={outOfStock}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar
-                  </Button>
-                </CardFooter>
-              </Card>
-            );
-          })
+        ) : Object.keys(filteredGroupedProducts).length > 0 ? (
+          Object.entries(filteredGroupedProducts).map(([group, products]) => (
+            <div key={group}>
+              <h3 className="text-lg font-semibold mb-4 font-headline">{group}</h3>
+               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {products.map((product) => {
+                  const outOfStock = product.stock <= 0;
+                  return (
+                    <Card
+                      key={product.id}
+                      className={`flex flex-col ${outOfStock ? 'opacity-50' : ''}`}
+                    >
+                      <CardHeader className="flex-1">
+                        <CardTitle>{product.name}</CardTitle>
+                        <CardDescription>
+                          {product.description || "Sem descrição"}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="font-semibold text-lg">
+                          {formatCurrency(product.price)}
+                        </p>
+                        <div className="flex gap-1 mt-1">
+                          {outOfStock && (
+                            <Badge variant="destructive">Esgotado</Badge>
+                          )}
+                          <Badge variant="secondary">{product.stock} em estoque</Badge>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button
+                          className="w-full"
+                          aria-label={`Adicionar ${product.name} à lista`}
+                          onClick={() => onAddProductToCart(product)}
+                          disabled={outOfStock}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Adicionar
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          ))
         ) : (
           <div className="col-span-full text-center py-10">
             <p className="text-muted-foreground">Nenhum item encontrado.</p>

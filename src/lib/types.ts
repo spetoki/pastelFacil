@@ -73,3 +73,7 @@ export type AppBanner = {
     base64: string;
     updatedAt: Date;
 }
+
+export type GroupedProducts = {
+  [key: string]: Product[];
+};

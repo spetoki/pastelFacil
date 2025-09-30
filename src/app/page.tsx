@@ -27,6 +27,7 @@ import type {
   Client,
   PaymentMethod,
   DailyClosure,
+  GroupedProducts,
 } from "@/lib/types";
 import { Header } from "@/components/header";
 import { DailySummary } from "@/components/daily-summary";
@@ -129,7 +130,7 @@ export default function Home() {
     const productsQuery = query(collection(db, 'products'));
     const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
       const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-      setProducts(productsList.sort((a, b) => a.name.localeCompare(b.name)));
+      setProducts(productsList);
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching products: ", error);
@@ -220,6 +221,33 @@ export default function Home() {
       unsubscribeDailyClosures();
     };
   }, [isClient, toast, shiftStart]);
+  
+  const groupedProducts = useMemo(() => {
+    const subOptions: Record<string, string[]> = {
+        "Verde e Amarelo": ["EEOP 07", "EEOP 26", "EEOP 34", "EEOP 50", "EEOP 63", "EET 397", "CEPEC 2002"],
+        "Roxo e alaranjado": ["BN 34", "CEPEC 2004", "CCN 51", "PH16", "PS 1319", "SJ 02"],
+    };
+
+    const getTypeForProduct = (productName: string) => {
+      for (const type in subOptions) {
+        if (subOptions[type].includes(productName)) {
+          return type;
+        }
+      }
+      return "Outros"; 
+    };
+
+    return products.reduce((acc, product) => {
+        const type = getTypeForProduct(product.name);
+        if (!acc[type]) {
+            acc[type] = [];
+        }
+        acc[type].push(product);
+        // Sort products within the group alphabetically by name
+        acc[type].sort((a, b) => a.name.localeCompare(b.name));
+        return acc;
+    }, {} as GroupedProducts);
+  }, [products]);
 
   const handleLogout = () => {
     clearAuthentication();
@@ -593,7 +621,7 @@ export default function Home() {
             <div className="lg:col-span-2 space-y-6">
               <DailySummary summary={dailySummary} />
               <ProductList
-                products={products}
+                groupedProducts={groupedProducts}
                 onAddProductToCart={handleAddProductToCart}
                 isLoading={isLoading}
                 showAddProductButton={false}
