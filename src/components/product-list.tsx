@@ -70,19 +70,21 @@ export function ProductList({
       </div>
 
       <ClonesImage />
-
-      <div className="flex flex-col gap-3">
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {isLoading ? (
             Array.from({ length: 8 }).map((_, i) => (
-              <Card key={i} className="flex items-center p-3">
-                 <div className="flex-1 space-y-1">
+               <Card key={i}>
+                <CardHeader>
                   <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                 </div>
-                 <div className="flex items-center gap-4">
-                    <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-9 w-9 rounded-md" />
-                 </div>
+                   <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-6 w-20" />
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-9 w-full" />
+                </CardFooter>
               </Card>
             ))
         ) : filteredProducts.length > 0 ? (
@@ -91,31 +93,36 @@ export function ProductList({
             return (
               <Card
                 key={product.id}
-                className={`flex items-center p-3 transition-shadow hover:shadow-md ${outOfStock ? 'opacity-50' : ''}`}
+                className={`flex flex-col ${outOfStock ? 'opacity-50' : ''}`}
               >
-                <div className="flex-1">
-                    <p className="font-semibold">{product.name}</p>
-                    <p className="text-sm text-muted-foreground">{product.description || 'Sem descrição'}</p>
-                     <div className="flex gap-1 mt-1">
-                      {outOfStock && (
-                        <Badge variant="destructive">Esgotado</Badge>
-                      )}
-                      <Badge variant="secondary">{product.stock} em estoque</Badge>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <p className="font-semibold text-lg w-24 text-right">
+                <CardHeader className="flex-1">
+                  <CardTitle>{product.name}</CardTitle>
+                  <CardDescription>
+                    {product.description || "Sem descrição"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="font-semibold text-lg">
                     {formatCurrency(product.price)}
                   </p>
+                  <div className="flex gap-1 mt-1">
+                    {outOfStock && (
+                      <Badge variant="destructive">Esgotado</Badge>
+                    )}
+                     <Badge variant="secondary">{product.stock} em estoque</Badge>
+                  </div>
+                </CardContent>
+                <CardFooter>
                   <Button
-                    size="icon"
+                    className="w-full"
                     aria-label={`Adicionar ${product.name} à lista`}
                     onClick={() => onAddProductToCart(product)}
                     disabled={outOfStock}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="mr-2 h-4 w-4" />
+                    Adicionar
                   </Button>
-                </div>
+                </CardFooter>
               </Card>
             );
           })

@@ -129,7 +129,7 @@ export default function Home() {
     const productsQuery = query(collection(db, 'products'));
     const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
       const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-      setProducts(productsList);
+      setProducts(productsList.sort((a, b) => a.name.localeCompare(b.name)));
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching products: ", error);
