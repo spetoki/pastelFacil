@@ -69,6 +69,7 @@ const contractSchema = z.object({
   contratadoRenasem: z.string().default("RO-02010/2022"),
   contratadoLocalizacao: z.string().default("Lh 13, Lote 29-B, Gleba 13, sentido Funai"),
 
+  tipoDeMuda: z.enum(["enxertada", "enraizada"], { required_error: "Selecione o tipo de muda."}),
   clones: z.array(z.object({
     name: z.string().min(2, { message: "Nome do clone obrigatório."}),
     quantity: z.coerce.number().positive({ message: "Qtd. deve ser > 0"}),
@@ -93,7 +94,7 @@ const contractSchema = z.object({
     return data.contratanteNomeCompleto && data.contratanteCpf && data.contratanteAddress && data.contratanteRg;
 }, {
     message: "Preencha todos os campos obrigatórios para o tipo de pessoa selecionado.",
-    path: ['contratanteIsPJ'], // You can associate the error with a general path
+    path: ['contratanteIsPJ'],
 });
 
 
@@ -133,6 +134,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       dataEntregaInicio: "dezembro 2025",
       dataEntregaFim: "abril de 2026",
       prazoContratoMeses: 15,
+      tipoDeMuda: "enxertada",
       clones: [{name: "", quantity: 0}],
       valorTotal: 0,
       valorUnitario: 0,
@@ -164,22 +166,30 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     const totalClones = values.clones.reduce((sum, clone) => sum + clone.quantity, 0);
     const valorTotalPorExtenso = "REPLACE_ME"; // TODO: Implement number to words
     const valorUnitarioPorExtenso = "REPLACE_ME"; // TODO: Implement number to words
+    
+    const objetoContratoTexto = values.tipoDeMuda === "enxertada" 
+      ? "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau enxertado."
+      : "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau clonal enraizadas.";
+
+    const valorContratoTexto = values.tipoDeMuda === "enxertada"
+      ? `referente a quantidade de ${totalClones} mudas de cacau clonal por enxertia`
+      : `referente a quantidade de ${totalClones} mudas de cacau clonal enraizadas`;
 
     let contratanteHtml = `
       <p>
-        <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto}, ${values.contratanteNacionalidade}, ${values.contratanteEstadoCivil}, ${values.contratanteProfissao}, portador(a) do documento de identidade RG nº ${values.contratanteRg}, inscrito(a) no C.P.F. sob o nº ${values.contratanteCpf}, com endereço declarado: ${values.contratanteAddress}, telefone: ${values.contratanteTelefone || 'não informado'}, e-mail: ${values.contratanteEmail || 'não informado'};
+        <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto || contratante.name}, ${values.contratanteNacionalidade}, ${values.contratanteEstadoCivil}, ${values.contratanteProfissao}, portador(a) do documento de identidade RG nº ${values.contratanteRg}, inscrito(a) no C.P.F. sob o nº ${values.contratanteCpf || contratante.cpf}, com endereço declarado: ${values.contratanteAddress || contratante.address}, telefone: ${values.contratanteTelefone || contratante.phone || 'não informado'}, e-mail: ${values.contratanteEmail || 'não informado'};
       </p>
     `;
     
-    let contratanteAssinatura = `<p>${values.contratanteNomeCompleto}</p><p>(Contratante)</p>`;
+    let contratanteAssinatura = `<p>${values.contratanteNomeCompleto || contratante.name}</p><p>(Contratante)</p>`;
 
     if(values.contratanteIsPJ) {
       contratanteHtml = `
         <p>
-          <strong>CONTRATANTE:</strong> ${values.contratanteRazaoSocial}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${values.contratanteCnpj}, Inscrição Estadual/Municipal nº ${values.contratanteIE || 'não aplicável'}, com sede em ${values.contratanteSedeAddress}, neste ato representada por ${values.contratanteRepLegalNome}, (dados do representante: ${values.contratanteRepLegalDados});
+          <strong>CONTRATANTE:</strong> ${values.contratanteRazaoSocial}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${values.contratanteCnpj}, Inscrição Estadual/Municipal nº ${values.contratanteIE || 'não aplicável'}, com sede em ${values.contratanteSedeAddress}, neste ato representada por ${values.contratanteRepLegalNome || contratante.name}, (dados do representante: ${values.contratanteRepLegalDados});
         </p>
       `;
-      contratanteAssinatura = `<p>${values.contratanteRepLegalNome}</p><p>p/p ${values.contratanteRazaoSocial}</p><p>(Contratante)</p>`;
+      contratanteAssinatura = `<p>${values.contratanteRepLegalNome || contratante.name}</p><p>p/p ${values.contratanteRazaoSocial}</p><p>(Contratante)</p>`;
     }
 
     const contractHtml = `
@@ -209,11 +219,11 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           </p>
           
           <p class="no-indent">
-            As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Fornecimento de Mudas Clonais de Cacau Enxertadas, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente.
+            As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Fornecimento de Mudas Clonais de Cacau, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente.
           </p>
           
           <p class="clausula-title">DO OBJETO DO CONTRATO</p>
-          <p><strong>Cláusula 1ª.</strong> O presente contrato tem como OBJETO, o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau enxertado. Sendo dos Seguintes Clones e quantidades por clone:</p>
+          <p><strong>Cláusula 1ª.</strong> O presente contrato tem como OBJETO, ${objetoContratoTexto} Sendo dos Seguintes Clones e quantidades por clone:</p>
           <table style="width: 50%; margin: 20px auto; border-collapse: collapse;">
             <thead style="font-weight: bold;">
               <tr>
@@ -239,7 +249,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <p><strong>Cláusula 9ª.</strong> O CONTRATANTE fica responsável por providenciar sombreamento provisório para plantio das mudas correspondendo a sombra de 80% bem como sistema de irrigação a fim de garantir pegamento das mudas, na ausência destes o CONTRATADO não se responsabiliza por índices de pegamento inferiores.</p>
           
           <p class="clausula-title">DA REMUNERAÇÃO</p>
-          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE se compromete a pagar ao CONTRATADO a quantia de R$ ${values.valorTotal.toFixed(2)} (${valorTotalPorExtenso}), referente a quantidade de ${totalClones} mudas de cacau clonal por enxertia, com valor unitário de R$ ${values.valorUnitario.toFixed(2)} (${valorUnitarioPorExtenso}), sendo 50% do valor combinado como adiantamento na reserva (Assinatura do contrato) e o restante 50% na entrega das mudas.</p>
+          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE se compromete a pagar ao CONTRATADO a quantia de R$ ${values.valorTotal.toFixed(2)} (${valorTotalPorExtenso}), ${valorContratoTexto}, com valor unitário de R$ ${values.valorUnitario.toFixed(2)} (${valorUnitarioPorExtenso}), sendo 50% do valor combinado como adiantamento na reserva (Assinatura do contrato) e o restante 50% na entrega das mudas.</p>
           
           <p class="clausula-title">DO PRAZO</p>
           <p><strong>Cláusula 11ª.</strong> O presente instrumento terá prazo de ${values.prazoContratoMeses} meses, passando a valer a partir da assinatura pelas partes.</p>
@@ -249,7 +259,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           
           <p class="no-indent" style="margin-top: 30px;">Por estarem assim justos e contratados, firmam o presente instrumento, em duas vias de igual teor, juntamente com 2 (duas) testemunhas.</p>
           
-          <p style="text-align: right; text-indent: 0; margin-top: 30px;">${values.contractCity}, ${new Date(values.contractDate + 'T00:00:00-03:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>
+          <p style="text-align: right; text-indent: 0; margin-top: 30px;">${values.contractCity}, ${new Date((values.contractDate || new Date().toISOString().split('T')[0]) + 'T12:00:00Z').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>
 
           <div class="signatures">
             <div class="signature-line">
@@ -435,21 +445,53 @@ export function ContractsPage({ clients }: ContractsPageProps) {
             <Card>
               <CardHeader><CardTitle>Objeto do Contrato</CardTitle></CardHeader>
               <CardContent className="space-y-4">
+                 <FormField
+                  control={form.control}
+                  name="tipoDeMuda"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Tipo de Muda</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex space-x-4"
+                        >
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="enxertada" id="type-grafted" />
+                            </FormControl>
+                            <FormLabel htmlFor="type-grafted" className="font-normal">Muda Enxertada</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="enraizada" id="type-rooted" />
+                            </FormControl>
+                            <FormLabel htmlFor="type-rooted" className="font-normal">Muda Enraizada</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Separator/>
                  <div>
+                    <FormLabel>Clones e Quantidades</FormLabel>
                     {fields.map((field, index) => (
-                      <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end mb-2">
+                      <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end mb-2 mt-2">
                         <FormField
                           control={form.control}
                           name={`clones.${index}.name`}
                           render={({ field }) => (
-                            <FormItem><FormLabel>Clone</FormLabel><FormControl><Input {...field} placeholder="Ex: PH16" /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel className="sr-only">Clone</FormLabel><FormControl><Input {...field} placeholder="Ex: PH16" /></FormControl><FormMessage /></FormItem>
                           )}
                         />
                         <FormField
                           control={form.control}
                           name={`clones.${index}.quantity`}
                           render={({ field }) => (
-                            <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel className="sr-only">Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                           )}
                         />
                         <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}><Trash/></Button>
@@ -508,5 +550,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     </Card>
   );
 }
+
+    
 
     
