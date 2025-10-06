@@ -18,8 +18,11 @@ export function usePwaInstall() {
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
+      // Previne o mini-infobar de aparecer no Chrome
       e.preventDefault();
+      // Guarda o evento para que possa ser disparado depois
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      // Atualiza a UI para notificar o usuário que ele pode instalar o PWA
       setCanInstall(true);
     };
 
@@ -37,9 +40,12 @@ export function usePwaInstall() {
     if (!deferredPrompt) {
       return;
     }
+    // Mostra o prompt de instalação
     await deferredPrompt.prompt();
+    // Espera o usuário responder ao prompt
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
+      // O usuário aceitou, não precisamos mais do prompt
       setDeferredPrompt(null);
       setCanInstall(false);
     }

@@ -171,22 +171,27 @@ export function Settings() {
         </CardContent>
       </Card>
 
-      {canInstall && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Instalar Aplicativo</CardTitle>
-            <CardDescription>
-              Adicione o Viveiro Andurá à sua tela inicial para acesso rápido, como um aplicativo nativo.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={install}>
-              <Download className="mr-2" />
-              Instalar Aplicativo no Dispositivo
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Instalar Aplicativo</CardTitle>
+          <CardDescription>
+            Adicione o Viveiro Andurá à sua tela inicial para acesso rápido, como um aplicativo nativo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {canInstall ? (
+              <Button onClick={install}>
+                <Download className="mr-2" />
+                Instalar no Dispositivo
+              </Button>
+          ) : (
+             <p className="text-sm text-muted-foreground">
+                Não é possível instalar neste navegador ou o aplicativo já foi instalado. <br/>
+                No iOS (iPhone/iPad), use a opção "Adicionar à Tela de Início" no menu de compartilhamento do Safari.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="border-destructive">
           <CardHeader>
