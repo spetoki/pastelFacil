@@ -530,6 +530,28 @@ export default function Home() {
     [toast]
   );
 
+  const handleDeleteClient = useCallback(
+    async (clientId: string): Promise<void> => {
+      try {
+        const clientRef = doc(db, "clients", clientId);
+        await deleteDoc(clientRef);
+        toast({
+          title: "Cliente Excluído!",
+          description: "O cliente foi removido permanentemente do sistema.",
+        });
+      } catch (error) {
+        console.error("Error deleting client: ", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao excluir cliente",
+          description: "Não foi possível remover o cliente.",
+        });
+        throw error;
+      }
+    },
+    [toast]
+  );
+
   const handleAddTransaction = useCallback(
     async (
       type: "expense" | "cashEntry",
@@ -695,6 +717,7 @@ export default function Home() {
           <ClientList
             clients={clients}
             onAddClient={handleAddClient}
+            onDeleteClient={handleDeleteClient}
             isLoading={isLoading}
           />
         );
@@ -719,7 +742,7 @@ export default function Home() {
           <ReportPinDialog onUnlock={handleUnlockReports} />
         );
       case "configuracoes":
-        return <SettingsComponent />;
+        return <SettingsComponent/>;
       default:
         return null;
     }
@@ -739,3 +762,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
