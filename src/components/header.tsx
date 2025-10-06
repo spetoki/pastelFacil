@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/icons";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, Home } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +50,13 @@ export function Header({ onLogout, activePage, onPageChange }: HeaderProps) {
               <h1 className="text-2xl font-bold font-headline text-foreground ml-2 hidden sm:block">
                 Viveiro Andurá
               </h1>
+            </Button>
+            <Button 
+                variant={activePage === 'caixa' ? "secondary" : "ghost"}
+                onClick={() => onPageChange('caixa')}
+              >
+                <Home className="mr-2 h-4 w-4" />
+                Início
             </Button>
              <Button 
                 variant={activePage === 'caixa' ? "secondary" : "ghost"}
