@@ -36,7 +36,7 @@ export type Sale = {
 export type DailySummaryData = {
   totalRevenue: number;
   numberOfSales: number;
-  averageSaleValue: number;
+  totalItemsSold: number;
 };
 
 export type CashTransaction = {

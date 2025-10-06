@@ -561,10 +561,13 @@ export default function Home() {
     const totalRevenue = totalSalesRevenue + totalCashEntryRevenue;
     
     const numberOfSales = salesHistory.length + cashEntries.filter(e => e.paymentMethod).length;
-    const averageSaleValue =
-      numberOfSales > 0 ? totalRevenue / numberOfSales : 0;
+    
+    const totalItemsSold = salesHistory.reduce((sum, sale) => 
+      sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
+      0
+    );
 
-    return { totalRevenue, numberOfSales, averageSaleValue };
+    return { totalRevenue, numberOfSales, totalItemsSold };
   }, [salesHistory, cashEntries]);
 
   const handleCloseDay = useCallback(async (closureData: Omit<DailyClosure, 'id' | 'date'>) => {
