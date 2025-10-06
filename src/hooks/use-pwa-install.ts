@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,28 +12,27 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+let deferredPrompt: BeforeInstallPromptEvent | null = null;
+const listeners: ((canInstall: boolean) => void)[] = [];
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e: Event) => {
+    e.preventDefault();
+    deferredPrompt = e as BeforeInstallPromptEvent;
+    listeners.forEach(l => l(true));
+  });
+}
+
 export function usePwaInstall() {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
-  const [canInstall, setCanInstall] = useState(false);
+  const [canInstall, setCanInstall] = useState(!!deferredPrompt);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      // Previne o mini-infobar de aparecer no Chrome
-      e.preventDefault();
-      // Guarda o evento para que possa ser disparado depois
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      // Atualiza a UI para notificar o usuário que ele pode instalar o PWA
-      setCanInstall(true);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-
+    listeners.push(setCanInstall);
     return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt
-      );
+      const index = listeners.indexOf(setCanInstall);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
     };
   }, []);
 
@@ -40,14 +40,12 @@ export function usePwaInstall() {
     if (!deferredPrompt) {
       return;
     }
-    // Mostra o prompt de instalação
     await deferredPrompt.prompt();
-    // Espera o usuário responder ao prompt
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
-      // O usuário aceitou, não precisamos mais do prompt
-      setDeferredPrompt(null);
+      deferredPrompt = null;
       setCanInstall(false);
+      listeners.forEach(l => l(false));
     }
   };
 

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect } from "react";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 // This is a client component, so we can't use the metadata object directly.
 // Instead, we set the title in a useEffect hook.
@@ -18,6 +19,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  usePwaInstall(); // Captura o evento de instalação aqui.
+  
   useEffect(() => {
     document.title = "Viveiro Andurá";
     
