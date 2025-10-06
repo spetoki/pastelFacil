@@ -179,15 +179,14 @@ export function Settings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {canInstall ? (
-              <Button onClick={install}>
-                <Download className="mr-2" />
-                Instalar no Dispositivo
-              </Button>
-          ) : (
-             <p className="text-sm text-muted-foreground">
-                Não é possível instalar neste navegador ou o aplicativo já foi instalado. <br/>
-                No iOS (iPhone/iPad), use a opção "Adicionar à Tela de Início" no menu de compartilhamento do Safari.
+            <Button onClick={install} disabled={!canInstall}>
+              <Download className="mr-2" />
+              Instalar no Dispositivo
+            </Button>
+          {!canInstall && (
+             <p className="text-sm text-muted-foreground mt-4">
+                Seu navegador não suporta a instalação direta ou o aplicativo já foi instalado. <br/>
+                <span className="font-semibold">No iOS (iPhone/iPad):</span> use a opção "Adicionar à Tela de Início" no menu de compartilhamento do Safari.
             </p>
           )}
         </CardContent>
