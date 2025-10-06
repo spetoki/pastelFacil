@@ -26,9 +26,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "./ui/input";
 import { deleteAllData } from "@/lib/db-utils";
-import { ImageOff } from "lucide-react";
+import { ImageOff, Download } from "lucide-react";
 import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 type Theme = "light" | "dark";
 const BANNER_DOC_ID = "main-banner";
@@ -41,6 +42,7 @@ export function Settings() {
   const [isMounted, setIsMounted] = useState(false);
   const [pin, setPin] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  const { install, canInstall } = usePwaInstall();
 
   useEffect(() => {
     setIsMounted(true);
@@ -168,6 +170,23 @@ export function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      {canInstall && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Instalar Aplicativo</CardTitle>
+            <CardDescription>
+              Adicione o Viveiro Andurá à sua tela inicial para acesso rápido, como um aplicativo nativo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={install}>
+              <Download className="mr-2" />
+              Instalar Aplicativo no Dispositivo
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-destructive">
           <CardHeader>
