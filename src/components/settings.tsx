@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -29,21 +30,19 @@ import { deleteAllData } from "@/lib/db-utils";
 import { ImageOff, Download } from "lucide-react";
 import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 type Theme = "light" | "dark";
 const BANNER_DOC_ID = "main-banner";
 const BANNER_COLLECTION_ID = "appConfig";
 
-export function Settings() {
+export function Settings({ canInstall, install }: { canInstall: boolean, install: () => void }) {
   const { toast } = useToast();
   const [language, setLanguage] = useState("pt-br");
   const [theme, setTheme] = useState<Theme>("dark");
   const [isMounted, setIsMounted] = useState(false);
   const [pin, setPin] = useState("");
   const [isResetting, setIsResetting] = useState(false);
-  const { install, canInstall } = usePwaInstall();
-
+  
   useEffect(() => {
     setIsMounted(true);
     const storedTheme = localStorage.getItem("theme") as Theme | null;
