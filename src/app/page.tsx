@@ -142,7 +142,7 @@ export default function Home() {
     const clientsQuery = query(collection(db, 'clients'));
     const unsubscribeClients = onSnapshot(clientsQuery, (snapshot) => {
       const clientsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
-      setClients(clientsList.sort((a,b) => a.name.localeCompare(b.name)));
+      setClients(clientsList.sort((a,b) => (a.name || a.razaoSocial || '').localeCompare(b.name || b.razaoSocial || '')));
     }, (error) => {
       console.error("Error fetching clients: ", error);
       toast({ variant: "destructive", title: "Erro ao buscar clientes" });
@@ -505,7 +505,18 @@ export default function Home() {
   const handleAddClient = useCallback(
     async (values: ClientFormValues): Promise<void> => {
       try {
-        await addDoc(collection(db, "clients"), {...values, debt: 0});
+        // Remove empty strings so they don't overwrite data in Firestore with ""
+        const cleanValues = Object.fromEntries(
+          Object.entries(values).filter(([, v]) => v !== '')
+        );
+
+        const newClientData = {
+          ...cleanValues,
+          isPJ: values.isPJ, // make sure boolean is preserved
+          debt: 0,
+        };
+
+        await addDoc(collection(db, "clients"), newClientData);
       } catch (error) {
         console.error("Error adding client: ", error);
         toast({

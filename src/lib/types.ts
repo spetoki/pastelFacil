@@ -51,11 +51,28 @@ export type CashTransaction = {
 export type Client = {
   id: string;
   name: string;
-  address: string;
-  cpf: string;
-  phone: string;
   debt: number;
+
+  // PF fields
+  cpf?: string;
+  address?: string;
+  phone?: string;
+  nacionalidade?: string;
+  estadoCivil?: string;
+  profissao?: string;
+  rg?: string;
+  email?: string;
+
+  // PJ fields
+  isPJ?: boolean;
+  razaoSocial?: string;
+  cnpj?: string;
+  ie?: string; // Inscrição Estadual/Municipal
+  sedeAddress?: string;
+  repLegalNome?: string;
+  repLegalDados?: string;
 };
+
 
 export type DailyClosure = {
   id: string;

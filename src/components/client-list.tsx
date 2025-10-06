@@ -28,17 +28,20 @@ export function ClientList({
 }: ClientListProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredClients = clients.filter(
-    (client) =>
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.cpf.includes(searchTerm)
-  );
+  const filteredClients = clients.filter((client) => {
+    const searchTermLower = searchTerm.toLowerCase();
+    const nameMatch = client.name?.toLowerCase().includes(searchTermLower);
+    const razaoSocialMatch = client.razaoSocial?.toLowerCase().includes(searchTermLower);
+    const cpfMatch = client.cpf?.includes(searchTerm);
+    const cnpjMatch = client.cnpj?.includes(searchTerm);
+    return nameMatch || razaoSocialMatch || cpfMatch || cnpjMatch;
+  });
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <Input
-          placeholder="Buscar cliente por nome ou CPF..."
+          placeholder="Buscar cliente por nome, CPF ou CNPJ..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -48,8 +51,8 @@ export function ClientList({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>CPF</TableHead>
+            <TableHead>Nome / Razão Social</TableHead>
+            <TableHead>CPF / CNPJ</TableHead>
             <TableHead>Telefone</TableHead>
             <TableHead>Endereço</TableHead>
           </TableRow>
@@ -67,10 +70,10 @@ export function ClientList({
           ) : filteredClients.length > 0 ? (
             filteredClients.map((client) => (
               <TableRow key={client.id}>
-                <TableCell className="font-medium">{client.name}</TableCell>
-                <TableCell>{client.cpf}</TableCell>
+                <TableCell className="font-medium">{client.isPJ ? client.razaoSocial : client.name}</TableCell>
+                <TableCell>{client.isPJ ? client.cnpj : client.cpf}</TableCell>
                 <TableCell>{client.phone}</TableCell>
-                <TableCell>{client.address}</TableCell>
+                <TableCell>{client.isPJ ? client.sedeAddress : client.address}</TableCell>
               </TableRow>
             ))
           ) : (

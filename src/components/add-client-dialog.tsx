@@ -27,9 +27,10 @@ export function AddClientDialog({ onAddClient }: AddClientDialogProps) {
     setIsSubmitting(true);
     try {
       await onAddClient(values);
+      const clientName = values.isPJ ? values.razaoSocial : values.name;
       toast({
         title: "Sucesso!",
-        description: `Cliente "${values.name}" adicionado.`,
+        description: `Cliente "${clientName}" adicionado.`,
       });
       setOpen(false);
     } catch (error) {
@@ -51,11 +52,11 @@ export function AddClientDialog({ onAddClient }: AddClientDialogProps) {
           Adicionar Cliente
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-headline">Adicionar Novo Cliente</DialogTitle>
           <DialogDescription>
-            Preencha as informações abaixo para cadastrar um novo cliente.
+            Preencha as informações abaixo para cadastrar um novo cliente. Apenas o nome é obrigatório.
           </DialogDescription>
         </DialogHeader>
         <AddClientForm
