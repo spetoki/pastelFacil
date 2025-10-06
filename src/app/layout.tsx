@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -13,76 +13,15 @@ import { Toaster } from "@/components/ui/toaster";
 //   description: "Gerencie seu estoque de mudas de cacau e clientes.",
 // };
 
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{
-    outcome: "accepted" | "dismissed";
-    platform: string;
-  }>;
-  prompt(): Promise<void>;
-}
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
-  const [canInstall, setCanInstall] = useState(false);
 
-  useEffect(() => {
+  React.useEffect(() => {
     document.title = "Viveiro Andurá";
-
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setCanInstall(true);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) =>
-          console.log(
-            "Service Worker registered with scope:",
-            registration.scope
-          )
-        )
-        .catch((error) =>
-          console.error("Service Worker registration failed:", error)
-        );
-    }
-
-    return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt
-      );
-    };
   }, []);
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) {
-      return;
-    }
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      setDeferredPrompt(null);
-      setCanInstall(false);
-    }
-  };
-
-  const childrenWithProps = React.Children.map(children, (child) => {
-    if (React.isValidElement(child)) {
-      // @ts-ignore
-      return React.cloneElement(child, { handleInstall, canInstall });
-    }
-    return child;
-  });
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
@@ -100,7 +39,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        {childrenWithProps}
+        {children}
         <Toaster />
       </body>
     </html>

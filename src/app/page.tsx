@@ -67,7 +67,7 @@ const getStartOfToday = () => {
 
 const STATUS_DOC_ID = "main";
 
-export default function Home({ canInstall, handleInstall }: { canInstall: boolean, handleInstall: () => void }) {
+export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
   const [activePage, setActivePage] = useState<Page>("caixa");
@@ -686,7 +686,7 @@ export default function Home({ canInstall, handleInstall }: { canInstall: boolea
           <ReportPinDialog onUnlock={handleUnlockReports} />
         );
       case "configuracoes":
-        return <SettingsComponent canInstall={canInstall} install={handleInstall} />;
+        return <SettingsComponent />;
       default:
         return null;
     }

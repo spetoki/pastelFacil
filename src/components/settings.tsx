@@ -35,7 +35,7 @@ type Theme = "light" | "dark";
 const BANNER_DOC_ID = "main-banner";
 const BANNER_COLLECTION_ID = "appConfig";
 
-export function Settings({ canInstall, install }: { canInstall: boolean, install: () => void }) {
+export function Settings() {
   const { toast } = useToast();
   const [language, setLanguage] = useState("pt-br");
   const [theme, setTheme] = useState<Theme>("dark");
@@ -167,27 +167,6 @@ export function Settings({ canInstall, install }: { canInstall: boolean, install
                 </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Instalar Aplicativo</CardTitle>
-          <CardDescription>
-            Adicione o Viveiro Andurá à sua tela inicial para acesso rápido, como um aplicativo nativo.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Button onClick={install} disabled={!canInstall}>
-              <Download className="mr-2" />
-              Instalar no Dispositivo
-            </Button>
-          {!canInstall && (
-             <p className="text-sm text-muted-foreground mt-4">
-                Seu navegador não suporta a instalação direta ou o aplicativo já foi instalado. <br/>
-                <span className="font-semibold">No iOS (iPhone/iPad):</span> use a opção "Adicionar à Tela de Início" no menu de compartilhamento do Safari.
-            </p>
-          )}
         </CardContent>
       </Card>
 
