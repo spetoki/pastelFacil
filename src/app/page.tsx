@@ -617,17 +617,9 @@ export default function Home() {
     switch (activePage) {
       case "caixa":
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start">
-            <div className="lg:col-span-2 space-y-6">
-              <DailySummary summary={dailySummary} />
-              <ProductList
-                groupedProducts={groupedProducts}
-                onAddProductToCart={handleAddProductToCart}
-                isLoading={isLoading}
-                showAddProductButton={false}
-              />
-            </div>
-            <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6">
+          <div className="flex flex-col lg:grid lg:grid-cols-3 lg:gap-6 xl:gap-8 items-start">
+            {/* Mobile: SalesCart on top. Desktop: SalesCart on the right */}
+            <div className="lg:col-span-1 lg:sticky lg:top-24 space-y-6 w-full order-1 lg:order-2">
               <SalesCart
                 items={cartItems}
                 onUpdateQuantity={handleUpdateQuantity}
@@ -636,6 +628,17 @@ export default function Home() {
                 onAddByBarcode={handleAddByBarcode}
               />
               <Calculator />
+            </div>
+
+            {/* Mobile: Product list below. Desktop: Product list on the left */}
+            <div className="lg:col-span-2 space-y-6 w-full order-2 lg:order-1 mt-6 lg:mt-0">
+              <DailySummary summary={dailySummary} />
+              <ProductList
+                groupedProducts={groupedProducts}
+                onAddProductToCart={handleAddProductToCart}
+                isLoading={isLoading}
+                showAddProductButton={false}
+              />
             </div>
           </div>
         );
