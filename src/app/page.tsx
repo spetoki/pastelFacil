@@ -606,6 +606,28 @@ export default function Home() {
     }
   }, [toast]);
   
+  const handleDeleteClosure = useCallback(
+    async (closureId: string) => {
+      try {
+        const closureRef = doc(db, "dailySummaries", closureId);
+        await deleteDoc(closureRef);
+        toast({
+          title: "Relatório Excluído!",
+          description: "O fechamento de caixa foi removido permanentemente.",
+        });
+      } catch (error) {
+        console.error("Error deleting closure: ", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao excluir relatório",
+          description: "Não foi possível remover o registro.",
+        });
+        throw error;
+      }
+    },
+    [toast]
+  );
+
   if (!isClient || !shiftStart) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -681,7 +703,7 @@ export default function Home() {
         );
       case "relatorios":
         return isReportsUnlocked ? (
-          <DailyClosuresHistory closures={dailyClosures} />
+          <DailyClosuresHistory closures={dailyClosures} onDeleteClosure={handleDeleteClosure} />
         ) : (
           <ReportPinDialog onUnlock={handleUnlockReports} />
         );

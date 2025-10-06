@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useState } from "react";
 import type { DailyClosure } from "@/lib/types";
 import {
   Accordion,
@@ -7,14 +9,29 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { ArrowDownCircle, ArrowUpCircle, CircleDollarSign, CreditCard, Landmark, FileText } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, CircleDollarSign, CreditCard, Landmark, FileText, Trash, KeyRound } from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 
 type DailyClosuresHistoryProps = {
   closures: DailyClosure[];
+  onDeleteClosure: (closureId: string) => Promise<void>;
 };
 
 const formatCurrency = (value: number) => {
@@ -31,7 +48,74 @@ const formatDate = (date: Date) => {
   }).format(date);
 };
 
-export function DailyClosuresHistory({ closures }: DailyClosuresHistoryProps) {
+function DeleteClosureDialog({
+  closure,
+  onDelete,
+}: {
+  closure: DailyClosure;
+  onDelete: () => void;
+}) {
+  const [pin, setPin] = useState("");
+  const [open, setOpen] = useState(false);
+  const CORRECT_PIN = "2209";
+
+  const handleDelete = () => {
+    onDelete();
+    setOpen(false);
+  };
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) setPin("");
+      }}
+    >
+      <AlertDialogTrigger asChild>
+        <Button size="icon" variant="destructive">
+          <Trash className="h-4 w-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta ação não pode ser desfeita. Para excluir permanentemente o
+            relatório de <span className="font-semibold">{formatDate(closure.date)}</span>, 
+            por favor, insira o PIN de proprietário.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="py-2">
+          <Label htmlFor={`pin-delete-${closure.id}`}>PIN de Confirmação</Label>
+          <Input
+            id={`pin-delete-${closure.id}`}
+            type="password"
+            maxLength={4}
+            placeholder="••••"
+            className="text-center tracking-widest mt-2"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            autoFocus
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setPin("")}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive hover:bg-destructive/90"
+            disabled={pin !== CORRECT_PIN}
+          >
+            Sim, excluir relatório
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+
+export function DailyClosuresHistory({ closures, onDeleteClosure }: DailyClosuresHistoryProps) {
   if (closures.length === 0) {
     return (
       <div className="text-center py-10 flex flex-col items-center gap-4 text-muted-foreground">
@@ -69,7 +153,10 @@ export function DailyClosuresHistory({ closures }: DailyClosuresHistoryProps) {
             </AccordionTrigger>
             <AccordionContent>
                 <div className="p-4 bg-muted/50 rounded-md">
-                    <h4 className="font-semibold mb-4 text-center">Resumo do Fechamento</h4>
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-semibold text-center">Resumo do Fechamento</h4>
+                        <DeleteClosureDialog closure={closure} onDelete={() => onDeleteClosure(closure.id)} />
+                    </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                        <FinancialCard
                           title="Vendas (Dinheiro)"
