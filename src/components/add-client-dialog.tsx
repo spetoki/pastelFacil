@@ -27,7 +27,7 @@ export function AddClientDialog({ onAddClient }: AddClientDialogProps) {
     setIsSubmitting(true);
     try {
       await onAddClient(values);
-      const clientName = values.isPJ ? values.razaoSocial : values.name;
+      const clientName = values.name;
       toast({
         title: "Sucesso!",
         description: `Cliente "${clientName}" adicionado.`,

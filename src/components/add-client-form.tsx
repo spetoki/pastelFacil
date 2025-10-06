@@ -20,7 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 // Zod schema for client form validation
 const formSchema = z.object({
   // Common fields
-  name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
+  name: z.string().min(2, { message: "O nome de identificação deve ter pelo menos 2 caracteres." }),
   phone: z.string().optional(),
   email: z.string().email({ message: "E-mail inválido." }).optional().or(z.literal('')),
   
@@ -42,16 +42,6 @@ const formSchema = z.object({
   sedeAddress: z.string().optional(),
   repLegalNome: z.string().optional(),
   repLegalDados: z.string().optional(),
-}).refine(data => {
-    // If it's a PJ, razaoSocial should be treated as the main identifier if name is empty.
-    if (data.isPJ) {
-        return data.razaoSocial && data.razaoSocial.length >= 2;
-    }
-    // If it's a PF, name is required.
-    return data.name && data.name.length >= 2;
-}, {
-    message: "O Nome (PF) ou Razão Social (PJ) é obrigatório.",
-    path: ["name"], // Could also be ["razaoSocial"], but name is fine for showing the error
 });
 
 
@@ -141,7 +131,8 @@ export function AddClientForm({
         {isPJ ? (
           // ============== PJ FIELDS ==============
           <div className="space-y-4 animate-in fade-in-50">
-            <FormField control={form.control} name="razaoSocial" render={({ field }) => ( <FormItem> <FormLabel>Razão Social <span className="text-destructive">*</span></FormLabel> <FormControl><Input placeholder="Nome da empresa" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+             <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Nome de Identificação (Apelido/Fantasia) <span className="text-destructive">*</span></FormLabel> <FormControl><Input placeholder="Nome para identificar a empresa" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+            <FormField control={form.control} name="razaoSocial" render={({ field }) => ( <FormItem> <FormLabel>Razão Social</FormLabel> <FormControl><Input placeholder="Nome oficial da empresa" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
             <div className="grid md:grid-cols-2 gap-4">
               <FormField control={form.control} name="cnpj" render={({ field }) => ( <FormItem> <FormLabel>CNPJ</FormLabel> <FormControl><Input placeholder="00.000.000/0000-00" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
               <FormField control={form.control} name="ie" render={({ field }) => ( <FormItem> <FormLabel>Inscrição Estadual/Municipal</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
