@@ -134,7 +134,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       valorTotal: 0,
       valorUnitario: 0,
       contractDate: "",
-      contractCity: "Cascavel",
+      contractCity: "Cacoal - RO",
       testemunha1Name: "",
       testemunha1Rg: "",
       testemunha2Name: "",
@@ -161,7 +161,6 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     `).join('');
 
     const totalClones = values.clones.reduce((sum, clone) => sum + clone.quantity, 0);
-
     const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
     const metadeValor = formatCurrency(values.valorTotal / 2);
 
@@ -179,8 +178,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
         </p>
       `;
       contratanteAssinatura = `
-        <p style="margin-bottom: 0;">${values.contratanteRepLegalNome || ""}</p>
-        <p style="margin-top: 0;">(Contratante)</p>
+        <p style="margin-bottom: 0; margin-top: 0; line-height: 1;">${values.contratanteRepLegalNome || ""}</p>
       `;
     } else {
         contratanteHtml = `
@@ -189,8 +187,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
         </p>
         `;
         contratanteAssinatura = `
-        <p style="margin-bottom: 0;">${values.contratanteNomeCompleto || ""}</p>
-        <p style="margin-top: 0;">(Contratante)</p>
+        <p style="margin-bottom: 0; margin-top: 0; line-height: 1;">${values.contratanteNomeCompleto || ""}</p>
         `;
     }
 
@@ -203,7 +200,6 @@ export function ContractsPage({ clients }: ContractsPageProps) {
             h1, h2 { text-align: center; font-size: 12pt; margin-bottom: 20px; text-transform: uppercase; font-weight: bold; }
             p { text-indent: 2em; text-align: justify; margin-bottom: 1em; }
             .no-indent { text-indent: 0; }
-            .clausula { margin-bottom: 1em; }
             .clausula-title { font-weight: bold; text-align: center; text-indent: 0; margin-bottom: 0.5em;}
             .assinaturas { margin-top: 50px; text-align: center; }
             .assinatura-bloco { margin-top: 60px; display: inline-block; width: 80%; }
@@ -246,7 +242,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           
           <p class="clausula-title">DO ATRASO POR FORÇA MAIOR</p>
           <p><strong>Cláusula 5ª.</strong> Não será considerada inadimplência da CONTRATADA o atraso na entrega das mudas quando decorrente de força maior ou caso fortuito, tais como catástrofes naturais, pragas, epidemias, incêndios, enchentes, acidentes, greves, restrições governamentais ou quaisquer outros fatos alheios à vontade da CONTRATADA.</p>
-          <p class="no-indent"><strong>Parágrafo único:</strong> Também não será considerada inadimplência em caso de afastamento temporário por motivos de saúde devidamente comprovados por atestado ou laudo médico. Nesse caso, o prazo de entrega poderá ser prorrogado pelo período necessário à recuperação, desde que o CONTRATANTE seja comunicado da nova previsão de entrega. O prazo máximo de regularização será de 6 (seis) meses.</p>
+          <p class="no-indent"><strong>Parágrafo único.</strong> Também não será considerada inadimplência em caso de afastamento temporário por motivos de saúde devidamente comprovados por atestado ou laudo médico. Nesse caso, o prazo de entrega poderá ser prorrogado pelo período necessário à recuperação, desde que o CONTRATANTE seja comunicado da nova previsão de entrega. O prazo máximo de regularização será de 6 (seis) meses.</p>
 
           <p><strong>Cláusula 6ª.</strong> Caso as mudas sejam entregues não respeitando as especificações previstas na Cláusula 2ª, serão devolvidas ao CONTRATADO, que deverá repô-las por outras que atendam às especificações.</p>
           <p><strong>Cláusula 7ª.</strong> As despesas com transporte serão de responsabilidade do CONTRATANTE, devendo o veículo comportar adequadamente as mudas a fim de evitar danos.</p>
@@ -265,7 +261,10 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <p><strong>Cláusula 11ª.</strong> O contrato terá prazo de ${values.prazoContratoMeses} meses a partir da assinatura pelas partes, encerrando-se automaticamente ao final deste período.</p>
           
           <p class="clausula-title">DA RESCISÃO CONTRATUAL</p>
-          <p><strong>Cláusula 12ª.</strong> Na hipótese de rescisão por iniciativa de qualquer das partes, aplica-se multa de 10% sobre o valor remanescente do contrato, acrescida de: Juros de 1% ao mês; Correção monetária pelo índice oficial vigente; Multa de mora de 2%, nos termos do Código de Defesa do Consumidor.</p>
+          <p><strong>Cláusula 12ª.</strong> Na hipótese de rescisão por iniciativa de qualquer das partes, aplica-se multa de 10% sobre o valor remanescente do contrato, acrescida de:</p>
+          <p style="text-indent: 4em;">Juros de 1% ao mês;</p>
+          <p style="text-indent: 4em;">Correção monetária pelo índice oficial vigente;</p>
+          <p style="text-indent: 4em;">Multa de mora de 2%, nos termos do Código de Defesa do Consumidor.</p>
           
           <p class="clausula-title">DO FORO</p>
           <p><strong>Cláusula 13ª.</strong> Para dirimir quaisquer controvérsias oriundas do contrato, as partes elegem o foro da comarca de Cacoal – Rondônia.</p>
@@ -275,8 +274,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <div class="assinaturas">
             <div class="assinatura-bloco">
               <div class="assinatura-linha">
-                <p style="margin-bottom: 0;">${values.contratadoRepresentante}</p>
-                <p style="margin-top: 0;">(Contratado)</p>
+                <p style="margin-bottom: 0; margin-top: 0; line-height: 1;">${values.contratadoRepresentante}</p>
               </div>
             </div>
             <div class="assinatura-bloco">
@@ -550,7 +548,6 @@ export function ContractsPage({ clients }: ContractsPageProps) {
               <CardHeader><CardTitle>Local e Testemunhas</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                  <div className="grid md:grid-cols-2 gap-4">
-                   <FormField control={form.control} name="contractCity" render={({ field }) => ( <FormItem> <FormLabel>Cidade do Contrato</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                    <FormField control={form.control} name="contractDate" render={({ field }) => ( <FormItem> <FormLabel>Data do Contrato</FormLabel> <FormControl><Input type="date" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -574,5 +571,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     </Card>
   );
 }
+
+    
 
     
