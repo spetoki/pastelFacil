@@ -134,7 +134,7 @@ export function ClientList({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nome de Identificação</TableHead>
+            <TableHead>Nome / Razão Social</TableHead>
             <TableHead>CPF / CNPJ</TableHead>
             <TableHead>Telefone</TableHead>
             <TableHead>Endereço</TableHead>
@@ -155,7 +155,7 @@ export function ClientList({
           ) : filteredClients.length > 0 ? (
             filteredClients.map((client) => (
               <TableRow key={client.id}>
-                <TableCell className="font-medium">{client.name}</TableCell>
+                <TableCell className="font-medium">{client.isPJ ? client.razaoSocial : client.name}</TableCell>
                 <TableCell>{client.isPJ ? client.cnpj : client.cpf}</TableCell>
                 <TableCell>{client.phone}</TableCell>
                 <TableCell>{client.isPJ ? client.sedeAddress : client.address}</TableCell>
@@ -176,5 +176,3 @@ export function ClientList({
     </div>
   );
 }
-
-    
