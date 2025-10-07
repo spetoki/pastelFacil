@@ -417,15 +417,15 @@ export function ContractsPage({ clients }: ContractsPageProps) {
                         >
                           <FormItem className="flex items-center space-x-2">
                             <FormControl>
-                              <RadioGroupItem value="false" id="type-pf" />
+                              <RadioGroupItem value="false" id="type-pf-contract" />
                             </FormControl>
-                            <FormLabel htmlFor="type-pf" className="font-normal">Pessoa Física</FormLabel>
+                            <FormLabel htmlFor="type-pf-contract" className="font-normal">Pessoa Física</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2">
                             <FormControl>
-                              <RadioGroupItem value="true" id="type-pj" />
+                              <RadioGroupItem value="true" id="type-pj-contract" />
                             </FormControl>
-                            <FormLabel htmlFor="type-pj" className="font-normal">Pessoa Jurídica</FormLabel>
+                            <FormLabel htmlFor="type-pj-contract" className="font-normal">Pessoa Jurídica</FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
