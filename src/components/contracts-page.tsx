@@ -134,7 +134,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       valorTotal: 0,
       valorUnitario: 0,
       contractDate: "",
-      contractCity: "",
+      contractCity: "Cascavel",
       testemunha1Name: "",
       testemunha1Rg: "",
       testemunha2Name: "",
@@ -161,12 +161,13 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     `).join('');
 
     const totalClones = values.clones.reduce((sum, clone) => sum + clone.quantity, 0);
-    // TODO: Implement number to words
-    const valorTotalPorExtenso = "REPLACE_ME"; 
+
+    const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+    const metadeValor = formatCurrency(values.valorTotal / 2);
 
     const objetoContratoTexto = values.tipoDeMuda === "enxertada" 
-      ? "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau enxertado."
-      : "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau clonal enraizadas.";
+      ? "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau enxertado, conforme abaixo:"
+      : "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau clonal enraizadas, conforme abaixo:";
 
     let contratanteHtml;
     let contratanteAssinatura;
@@ -179,7 +180,6 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       `;
       contratanteAssinatura = `
         <p style="margin-bottom: 0;">${values.contratanteRepLegalNome || ""}</p>
-        <p style="margin-top: 0;">p/p ${values.contratanteRazaoSocial || ""}</p>
         <p style="margin-top: 0;">(Contratante)</p>
       `;
     } else {
@@ -225,7 +225,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           </p>
           
           <p class="clausula-title">DO OBJETO DO CONTRATO</p>
-          <p><strong>Cláusula 1ª.</strong> O presente contrato tem como objeto ${objetoContratoTexto} sendo:</p>
+          <p><strong>Cláusula 1ª.</strong> ${objetoContratoTexto}</p>
           <table style="width: 50%; margin: 20px auto; border-collapse: collapse;">
             <thead style="font-weight: bold;">
               <tr>
@@ -239,42 +239,36 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           </table>
 
           <p class="clausula-title">DA ENTREGA</p>
-          <p><strong>Cláusula 2ª.</strong> As mudas deverão ser retiradas no viveiro após a avaliação e concordância do CONTRATANTE, devendo as mesmas estar em boas condições de desenvolvimento e sanidade, soldadura do porta-enxerto consolidada, folhas maduras e expandidas em número não inferior a 3 pares.</p>
+          <p><strong>Cláusula 2ª.</strong> As mudas deverão ser retiradas no viveiro após a avaliação e concordância do CONTRATANTE, devendo as mesmas estar em boas condições de desenvolvimento e sanidade, com soldadura do porta-enxerto consolidada e folhas maduras expandidas em número não inferior a 3 pares.</p>
           <p><strong>Cláusula 3ª.</strong> As mudas na entrega deverão estar separadas conforme o clone, em perfeito estado para plantio e livres de doenças ou pragas que prejudiquem seu desenvolvimento.</p>
-          <p><strong>Cláusula 4ª.</strong> A entrega das mudas se realizará a partir de ${values.dataEntregaInicio} até ${values.dataEntregaFim}, de acordo com a ordem de pedidos, e de forma acordada entre CONTRATANTE e CONTRATADO, devendo o agendamento ser feito com antecedência mínima de 5 dias.</p>
-          <p><strong>Cláusula 4ª-A (opcional).</strong> No ato da retirada, o CONTRATANTE assinará termo de entrega, declarando ter recebido as mudas em conformidade com as especificações técnicas deste contrato.</p>
+          <p><strong>Cláusula 4ª.</strong> A entrega das mudas se realizará a partir de ${values.dataEntregaInicio} até ${values.dataEntregaFim}, de acordo com a ordem de pedidos, devendo o agendamento ser feito com antecedência mínima de 5 dias.</p>
+          <p><strong>Cláusula 4ª-A.</strong> No ato da retirada, o CONTRATANTE assinará termo de entrega, declarando ter recebido as mudas em conformidade com as especificações técnicas deste contrato.</p>
           
-          <p class="clausula-title">CLÁUSULA 5ª – DO ATRASO POR FORÇA MAIOR</p>
-          <p>Não será considerada inadimplência da CONTRATADA o atraso na entrega das mudas quando decorrente de força maior ou caso fortuito, compreendendo-se como tais os eventos imprevisíveis ou inevitáveis, tais como catástrofes naturais, pragas, epidemias, incêndios, enchentes, acidentes, greves, restrições governamentais ou quaisquer outros fatos alheios à vontade da CONTRATADA.</p>
-          <p class="no-indent"><strong>Parágrafo único:</strong> Também não será considerada inadimplência da CONTRATADA em caso de afastamento temporário por motivos de saúde, devidamente comprovados por atestado ou laudo médico, hipótese em que o prazo de entrega poderá ser prorrogado pelo período necessário à recuperação, sem aplicação de penalidades, desde que o CONTRATANTE seja comunicado e informado sobre a nova previsão de entrega.</p>
-          <p>Nessas hipóteses, a CONTRATADA terá o prazo máximo de 6 (seis) meses, contados da data originalmente prevista para a entrega, para regularizar a situação.</p>
+          <p class="clausula-title">DO ATRASO POR FORÇA MAIOR</p>
+          <p><strong>Cláusula 5ª.</strong> Não será considerada inadimplência da CONTRATADA o atraso na entrega das mudas quando decorrente de força maior ou caso fortuito, tais como catástrofes naturais, pragas, epidemias, incêndios, enchentes, acidentes, greves, restrições governamentais ou quaisquer outros fatos alheios à vontade da CONTRATADA.</p>
+          <p class="no-indent"><strong>Parágrafo único:</strong> Também não será considerada inadimplência em caso de afastamento temporário por motivos de saúde devidamente comprovados por atestado ou laudo médico. Nesse caso, o prazo de entrega poderá ser prorrogado pelo período necessário à recuperação, desde que o CONTRATANTE seja comunicado da nova previsão de entrega. O prazo máximo de regularização será de 6 (seis) meses.</p>
 
           <p><strong>Cláusula 6ª.</strong> Caso as mudas sejam entregues não respeitando as especificações previstas na Cláusula 2ª, serão devolvidas ao CONTRATADO, que deverá repô-las por outras que atendam às especificações.</p>
           <p><strong>Cláusula 7ª.</strong> As despesas com transporte serão de responsabilidade do CONTRATANTE, devendo o veículo comportar adequadamente as mudas a fim de evitar danos.</p>
 
           <p class="clausula-title">DO CULTIVO</p>
-          <p><strong>Cláusula 8ª.</strong> As mudas deverão ser cultivadas de acordo com as recomendações técnicas para a cultura do cacau, em solo corrigido, com disponibilidade hídrica, nutrição mineral adequada, e manejo adequado para garantir pegamento mínimo de 80%.</p>
+          <p><strong>Cláusula 8ª.</strong> As mudas deverão ser cultivadas de acordo com as recomendações técnicas para a cultura do cacau, em solo corrigido, com disponibilidade hídrica, nutrição mineral adequada e manejo correto, garantindo pegamento mínimo de 80%.</p>
           <p><strong>Cláusula 9ª.</strong> O CONTRATANTE se responsabiliza por fornecer sombreamento provisório e sistema de irrigação para garantir o pegamento das mudas. Na ausência destes, o CONTRATADO não se responsabiliza por índices inferiores.</p>
           
           <p class="clausula-title">DA REMUNERAÇÃO</p>
-          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE pagará ao CONTRATADO a quantia total de R$ ${values.valorTotal.toFixed(2)} (${valorTotalPorExtenso}) referente a ${totalClones} mudas de cacau clonal, sendo:</p>
-          <p style="text-indent: 4em;">50% na assinatura do contrato como adiantamento;</p>
-          <p style="text-indent: 4em;">50% restantes na entrega das mudas.</p>
-          <p>Forma de pagamento: PIX ou transferência bancária para a titularidade de ${values.contratadoRepresentante}, CPF ${values.contratadoRepresentanteCpf}.</p>
+          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE pagará ao CONTRATADO a quantia total de ${formatCurrency(values.valorTotal)}, referente a ${totalClones} mudas de cacau clonal, sendo:</p>
+          <p style="text-indent: 4em;">50% (${metadeValor}) na assinatura do contrato como adiantamento;</p>
+          <p style="text-indent: 4em;">50% restantes (${metadeValor}) na entrega das mudas.</p>
+          <p>Forma de pagamento: PIX ou transferência bancária para ${values.contratadoRepresentante}, CPF ${values.contratadoRepresentanteCpf}.</p>
           
           <p class="clausula-title">DO PRAZO</p>
-          <p><strong>Cláusula 11ª.</strong> O contrato terá prazo de ${values.prazoContratoMeses} meses, a partir da assinatura pelas partes, encerrando-se automaticamente ao final deste período.</p>
+          <p><strong>Cláusula 11ª.</strong> O contrato terá prazo de ${values.prazoContratoMeses} meses a partir da assinatura pelas partes, encerrando-se automaticamente ao final deste período.</p>
           
-          <p class="clausula-title">CLÁUSULA 12ª – DA RESCISÃO CONTRATUAL</p>
-          <p>Na hipótese de rescisão por iniciativa de qualquer das partes, aplica-se multa de 10% sobre o valor remanescente do contrato, acrescida de:</p>
-          <ul style="text-indent: 2em;">
-            <li>Juros de 1% ao mês;</li>
-            <li>Correção monetária pelo índice oficial vigente;</li>
-            <li>Multa de mora de 2%, nos termos do Código de Defesa do Consumidor.</li>
-          </ul>
+          <p class="clausula-title">DA RESCISÃO CONTRATUAL</p>
+          <p><strong>Cláusula 12ª.</strong> Na hipótese de rescisão por iniciativa de qualquer das partes, aplica-se multa de 10% sobre o valor remanescente do contrato, acrescida de: Juros de 1% ao mês; Correção monetária pelo índice oficial vigente; Multa de mora de 2%, nos termos do Código de Defesa do Consumidor.</p>
           
-          <p class="clausula-title">CLÁUSULA 13ª – DO FORO</p>
-          <p>Para dirimir quaisquer controvérsias oriundas do contrato, as partes elegem o foro da comarca de Cacoal – Rondônia.</p>
+          <p class="clausula-title">DO FORO</p>
+          <p><strong>Cláusula 13ª.</strong> Para dirimir quaisquer controvérsias oriundas do contrato, as partes elegem o foro da comarca de Cacoal – Rondônia.</p>
           
           <p style="text-align: right; text-indent: 0; margin-top: 30px;">${values.contractCity}, ${new Date((values.contractDate || new Date().toISOString().split('T')[0]) + 'T12:00:00Z').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>
 
@@ -294,16 +288,10 @@ export function ContractsPage({ clients }: ContractsPageProps) {
             <p style="margin-top: 60px; font-weight: bold; text-indent: 0;">Testemunhas:</p>
 
             <div class="assinatura-bloco">
-              <div class="assinatura-linha">
-                <p style="margin-bottom: 0;">${values.testemunha1Name}</p>
-                <p style="margin-top: 0;">RG: ${values.testemunha1Rg}</p>
-              </div>
+                <p style="margin-bottom: 0;">Nome: ________________________ RG: ________________________</p>
             </div>
-             <div class="assinatura-bloco">
-              <div class="assinatura-linha">
-                <p style="margin-bottom: 0;">${values.testemunha2Name}</p>
-                <p style="margin-top: 0;">RG: ${values.testemunha2Rg}</p>
-              </div>
+            <div class="assinatura-bloco">
+                <p style="margin-bottom: 0;">Nome: ________________________ RG: ________________________</p>
             </div>
           </div>
         </body>
@@ -586,3 +574,5 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     </Card>
   );
 }
+
+    
