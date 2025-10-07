@@ -90,14 +90,6 @@ const contractSchema = z.object({
   testemunha1Rg: z.string().min(2, { message: "O RG da testemunha é obrigatório." }),
   testemunha2Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
   testemunha2Rg: z.string().min(2, { message: "O RG da testemunha é obrigatório." }),
-}).refine(data => {
-    if (data.contratanteIsPJ) {
-        return data.contratanteCnpj && data.contratanteSedeAddress && data.contratanteRepLegalNome;
-    }
-    return data.contratanteNomeCompleto && data.contratanteCpf && data.contratanteAddress && data.contratanteRg;
-}, {
-    message: "Preencha todos os campos obrigatórios para o tipo de pessoa selecionado.",
-    path: ['contratanteIsPJ'],
 });
 
 
@@ -176,28 +168,30 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       ? "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau enxertado."
       : "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau clonal enraizadas.";
 
-    let contratanteHtml = `
-      <p>
-        <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto || contratante.name}, ${values.contratanteNacionalidade}, ${values.contratanteEstadoCivil}, ${values.contratanteProfissao}, portador do RG nº ${values.contratanteRg} e inscrito no CPF nº ${values.contratanteCpf || contratante.cpf}, com endereço declarado: ${values.contratanteAddress || contratante.address}, telefone: ${values.contratanteTelefone || contratante.phone || 'não informado'}, e-mail: ${values.contratanteEmail || contratante.email || 'não informado'}.
-      </p>
-    `;
-    
-    let contratanteAssinatura = `
-      <p style="margin-bottom: 0;">${values.contratanteNomeCompleto || contratante.name}</p>
-      <p style="margin-top: 0;">(Contratante)</p>
-    `;
+    let contratanteHtml;
+    let contratanteAssinatura;
 
-    if(contratanteIsPJ) {
+    if(values.contratanteIsPJ) {
       contratanteHtml = `
         <p>
-          <strong>CONTRATANTE:</strong> ${values.contratanteRazaoSocial || contratante.name}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${values.contratanteCnpj || contratante.cnpj}, Inscrição Estadual/Municipal nº ${values.contratanteIE || contratante.ie || 'não aplicável'}, com sede em ${values.contratanteSedeAddress || contratante.sedeAddress}, neste ato representada por ${values.contratanteRepLegalNome || contratante.repLegalNome || contratante.name}, (dados do representante: ${values.contratanteRepLegalDados || contratante.repLegalDados});
+          <strong>CONTRATANTE:</strong> ${values.contratanteRazaoSocial || ""}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${values.contratanteCnpj || ""}, Inscrição Estadual/Municipal nº ${values.contratanteIE || 'não aplicável'}, com sede em ${values.contratanteSedeAddress || ""}, neste ato representada por ${values.contratanteRepLegalNome || ""}, (dados do representante: ${values.contratanteRepLegalDados || ""});
         </p>
       `;
       contratanteAssinatura = `
-        <p style="margin-bottom: 0;">${values.contratanteRepLegalNome || contratante.name}</p>
-        <p style="margin-top: 0;">p/p ${values.contratanteRazaoSocial || contratante.name}</p>
+        <p style="margin-bottom: 0;">${values.contratanteRepLegalNome || ""}</p>
+        <p style="margin-top: 0;">p/p ${values.contratanteRazaoSocial || ""}</p>
         <p style="margin-top: 0;">(Contratante)</p>
       `;
+    } else {
+        contratanteHtml = `
+        <p>
+            <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto || ""}, ${values.contratanteNacionalidade || ""}, ${values.contratanteEstadoCivil || ""}, ${values.contratanteProfissao || ""}, portador do RG nº ${values.contratanteRg || ""} e inscrito no CPF nº ${values.contratanteCpf || ""}, com endereço declarado: ${values.contratanteAddress || ""}, telefone: ${values.contratanteTelefone || 'não informado'}, e-mail: ${values.contratanteEmail || 'não informado'}.
+        </p>
+        `;
+        contratanteAssinatura = `
+        <p style="margin-bottom: 0;">${values.contratanteNomeCompleto || ""}</p>
+        <p style="margin-top: 0;">(Contratante)</p>
+        `;
     }
 
     const contractHtml = `
@@ -251,7 +245,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <p><strong>Cláusula 4ª-A (opcional).</strong> No ato da retirada, o CONTRATANTE assinará termo de entrega, declarando ter recebido as mudas em conformidade com as especificações técnicas deste contrato.</p>
           
           <p class="clausula-title">CLÁUSULA 5ª – DO ATRASO POR FORÇA MAIOR</p>
-          <p>Não será considerada inadimplência da CONTRATADA o atraso na entrega das mudas quando decorrente de força maior ou caso fortuito, compreendendo eventos imprevisíveis ou inevitáveis, tais como catástrofes naturais, pragas, epidemias, incêndios, enchentes, acidentes, greves, restrições governamentais ou quaisquer fatos alheios à vontade da CONTRATADA.</p>
+          <p>Não será considerada inadimplência da CONTRATADA o atraso na entrega das mudas quando decorrente de força maior ou caso fortuito, compreendendo-se como tais os eventos imprevisíveis ou inevitáveis, tais como catástrofes naturais, pragas, epidemias, incêndios, enchentes, acidentes, greves, restrições governamentais ou quaisquer outros fatos alheios à vontade da CONTRATADA.</p>
           <p class="no-indent"><strong>Parágrafo único:</strong> Também não será considerada inadimplência da CONTRATADA em caso de afastamento temporário por motivos de saúde, devidamente comprovados por atestado ou laudo médico, hipótese em que o prazo de entrega poderá ser prorrogado pelo período necessário à recuperação, sem aplicação de penalidades, desde que o CONTRATANTE seja comunicado e informado sobre a nova previsão de entrega.</p>
           <p>Nessas hipóteses, a CONTRATADA terá o prazo máximo de 6 (seis) meses, contados da data originalmente prevista para a entrega, para regularizar a situação.</p>
 
@@ -326,7 +320,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
   const onContratanteChange = (contratanteId: string) => {
     const contratante = clients.find((c) => c.id === contratanteId);
     if(contratante) {
-      const isPJ = !!contratante.isPJ;
+      const isPJ = !!contratante.isPJ; // Force boolean
       form.setValue("contratanteIsPJ", isPJ);
 
       // Set values for both PF and PJ, ensuring no undefined values
