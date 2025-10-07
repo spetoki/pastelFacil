@@ -136,7 +136,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       dataEntregaFim: "abril de 2026",
       prazoContratoMeses: 15,
       tipoDeMuda: "enxertada",
-      clones: [{name: "", quantity: 0}],
+      clones: [{name: "", quantity: 1}],
       valorTotal: 0,
       valorUnitario: 0,
       contractDate: "",
@@ -532,7 +532,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
                       variant="outline"
                       size="sm"
                       className="mt-2"
-                      onClick={() => append({ name: "", quantity: 0 })}
+                      onClick={() => append({ name: "", quantity: 1 })}
                     >
                       <PlusCircle className="mr-2"/>
                       Adicionar Clone
