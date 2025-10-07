@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -89,7 +90,7 @@ const contractSchema = z.object({
   testemunha2Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
 }).refine(data => {
     if (data.contratanteIsPJ) {
-        return data.contratanteRazaoSocial && data.contratanteCnpj && data.contratanteSedeAddress && data.contratanteRepLegalNome;
+        return data.contratanteCnpj && data.contratanteSedeAddress && data.contratanteRepLegalNome;
     }
     return data.contratanteNomeCompleto && data.contratanteCpf && data.contratanteAddress && data.contratanteRg;
 }, {
@@ -243,6 +244,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           
           <p class="clausula-title">CLÁUSULA 5ª – DO ATRASO POR FORÇA MAIOR</p>
           <p>Não será considerada inadimplência da CONTRATADA o atraso na entrega das mudas quando decorrente de força maior ou caso fortuito, compreendendo-se como tais os eventos imprevisíveis ou inevitáveis, tais como catástrofes naturais, pragas, epidemias, incêndios, enchentes, acidentes, greves, restrições governamentais ou quaisquer outros fatos alheios à vontade da CONTRATADA.</p>
+          <p class="no-indent"><strong>Parágrafo único.</strong> Também não será considerada inadimplência da CONTRATADA em caso de afastamento temporário por motivos de saúde devidamente comprovados por atestado ou laudo médico, hipótese em que o prazo de entrega poderá ser prorrogado pelo período necessário à recuperação da CONTRATADA, sem aplicação de penalidades, desde que o CONTRATANTE seja comunicado e informado sobre a situação e a nova previsão de entrega.</p>
           <p>Nessas hipóteses, a CONTRATADA terá o prazo máximo de 6 (seis) meses, contados da data originalmente prevista para a entrega, para regularizar a situação e efetuar a entrega das mudas pendentes, sem que isso gere penalidades, desde que o CONTRATANTE seja devidamente comunicado e informado sobre a ocorrência e a nova previsão de entrega.</p>
           
           <p><strong>Cláusula 6ª.</strong> Caso as mudas sejam entregues, não respeitando as especificações previstas na Cláusula 2ª, serão devolvidas ao CONTRATADO, devendo este repô-las por outras que atendam às especificações.</p>
@@ -564,6 +566,8 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     </Card>
   );
 }
+
+    
 
     
 
