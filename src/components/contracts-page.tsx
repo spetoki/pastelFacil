@@ -72,7 +72,7 @@ const contractSchema = z.object({
 
   tipoDeMuda: z.enum(["enxertada", "enraizada"], { required_error: "Selecione o tipo de muda."}),
   clones: z.array(z.object({
-    name: z.string().min(2, { message: "Nome do clone obrigatório."}),
+    name: z.string().min(1, { message: "Nome do clone obrigatório."}),
     quantity: z.coerce.number().positive({ message: "Qtd. deve ser > 0"}),
   })).min(1, { message: "Adicione pelo menos um clone."}),
   
@@ -159,8 +159,8 @@ export function ContractsPage({ clients }: ContractsPageProps) {
 
     const clonesHtml = values.clones.map(clone => `
       <tr>
-        <td style="text-align: center; border: 1px solid black; padding: 5px;">${'${clone.quantity}'}</td>
-        <td style="text-align: center; border: 1px solid black; padding: 5px;">${'${clone.name}'}</td>
+        <td style="text-align: center; border: 1px solid black; padding: 5px;">${clone.quantity}</td>
+        <td style="text-align: center; border: 1px solid black; padding: 5px;">${clone.name}</td>
       </tr>
     `).join('');
 
@@ -173,24 +173,24 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       : "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau clonal enraizadas.";
 
     const valorContratoTexto = values.tipoDeMuda === "enxertada"
-      ? `referente a quantidade de ${'${totalClones}'} mudas de cacau clonal por enxertia`
-      : `referente a quantidade de ${'${totalClones}'} mudas de cacau clonal enraizadas`;
+      ? `referente a quantidade de ${totalClones} mudas de cacau clonal por enxertia`
+      : `referente a quantidade de ${totalClones} mudas de cacau clonal enraizadas`;
 
     let contratanteHtml = `
       <p>
-        <strong>CONTRATANTE:</strong> ${'${values.contratanteNomeCompleto || contratante.name}'}, ${'${values.contratanteNacionalidade}'}, ${'${values.contratanteEstadoCivil}'}, ${'${values.contratanteProfissao}'}, portador(a) do documento de identidade RG nº ${'${values.contratanteRg}'}, inscrito(a) no C.P.F. sob o nº ${'${values.contratanteCpf || contratante.cpf}'}, com endereço declarado: ${'${values.contratanteAddress || contratante.address}'}, telefone: ${'${values.contratanteTelefone || contratante.phone || \'não informado\'}'}, e-mail: ${'${values.contratanteEmail || \'não informado\'}'};
+        <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto || contratante.name}, ${values.contratanteNacionalidade}, ${values.contratanteEstadoCivil}, ${values.contratanteProfissao}, portador(a) do documento de identidade RG nº ${values.contratanteRg}, inscrito(a) no C.P.F. sob o nº ${values.contratanteCpf || contratante.cpf}, com endereço declarado: ${values.contratanteAddress || contratante.address}, telefone: ${values.contratanteTelefone || contratante.phone || 'não informado'}, e-mail: ${values.contratanteEmail || 'não informado'};
       </p>
     `;
     
-    let contratanteAssinatura = `<p>${'${values.contratanteNomeCompleto || contratante.name}'}</p><p>(Contratante)</p>`;
+    let contratanteAssinatura = `<p>${values.contratanteNomeCompleto || contratante.name}</p><p>(Contratante)</p>`;
 
     if(values.contratanteIsPJ) {
       contratanteHtml = `
         <p>
-          <strong>CONTRATANTE:</strong> ${'${values.contratanteRazaoSocial}'}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${'${values.contratanteCnpj}'}, Inscrição Estadual/Municipal nº ${'${values.contratanteIE || \'não aplicável\'}'}, com sede em ${'${values.contratanteSedeAddress}'}, neste ato representada por ${'${values.contratanteRepLegalNome || contratante.name}'}, (dados do representante: ${'${values.contratanteRepLegalDados}'});
+          <strong>CONTRATANTE:</strong> ${values.contratanteRazaoSocial}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${values.contratanteCnpj}, Inscrição Estadual/Municipal nº ${values.contratanteIE || 'não aplicável'}, com sede em ${values.contratanteSedeAddress}, neste ato representada por ${values.contratanteRepLegalNome || contratante.name}, (dados do representante: ${values.contratanteRepLegalDados});
         </p>
       `;
-      contratanteAssinatura = `<p>${'${values.contratanteRepLegalNome || contratante.name}'}</p><p>p/p ${'${values.contratanteRazaoSocial}'}</p><p>(Contratante)</p>`;
+      contratanteAssinatura = `<p>${values.contratanteRepLegalNome || contratante.name}</p><p>p/p ${values.contratanteRazaoSocial}</p><p>(Contratante)</p>`;
     }
 
     const contractHtml = `
@@ -213,10 +213,10 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <h2>CONTRATO DE FORNECIMENTO DE MUDAS CLONAIS DE CACAU</h2>
           <h1>IDENTIFICAÇÃO DAS PARTES CONTRATANTES</h1>
           
-          ${'${contratanteHtml}'}
+          ${contratanteHtml}
 
           <p>
-            <strong>CONTRATADO:</strong> ${'${values.contratadoName}'} – Renasem nº ${'${values.contratadoRenasem}'} localizado na ${'${values.contratadoLocalizacao}'}, aqui representado por: ${'${values.contratadoRepresentante}'}, brasileira, casada, engenheira agrônoma e viveirista, Carteira de Identidade nº ${'${values.contratadoRepresentanteId}'}, C.P.F. nº ${'${values.contratadoRepresentanteCpf}'}, residente e domiciliada na ${'${values.contratadoAddress}'}.
+            <strong>CONTRATADO:</strong> ${values.contratadoName} – Renasem nº ${values.contratadoRenasem} localizado na ${values.contratadoLocalizacao}, aqui representado por: ${values.contratadoRepresentante}, brasileira, casada, engenheira agrônoma e viveirista, Carteira de Identidade nº ${values.contratadoRepresentanteId}, C.P.F. nº ${values.contratadoRepresentanteCpf}, residente e domiciliada na ${values.contratadoAddress}.
           </p>
           
           <p class="no-indent">
@@ -224,7 +224,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           </p>
           
           <p class="clausula-title">DO OBJETO DO CONTRATO</p>
-          <p><strong>Cláusula 1ª.</strong> O presente contrato tem como OBJETO, ${'${objetoContratoTexto}'} Sendo dos Seguintes Clones e quantidades por clone:</p>
+          <p><strong>Cláusula 1ª.</strong> O presente contrato tem como OBJETO, ${objetoContratoTexto} Sendo dos Seguintes Clones e quantidades por clone:</p>
           <table style="width: 50%; margin: 20px auto; border-collapse: collapse;">
             <thead style="font-weight: bold;">
               <tr>
@@ -233,14 +233,14 @@ export function ContractsPage({ clients }: ContractsPageProps) {
               </tr>
             </thead>
             <tbody>
-              ${'${clonesHtml}'}
+              ${clonesHtml}
             </tbody>
           </table>
 
           <p class="clausula-title">DA ENTREGA</p>
           <p><strong>Cláusula 2ª.</strong> As mudas deverão ser RETIRADAS NO VIVEIRO após a avaliação e concordância do CONTRATANTE, devendo as mesmas estar em boas condições de desenvolvimento e sanidade, soldadura do porta enxerto consolidada, folhas maduras e expandidas em número não inferior a 3 pares.</p>
           <p><strong>Cláusula 3ª.</strong> As mudas na entrega deverão estar separadas conforme o clone, em perfeito estado para plantio e livres de doenças ou pragas que prejudiquem seu desenvolvimento.</p>
-          <p><strong>Cláusula 4ª.</strong> A entrega das mudas se realizará a partir de ${'${values.dataEntregaInicio}'} até a data limite de ${'${values.dataEntregaFim}'}, de acordo ordem de pedidos, e de forma acordada entre o CONTRATANTE e CONTRATADO, o qual deverá agendar com antecedência de 5 dias a retirada junto ao CONTRATADO.</p>
+          <p><strong>Cláusula 4ª.</strong> A entrega das mudas se realizará a partir de ${values.dataEntregaInicio} até a data limite de ${values.dataEntregaFim}, de acordo ordem de pedidos, e de forma acordada entre o CONTRATANTE e CONTRATADO, o qual deverá agendar com antecedência de 5 dias a retirada junto ao CONTRATADO.</p>
           
           <p class="clausula-title">CLÁUSULA 5ª – DO ATRASO POR FORÇA MAIOR</p>
           <p>Não será considerada inadimplência da CONTRATADA o atraso na entrega das mudas quando decorrente de força maior ou caso fortuito, compreendendo-se como tais os eventos imprevisíveis ou inevitáveis, tais como catástrofes naturais, pragas, epidemias, incêndios, enchentes, acidentes, greves, restrições governamentais ou quaisquer outros fatos alheios à vontade da CONTRATADA.</p>
@@ -255,10 +255,10 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           <p><strong>Cláusula 9ª.</strong> O CONTRATANTE fica responsável por providenciar sombreamento provisório para plantio das mudas correspondendo a sombra de 80% bem como sistema de irrigação a fim de garantir pegamento das mudas, na ausência destes o CONTRATADO não se responsabiliza por índices de pegamento inferiores.</p>
           
           <p class="clausula-title">DA REMUNERAÇÃO</p>
-          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE se compromete a pagar ao CONTRATADO a quantia de R$ ${'${values.valorTotal.toFixed(2)}'} (${'${valorTotalPorExtenso}'}), ${'${valorContratoTexto}'}, com valor unitário de R$ ${'${values.valorUnitario.toFixed(2)}'} (${'${valorUnitarioPorExtenso}'}), sendo 50% do valor combinado como adiantamento na reserva (Assinatura do contrato) e o restante 50% na entrega das mudas.</p>
+          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE se compromete a pagar ao CONTRATADO a quantia de R$ ${values.valorTotal.toFixed(2)} (${valorTotalPorExtenso}), ${valorContratoTexto}, com valor unitário de R$ ${values.valorUnitario.toFixed(2)} (${valorUnitarioPorExtenso}), sendo 50% do valor combinado como adiantamento na reserva (Assinatura do contrato) e o restante 50% na entrega das mudas.</p>
           
           <p class="clausula-title">DO PRAZO</p>
-          <p><strong>Cláusula 11ª.</strong> O presente instrumento terá prazo de ${'${values.prazoContratoMeses}'} meses, passando a valer a partir da assinatura pelas partes.</p>
+          <p><strong>Cláusula 11ª.</strong> O presente instrumento terá prazo de ${values.prazoContratoMeses} meses, passando a valer a partir da assinatura pelas partes.</p>
           
           <p class="clausula-title">CLÁUSULA 12ª – DA RESCISÃO CONTRATUAL</p>
           <p>Na hipótese de rescisão total do presente contrato, por iniciativa de qualquer das partes, será aplicada ao responsável pela quebra contratual uma multa de 10% (dez por cento) sobre o valor total remanescente do contrato a ser pago na data da rescisão.</p>
@@ -275,30 +275,30 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           
           <p class="no-indent" style="margin-top: 30px;">Por estarem assim justos e contratados, firmam o presente instrumento, em duas vias de igual teor, juntamente com 2 (duas) testemunhas.</p>
           
-          <p style="text-align: right; text-indent: 0; margin-top: 30px;">${'${values.contractCity}'}, ${'${new Date((values.contractDate || new Date().toISOString().split(\'T\')[0]) + \'T12:00:00Z\').toLocaleDateString(\'pt-BR\', { day: \'2-digit\', month: \'long\', year: \'numeric\' })}'}.</p>
+          <p style="text-align: right; text-indent: 0; margin-top: 30px;">${values.contractCity}, ${new Date((values.contractDate || new Date().toISOString().split('T')[0]) + 'T12:00:00Z').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>
 
           <div class="signatures">
             <div class="signature-line">
               <div class="signature-line-inner">
-                <p>${'${values.contratadoRepresentante}'} (Viveiro Andurá)</p>
+                <p>${values.contratadoRepresentante} (Viveiro Andurá)</p>
                 <p>(Contratado)</p>
               </div>
             </div>
             <div class="signature-line">
               <div class="signature-line-inner">
-                 ${'${contratanteAssinatura}'}
+                 ${contratanteAssinatura}
               </div>
             </div>
             <div class="signature-line">
               <div class="signature-line-inner">
-                <p>${'${values.testemunha1Name}'}</p>
+                <p>${values.testemunha1Name}</p>
                 <p>(Nome, RG e assinatura)</p>
                 <p>Testemunha 1</p>
               </div>
             </div>
              <div class="signature-line">
               <div class="signature-line-inner">
-                <p>${'${values.testemunha2Name}'}</p>
+                <p>${values.testemunha2Name}</p>
                 <p>(Nome, RG e assinatura)</p>
                 <p>Testemunha 2</p>
               </div>
@@ -511,14 +511,14 @@ export function ContractsPage({ clients }: ContractsPageProps) {
                       <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end mb-2 mt-2">
                         <FormField
                           control={form.control}
-                          name={`clones.${'${index}'}.name`}
+                          name={`clones.${index}.name`}
                           render={({ field }) => (
                             <FormItem><FormLabel className="sr-only">Clone</FormLabel><FormControl><Input {...field} placeholder="Ex: PH16" /></FormControl><FormMessage /></FormItem>
                           )}
                         />
                         <FormField
                           control={form.control}
-                          name={`clones.${'${index}'}.quantity`}
+                          name={`clones.${index}.quantity`}
                           render={({ field }) => (
                             <FormItem><FormLabel className="sr-only">Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                           )}
@@ -579,5 +579,3 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     </Card>
   );
 }
-
-    
