@@ -318,25 +318,24 @@ export function ContractsPage({ clients }: ContractsPageProps) {
   const onContratanteChange = (contratanteId: string) => {
     const contratante = clients.find((c) => c.id === contratanteId);
     if(contratante) {
-      // Set values for both PF and PJ
-      form.setValue("contratanteNomeCompleto", contratante.name);
-      form.setValue("contratanteCpf", contratante.cpf);
-      form.setValue("contratanteRg", contratante.rg);
-      form.setValue("contratanteAddress", contratante.address);
-      form.setValue("contratanteTelefone", contratante.phone);
-      form.setValue("contratanteEmail", contratante.email);
+      // Set values for both PF and PJ, ensuring no undefined values
+      form.setValue("contratanteNomeCompleto", contratante.name || "");
+      form.setValue("contratanteCpf", contratante.cpf || "");
+      form.setValue("contratanteRg", contratante.rg || "");
+      form.setValue("contratanteAddress", contratante.address || "");
+      form.setValue("contratanteTelefone", contratante.phone || "");
+      form.setValue("contratanteEmail", contratante.email || "");
       form.setValue("contratanteNacionalidade", contratante.nacionalidade || 'Brasileiro(a)');
-      form.setValue("contratanteEstadoCivil", contratante.estadoCivil);
+      form.setValue("contratanteEstadoCivil", contratante.estadoCivil || "");
       form.setValue("contratanteProfissao", contratante.profissao || 'Produtor Rural');
 
-      form.setValue("contratanteRazaoSocial", contratante.razaoSocial);
-      form.setValue("contratanteCnpj", contratante.cnpj);
-      form.setValue("contratanteIE", contratante.ie);
-      form.setValue("contratanteSedeAddress", contratante.sedeAddress);
-      form.setValue("contratanteRepLegalNome", contratante.repLegalNome || contratante.name); // Fallback to name
-      form.setValue("contratanteRepLegalDados", contratante.repLegalDados);
+      form.setValue("contratanteRazaoSocial", contratante.razaoSocial || "");
+      form.setValue("contratanteCnpj", contratante.cnpj || "");
+      form.setValue("contratanteIE", contratante.ie || "");
+      form.setValue("contratanteSedeAddress", contratante.sedeAddress || "");
+      form.setValue("contratanteRepLegalNome", contratante.repLegalNome || contratante.name || "");
+      form.setValue("contratanteRepLegalDados", contratante.repLegalDados || "");
 
-      // This is the fix: explicitly set the isPJ field
       form.setValue("contratanteIsPJ", !!contratante.isPJ);
     }
   }
@@ -580,3 +579,5 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     </Card>
   );
 }
+
+    
