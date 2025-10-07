@@ -27,22 +27,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "./ui/input";
 import { deleteAllData } from "@/lib/db-utils";
-import { ImageOff, Download, Smartphone, Laptop } from "lucide-react";
+import { ImageOff } from "lucide-react";
 import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 type Theme = "light" | "dark";
 const BANNER_DOC_ID = "main-banner";
 const BANNER_COLLECTION_ID = "appConfig";
-
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: Array<string>;
-  readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed';
-    platform: string;
-  }>;
-  prompt(): Promise<void>;
-}
 
 export function Settings() {
   const { toast } = useToast();
@@ -51,20 +42,9 @@ export function Settings() {
   const [isMounted, setIsMounted] = useState(false);
   const [pin, setPin] = useState("");
   const [isResetting, setIsResetting] = useState(false);
-  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
-  const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setInstallEvent(e as BeforeInstallPromptEvent);
-      setCanInstall(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
     const storedTheme = localStorage.getItem("theme") as Theme | null;
     if (storedTheme) {
       setTheme(storedTheme);
@@ -74,26 +54,7 @@ export function Settings() {
         setTheme(isSystemDark ? "dark" : "light");
         document.documentElement.classList.toggle("dark", isSystemDark);
     }
-    
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
   }, []);
-
-  const handleInstallClick = () => {
-    if (installEvent) {
-      installEvent.prompt();
-      installEvent.userChoice.then(choiceResult => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-        } else {
-          console.log('User dismissed the install prompt');
-        }
-        setInstallEvent(null);
-        setCanInstall(false);
-      });
-    }
-  };
 
   const handleLanguageChange = (value: string) => {
     setLanguage(value);
@@ -209,26 +170,6 @@ export function Settings() {
         </CardContent>
       </Card>
       
-       <Card>
-        <CardHeader>
-          <CardTitle>Instalar Aplicativo</CardTitle>
-          <CardDescription>
-            Instale o aplicativo no seu dispositivo para acesso rápido pela área de trabalho ou tela de início.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Button onClick={handleInstallClick} disabled={!canInstall} className="w-full">
-              <Download className="mr-2 h-4 w-4" />
-              {canInstall ? "Instalar no Dispositivo" : "Instalação não disponível"}
-            </Button>
-            {!canInstall && (
-                <p className="text-xs text-muted-foreground mt-2">
-                    Se você estiver usando um iPhone/iPad, abra este site no Safari, clique em "Compartilhar" e depois em "Adicionar à Tela de Início".
-                </p>
-            )}
-        </CardContent>
-      </Card>
-
       <Card className="border-destructive">
           <CardHeader>
               <CardTitle>Zona de Perigo</CardTitle>
