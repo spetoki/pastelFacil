@@ -66,9 +66,9 @@ const contractSchema = z.object({
   contratadoRepresentante: z.string().default("SANDRA RITA BARTNIK QUARESMA"),
   contratadoRepresentanteId: z.string().default("680.584 SSP/RO"),
   contratadoRepresentanteCpf: z.string().default("761.158.872-91"),
-  contratadoAddress: z.string().default("Avenida dos Lírios, nº 2793, bairro Embratel, Cep 76.966-294, Cidade Cacoal, no Estado de Rondônia"),
+  contratadoAddress: z.string().default("Avenida dos Lírios, nº 2793, bairro Embratel, CEP 76.966-294, Cidade Cacoal, Estado de Rondônia"),
   contratadoRenasem: z.string().default("RO-02010/2022"),
-  contratadoLocalizacao: z.string().default("Lh 13, Lote 29-B, Gleba 13, sentido Funai"),
+  contratadoLocalizacao: z.string().default("LH 13, Lote 29-B, Gleba 13, sentido Funai"),
 
   tipoDeMuda: z.enum(["enxertada", "enraizada"], { required_error: "Selecione o tipo de muda."}),
   clones: z.array(z.object({
@@ -78,16 +78,18 @@ const contractSchema = z.object({
   
   valorTotal: z.coerce.number().positive(),
   valorUnitario: z.coerce.number().positive(),
-  dataEntregaInicio: z.string().default("dezembro 2025"),
+  dataEntregaInicio: z.string().default("dezembro de 2025"),
   dataEntregaFim: z.string().default("abril de 2026"),
 
-  prazoContratoMeses: z.coerce.number().positive().default(15),
+  prazoContratoMeses: z.coerce.number().positive().default(12),
   
   contractDate: z.string().min(1, { message: "A data do contrato é obrigatória."}),
   contractCity: z.string().min(2, { message: "A cidade é obrigatória." }),
 
   testemunha1Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
+  testemunha1Rg: z.string().min(2, { message: "O RG da testemunha é obrigatório." }),
   testemunha2Name: z.string().min(2, { message: "O nome da testemunha é obrigatório." }),
+  testemunha2Rg: z.string().min(2, { message: "O RG da testemunha é obrigatório." }),
 }).refine(data => {
     if (data.contratanteIsPJ) {
         return data.contratanteCnpj && data.contratanteSedeAddress && data.contratanteRepLegalNome;
@@ -108,7 +110,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       contratanteId: "",
       
       contratanteNomeCompleto: "",
-      contratanteNacionalidade: "Brasileiro(a)",
+      contratanteNacionalidade: "brasileiro(a)",
       contratanteEstadoCivil: "",
       contratanteProfissao: "Produtor Rural",
       contratanteRg: "",
@@ -129,12 +131,12 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       contratadoRepresentante: "SANDRA RITA BARTNIK QUARESMA",
       contratadoRepresentanteId: "680.584 SSP/RO",
       contratadoRepresentanteCpf: "761.158.872-91",
-      contratadoAddress: "Avenida dos Lírios, nº 2793, bairro Embratel, Cep 76.966-294, Cidade Cacoal, no Estado de Rondônia",
+      contratadoAddress: "Avenida dos Lírios, nº 2793, bairro Embratel, CEP 76.966-294, Cidade Cacoal, Estado de Rondônia",
       contratadoRenasem: "RO-02010/2022",
-      contratadoLocalizacao: "Lh 13, Lote 29-B, Gleba 13, sentido Funai",
-      dataEntregaInicio: "dezembro 2025",
+      contratadoLocalizacao: "LH 13, Lote 29-B, Gleba 13, sentido Funai",
+      dataEntregaInicio: "dezembro de 2025",
       dataEntregaFim: "abril de 2026",
-      prazoContratoMeses: 15,
+      prazoContratoMeses: 12,
       tipoDeMuda: "enxertada",
       clones: [{name: "", quantity: 1}],
       valorTotal: 0,
@@ -142,7 +144,9 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       contractDate: "",
       contractCity: "",
       testemunha1Name: "",
+      testemunha1Rg: "",
       testemunha2Name: "",
+      testemunha2Rg: "",
     },
   });
 
@@ -151,7 +155,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     name: "clones",
   });
   
-  const isPJ = form.watch("contratanteIsPJ");
+  const contratanteIsPJ = form.watch("contratanteIsPJ");
 
   const handleGenerateContract = (values: ContractFormValues) => {
     const contratante = clients.find((c) => c.id === values.contratanteId);
@@ -165,32 +169,35 @@ export function ContractsPage({ clients }: ContractsPageProps) {
     `).join('');
 
     const totalClones = values.clones.reduce((sum, clone) => sum + clone.quantity, 0);
-    const valorTotalPorExtenso = "REPLACE_ME"; // TODO: Implement number to words
-    const valorUnitarioPorExtenso = "REPLACE_ME"; // TODO: Implement number to words
-    
+    // TODO: Implement number to words
+    const valorTotalPorExtenso = "REPLACE_ME"; 
+
     const objetoContratoTexto = values.tipoDeMuda === "enxertada" 
       ? "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau enxertado."
       : "o fornecimento, pelo CONTRATADO ao CONTRATANTE, de mudas de cacau clonal enraizadas.";
 
-    const valorContratoTexto = values.tipoDeMuda === "enxertada"
-      ? `referente a quantidade de ${totalClones} mudas de cacau clonal por enxertia`
-      : `referente a quantidade de ${totalClones} mudas de cacau clonal enraizadas`;
-
     let contratanteHtml = `
       <p>
-        <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto || contratante.name}, ${values.contratanteNacionalidade}, ${values.contratanteEstadoCivil}, ${values.contratanteProfissao}, portador(a) do documento de identidade RG nº ${values.contratanteRg}, inscrito(a) no C.P.F. sob o nº ${values.contratanteCpf || contratante.cpf}, com endereço declarado: ${values.contratanteAddress || contratante.address}, telefone: ${values.contratanteTelefone || contratante.phone || 'não informado'}, e-mail: ${values.contratanteEmail || 'não informado'};
+        <strong>CONTRATANTE:</strong> ${values.contratanteNomeCompleto || contratante.name}, ${values.contratanteNacionalidade}, ${values.contratanteEstadoCivil}, ${values.contratanteProfissao}, portador do RG nº ${values.contratanteRg} e inscrito no CPF nº ${values.contratanteCpf || contratante.cpf}, com endereço declarado: ${values.contratanteAddress || contratante.address}, telefone: ${values.contratanteTelefone || contratante.phone || 'não informado'}, e-mail: ${values.contratanteEmail || contratante.email || 'não informado'}.
       </p>
     `;
     
-    let contratanteAssinatura = `<p>${values.contratanteNomeCompleto || contratante.name}</p><p>(Contratante)</p>`;
+    let contratanteAssinatura = `
+      <p style="margin-bottom: 0;">${values.contratanteNomeCompleto || contratante.name}</p>
+      <p style="margin-top: 0;">(Contratante)</p>
+    `;
 
-    if(values.contratanteIsPJ) {
+    if(contratanteIsPJ) {
       contratanteHtml = `
         <p>
-          <strong>CONTRATANTE:</strong> ${values.contratanteRazaoSocial}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${values.contratanteCnpj}, Inscrição Estadual/Municipal nº ${values.contratanteIE || 'não aplicável'}, com sede em ${values.contratanteSedeAddress}, neste ato representada por ${values.contratanteRepLegalNome || contratante.name}, (dados do representante: ${values.contratanteRepLegalDados});
+          <strong>CONTRATANTE:</strong> ${values.contratanteRazaoSocial || contratante.name}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${values.contratanteCnpj || contratante.cnpj}, Inscrição Estadual/Municipal nº ${values.contratanteIE || contratante.ie || 'não aplicável'}, com sede em ${values.contratanteSedeAddress || contratante.sedeAddress}, neste ato representada por ${values.contratanteRepLegalNome || contratante.repLegalNome || contratante.name}, (dados do representante: ${values.contratanteRepLegalDados || contratante.repLegalDados});
         </p>
       `;
-      contratanteAssinatura = `<p>${values.contratanteRepLegalNome || contratante.name}</p><p>p/p ${values.contratanteRazaoSocial}</p><p>(Contratante)</p>`;
+      contratanteAssinatura = `
+        <p style="margin-bottom: 0;">${values.contratanteRepLegalNome || contratante.name}</p>
+        <p style="margin-top: 0;">p/p ${values.contratanteRazaoSocial || contratante.name}</p>
+        <p style="margin-top: 0;">(Contratante)</p>
+      `;
     }
 
     const contractHtml = `
@@ -204,9 +211,9 @@ export function ContractsPage({ clients }: ContractsPageProps) {
             .no-indent { text-indent: 0; }
             .clausula { margin-bottom: 1em; }
             .clausula-title { font-weight: bold; text-align: center; text-indent: 0; margin-bottom: 0.5em;}
-            .signatures { margin-top: 50px; text-align: center; }
-            .signature-line { margin-top: 60px; display: inline-block; width: 45%; }
-            .signature-line-inner { border-top: 1px solid black; padding-top: 5px; }
+            .assinaturas { margin-top: 50px; text-align: center; }
+            .assinatura-bloco { margin-top: 60px; display: inline-block; width: 80%; }
+            .assinatura-linha { border-top: 1px solid black; padding-top: 5px; margin: 0 auto; width: 60%; }
           </style>
         </head>
         <body>
@@ -216,15 +223,15 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           ${contratanteHtml}
 
           <p>
-            <strong>CONTRATADO:</strong> ${values.contratadoName} – Renasem nº ${values.contratadoRenasem} localizado na ${values.contratadoLocalizacao}, aqui representado por: ${values.contratadoRepresentante}, brasileira, casada, engenheira agrônoma e viveirista, Carteira de Identidade nº ${values.contratadoRepresentanteId}, C.P.F. nº ${values.contratadoRepresentanteCpf}, residente e domiciliada na ${values.contratadoAddress}.
+            <strong>CONTRATADO:</strong> ${values.contratadoName} – Renasem nº ${values.contratadoRenasem}, localizado na ${values.contratadoLocalizacao}, aqui representado por ${values.contratadoRepresentante}, brasileira, casada, engenheira agrônoma e viveirista, Carteira de Identidade nº ${values.contratadoRepresentanteId}, CPF nº ${values.contratadoRepresentanteCpf}, residente na ${values.contratadoAddress}.
           </p>
           
           <p class="no-indent">
-            As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Fornecimento de Mudas Clonais de Cacau, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente.
+            As partes acima identificadas têm entre si justo e acertado o presente Contrato de Fornecimento de Mudas Clonais de Cacau, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente.
           </p>
           
           <p class="clausula-title">DO OBJETO DO CONTRATO</p>
-          <p><strong>Cláusula 1ª.</strong> O presente contrato tem como OBJETO, ${objetoContratoTexto} Sendo dos Seguintes Clones e quantidades por clone:</p>
+          <p><strong>Cláusula 1ª.</strong> O presente contrato tem como objeto ${objetoContratoTexto} sendo:</p>
           <table style="width: 50%; margin: 20px auto; border-collapse: collapse;">
             <thead style="font-weight: bold;">
               <tr>
@@ -238,69 +245,70 @@ export function ContractsPage({ clients }: ContractsPageProps) {
           </table>
 
           <p class="clausula-title">DA ENTREGA</p>
-          <p><strong>Cláusula 2ª.</strong> As mudas deverão ser RETIRADAS NO VIVEIRO após a avaliação e concordância do CONTRATANTE, devendo as mesmas estar em boas condições de desenvolvimento e sanidade, soldadura do porta enxerto consolidada, folhas maduras e expandidas em número não inferior a 3 pares.</p>
+          <p><strong>Cláusula 2ª.</strong> As mudas deverão ser retiradas no viveiro após a avaliação e concordância do CONTRATANTE, devendo as mesmas estar em boas condições de desenvolvimento e sanidade, soldadura do porta-enxerto consolidada, folhas maduras e expandidas em número não inferior a 3 pares.</p>
           <p><strong>Cláusula 3ª.</strong> As mudas na entrega deverão estar separadas conforme o clone, em perfeito estado para plantio e livres de doenças ou pragas que prejudiquem seu desenvolvimento.</p>
-          <p><strong>Cláusula 4ª.</strong> A entrega das mudas se realizará a partir de ${values.dataEntregaInicio} até a data limite de ${values.dataEntregaFim}, de acordo ordem de pedidos, e de forma acordada entre o CONTRATANTE e CONTRATADO, o qual deverá agendar com antecedência de 5 dias a retirada junto ao CONTRATADO.</p>
+          <p><strong>Cláusula 4ª.</strong> A entrega das mudas se realizará a partir de ${values.dataEntregaInicio} até ${values.dataEntregaFim}, de acordo com a ordem de pedidos, e de forma acordada entre CONTRATANTE e CONTRATADO, devendo o agendamento ser feito com antecedência mínima de 5 dias.</p>
+          <p><strong>Cláusula 4ª-A (opcional).</strong> No ato da retirada, o CONTRATANTE assinará termo de entrega, declarando ter recebido as mudas em conformidade com as especificações técnicas deste contrato.</p>
           
           <p class="clausula-title">CLÁUSULA 5ª – DO ATRASO POR FORÇA MAIOR</p>
-          <p>Não será considerada inadimplência da CONTRATADA o atraso na entrega das mudas quando decorrente de força maior ou caso fortuito, compreendendo-se como tais os eventos imprevisíveis ou inevitáveis, tais como catástrofes naturais, pragas, epidemias, incêndios, enchentes, acidentes, greves, restrições governamentais ou quaisquer outros fatos alheios à vontade da CONTRATADA.</p>
-          <p class="no-indent"><strong>Parágrafo único.</strong> Também não será considerada inadimplência da CONTRATADA em caso de afastamento temporário por motivos de saúde devidamente comprovados por atestado ou laudo médico, hipótese em que o prazo de entrega poderá ser prorrogado pelo período necessário à recuperação da CONTRATADA, sem aplicação de penalidades, desde que o CONTRATANTE seja comunicado e informado sobre a situação e a nova previsão de entrega.</p>
-          <p>Nessas hipóteses, a CONTRATADA terá o prazo máximo de 6 (seis) meses, contados da data originalmente prevista para a entrega, para regularizar a situação e efetuar a entrega das mudas pendentes, sem que isso gere penalidades, desde que o CONTRATANTE seja devidamente comunicado e informado sobre a ocorrência e a nova previsão de entrega.</p>
-          
-          <p><strong>Cláusula 6ª.</strong> Caso as mudas sejam entregues, não respeitando as especificações previstas na Cláusula 2ª, serão devolvidas ao CONTRATADO, devendo este repô-las por outras que atendam às especificações.</p>
-          <p><strong>Cláusula 7ª.</strong> Correrão por conta do CONTRATANTE as despesas com o transporte na entrega das mudas, devendo ser feita em veículo que comporte adequadamente a fim de evitar danos e prejuízos no pegamento das mudas.</p>
+          <p>Não será considerada inadimplência da CONTRATADA o atraso na entrega das mudas quando decorrente de força maior ou caso fortuito, compreendendo eventos imprevisíveis ou inevitáveis, tais como catástrofes naturais, pragas, epidemias, incêndios, enchentes, acidentes, greves, restrições governamentais ou quaisquer fatos alheios à vontade da CONTRATADA.</p>
+          <p class="no-indent"><strong>Parágrafo único:</strong> Também não será considerada inadimplência da CONTRATADA em caso de afastamento temporário por motivos de saúde, devidamente comprovados por atestado ou laudo médico, hipótese em que o prazo de entrega poderá ser prorrogado pelo período necessário à recuperação, sem aplicação de penalidades, desde que o CONTRATANTE seja comunicado e informado sobre a nova previsão de entrega.</p>
+          <p>Nessas hipóteses, a CONTRATADA terá o prazo máximo de 6 (seis) meses, contados da data originalmente prevista para a entrega, para regularizar a situação.</p>
+
+          <p><strong>Cláusula 6ª.</strong> Caso as mudas sejam entregues não respeitando as especificações previstas na Cláusula 2ª, serão devolvidas ao CONTRATADO, que deverá repô-las por outras que atendam às especificações.</p>
+          <p><strong>Cláusula 7ª.</strong> As despesas com transporte serão de responsabilidade do CONTRATANTE, devendo o veículo comportar adequadamente as mudas a fim de evitar danos.</p>
 
           <p class="clausula-title">DO CULTIVO</p>
-          <p><strong>Cláusula 8ª.</strong> As mudas deverão ser cultivadas de acordo com as recomendações técnicas para a cultura do cacau, em solo corrigido caso necessário, com disponibilidade hídrica e nutrição mineral adequada, bem como o manejo de plantio e pós plantio adequados a fim garantir pegamento de 80% conforme literatura técnica.</p>
-          <p><strong>Cláusula 9ª.</strong> O CONTRATANTE fica responsável por providenciar sombreamento provisório para plantio das mudas correspondendo a sombra de 80% bem como sistema de irrigação a fim de garantir pegamento das mudas, na ausência destes o CONTRATADO não se responsabiliza por índices de pegamento inferiores.</p>
+          <p><strong>Cláusula 8ª.</strong> As mudas deverão ser cultivadas de acordo com as recomendações técnicas para a cultura do cacau, em solo corrigido, com disponibilidade hídrica, nutrição mineral adequada, e manejo adequado para garantir pegamento mínimo de 80%.</p>
+          <p><strong>Cláusula 9ª.</strong> O CONTRATANTE se responsabiliza por fornecer sombreamento provisório e sistema de irrigação para garantir o pegamento das mudas. Na ausência destes, o CONTRATADO não se responsabiliza por índices inferiores.</p>
           
           <p class="clausula-title">DA REMUNERAÇÃO</p>
-          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE se compromete a pagar ao CONTRATADO a quantia de R$ ${values.valorTotal.toFixed(2)} (${valorTotalPorExtenso}), ${valorContratoTexto}, com valor unitário de R$ ${values.valorUnitario.toFixed(2)} (${valorUnitarioPorExtenso}), sendo 50% do valor combinado como adiantamento na reserva (Assinatura do contrato) e o restante 50% na entrega das mudas.</p>
+          <p><strong>Cláusula 10ª.</strong> O CONTRATANTE pagará ao CONTRATADO a quantia total de R$ ${values.valorTotal.toFixed(2)} (${valorTotalPorExtenso}) referente a ${totalClones} mudas de cacau clonal, sendo:</p>
+          <p style="text-indent: 4em;">50% na assinatura do contrato como adiantamento;</p>
+          <p style="text-indent: 4em;">50% restantes na entrega das mudas.</p>
+          <p>Forma de pagamento: PIX ou transferência bancária para a titularidade de ${values.contratadoRepresentante}, CPF ${values.contratadoRepresentanteCpf}.</p>
           
           <p class="clausula-title">DO PRAZO</p>
-          <p><strong>Cláusula 11ª.</strong> O presente instrumento terá prazo de ${values.prazoContratoMeses} meses, passando a valer a partir da assinatura pelas partes.</p>
+          <p><strong>Cláusula 11ª.</strong> O contrato terá prazo de ${values.prazoContratoMeses} meses, a partir da assinatura pelas partes, encerrando-se automaticamente ao final deste período.</p>
           
           <p class="clausula-title">CLÁUSULA 12ª – DA RESCISÃO CONTRATUAL</p>
-          <p>Na hipótese de rescisão total do presente contrato, por iniciativa de qualquer das partes, será aplicada ao responsável pela quebra contratual uma multa de 10% (dez por cento) sobre o valor total remanescente do contrato a ser pago na data da rescisão.</p>
-          <p>Além da multa rescisória, incidirão também:</p>
-          <ul>
-            <li>Juros de 1% (um por cento) ao mês;</li>
+          <p>Na hipótese de rescisão por iniciativa de qualquer das partes, aplica-se multa de 10% sobre o valor remanescente do contrato, acrescida de:</p>
+          <ul style="text-indent: 2em;">
+            <li>Juros de 1% ao mês;</li>
             <li>Correção monetária pelo índice oficial vigente;</li>
-            <li>Multa de mora de 2% (dois por cento);</li>
+            <li>Multa de mora de 2%, nos termos do Código de Defesa do Consumidor.</li>
           </ul>
-          <p>nos termos do Código de Defesa do Consumidor (Lei nº 8.078/1990).</p>
           
           <p class="clausula-title">CLÁUSULA 13ª – DO FORO</p>
-          <p>Para dirimir quaisquer controvérsias oriundas do CONTRATO, as partes elegem o foro da comarca de Cacoal – Rondônia;</p>
-          
-          <p class="no-indent" style="margin-top: 30px;">Por estarem assim justos e contratados, firmam o presente instrumento, em duas vias de igual teor, juntamente com 2 (duas) testemunhas.</p>
+          <p>Para dirimir quaisquer controvérsias oriundas do contrato, as partes elegem o foro da comarca de Cacoal – Rondônia.</p>
           
           <p style="text-align: right; text-indent: 0; margin-top: 30px;">${values.contractCity}, ${new Date((values.contractDate || new Date().toISOString().split('T')[0]) + 'T12:00:00Z').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>
 
-          <div class="signatures">
-            <div class="signature-line">
-              <div class="signature-line-inner">
-                <p>${values.contratadoRepresentante} (Viveiro Andurá)</p>
-                <p>(Contratado)</p>
+          <div class="assinaturas">
+            <div class="assinatura-bloco">
+              <div class="assinatura-linha">
+                <p style="margin-bottom: 0;">${values.contratadoRepresentante}</p>
+                <p style="margin-top: 0;">(Contratado)</p>
               </div>
             </div>
-            <div class="signature-line">
-              <div class="signature-line-inner">
+            <div class="assinatura-bloco">
+              <div class="assinatura-linha">
                  ${contratanteAssinatura}
               </div>
             </div>
-            <div class="signature-line">
-              <div class="signature-line-inner">
-                <p>${values.testemunha1Name}</p>
-                <p>(Nome, RG e assinatura)</p>
-                <p>Testemunha 1</p>
+            
+            <p style="margin-top: 60px; font-weight: bold; text-indent: 0;">Testemunhas:</p>
+
+            <div class="assinatura-bloco">
+              <div class="assinatura-linha">
+                <p style="margin-bottom: 0;">${values.testemunha1Name}</p>
+                <p style="margin-top: 0;">RG: ${values.testemunha1Rg}</p>
               </div>
             </div>
-             <div class="signature-line">
-              <div class="signature-line-inner">
-                <p>${values.testemunha2Name}</p>
-                <p>(Nome, RG e assinatura)</p>
-                <p>Testemunha 2</p>
+             <div class="assinatura-bloco">
+              <div class="assinatura-linha">
+                <p style="margin-bottom: 0;">${values.testemunha2Name}</p>
+                <p style="margin-top: 0;">RG: ${values.testemunha2Rg}</p>
               </div>
             </div>
           </div>
@@ -318,6 +326,9 @@ export function ContractsPage({ clients }: ContractsPageProps) {
   const onContratanteChange = (contratanteId: string) => {
     const contratante = clients.find((c) => c.id === contratanteId);
     if(contratante) {
+      const isPJ = !!contratante.isPJ;
+      form.setValue("contratanteIsPJ", isPJ);
+
       // Set values for both PF and PJ, ensuring no undefined values
       form.setValue("contratanteNomeCompleto", contratante.name || "");
       form.setValue("contratanteCpf", contratante.cpf || "");
@@ -325,7 +336,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       form.setValue("contratanteAddress", contratante.address || "");
       form.setValue("contratanteTelefone", contratante.phone || "");
       form.setValue("contratanteEmail", contratante.email || "");
-      form.setValue("contratanteNacionalidade", contratante.nacionalidade || 'Brasileiro(a)');
+      form.setValue("contratanteNacionalidade", contratante.nacionalidade || 'brasileiro(a)');
       form.setValue("contratanteEstadoCivil", contratante.estadoCivil || "");
       form.setValue("contratanteProfissao", contratante.profissao || 'Produtor Rural');
 
@@ -335,8 +346,6 @@ export function ContractsPage({ clients }: ContractsPageProps) {
       form.setValue("contratanteSedeAddress", contratante.sedeAddress || "");
       form.setValue("contratanteRepLegalNome", contratante.repLegalNome || contratante.name || "");
       form.setValue("contratanteRepLegalDados", contratante.repLegalDados || "");
-
-      form.setValue("contratanteIsPJ", !!contratante.isPJ);
     }
   }
 
@@ -435,7 +444,7 @@ export function ContractsPage({ clients }: ContractsPageProps) {
                 
                 <Separator />
                 
-                {isPJ ? (
+                {contratanteIsPJ ? (
                   // Campos Pessoa Jurídica
                   <div className="space-y-4">
                     <FormField control={form.control} name="contratanteRazaoSocial" render={({ field }) => ( <FormItem> <FormLabel>Razão Social</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
@@ -564,7 +573,11 @@ export function ContractsPage({ clients }: ContractsPageProps) {
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="testemunha1Name" render={({ field }) => ( <FormItem> <FormLabel>Nome Testemunha 1</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="testemunha1Rg" render={({ field }) => ( <FormItem> <FormLabel>RG Testemunha 1</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="testemunha2Name" render={({ field }) => ( <FormItem> <FormLabel>Nome Testemunha 2</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="testemunha2Rg" render={({ field }) => ( <FormItem> <FormLabel>RG Testemunha 2</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 </div>
               </CardContent>
             </Card>
