@@ -101,6 +101,8 @@ const updateHistory = [
 
 
 export function UpdatesPage({ notice }: UpdatesPageProps) {
+  const finalNotice = notice || "Prezados usuários,\n\nInformamos que uma nova atualização está programada para o dia 25 de outubro de 2025. Nesta data, implementaremos melhorias e novas funcionalidades no menu de Contratos.\n\nAgradecemos a compreensão.";
+
   return (
     <div className="space-y-8">
       {/* Mural de Avisos */}
@@ -115,11 +117,11 @@ export function UpdatesPage({ notice }: UpdatesPageProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {notice ? (
+          {finalNotice ? (
             <Alert>
-              <AlertTitle>Aviso Importante</AlertTitle>
+              <AlertTitle>Comunicado Importante</AlertTitle>
               <AlertDescription className="whitespace-pre-wrap">
-                {notice}
+                {finalNotice}
               </AlertDescription>
             </Alert>
           ) : (
