@@ -91,8 +91,6 @@ export function SalesCart({
 
   const paymentOptions: { value: PaymentMethod; label: string, icon: React.FC<any> }[] = [
     { value: "Dinheiro", label: "Dinheiro", icon: CircleDollarSign },
-    { value: "Pix", label: "Pix", icon: Landmark },
-    { value: "Cartão", label: "Cartão", icon: CreditCard },
   ];
 
   return (
@@ -230,7 +228,7 @@ export function SalesCart({
                   <RadioGroup
                     value={paymentMethod}
                     onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
-                    className="grid grid-cols-3 gap-4"
+                    className="grid grid-cols-1 gap-4"
                   >
                     {paymentOptions.map((option) => (
                         <Label
