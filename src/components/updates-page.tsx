@@ -19,7 +19,7 @@ import {
   TimelineContent,
 } from "@/components/ui/timeline";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Megaphone, GitCommit, Settings, FileSignature, Palette, PlusCircle, Wrench, Bug, FileText, Package, Users } from "lucide-react";
+import { Megaphone, GitCommit, Settings, FileSignature, Palette, PlusCircle, Wrench, Bug, FileText, Package, Users, LayoutPanelLeft } from "lucide-react";
 
 type UpdatesPageProps = {
   notice: string;
@@ -27,6 +27,13 @@ type UpdatesPageProps = {
 
 // Histórico estático de atualizações
 const updateHistory = [
+   {
+    version: "v1.10",
+    date: "26/07/2024",
+    title: "Refatoração do Menu de Navegação",
+    description: "Para uma interface mais limpa, o botão 'Retiradas' foi movido da tela inicial para dentro do menu principal, deixando apenas o botão 'Início' em destaque.",
+    icon: LayoutPanelLeft,
+  },
   {
     version: "v1.9",
     date: "25/07/2024",
@@ -89,13 +96,6 @@ const updateHistory = [
     title: "Fechamento de Caixa e Relatórios",
     description: "Implementadas as abas 'Fechamento' e 'Relatórios', permitindo a conferência de valores, registro de despesas e o salvamento de um resumo diário, com acesso protegido por PIN.",
     icon: FileText,
-  },
-  {
-    version: "v1.0",
-    date: "16/07/2024",
-    title: "Lançamento do Sistema",
-    description: "Versão inicial do sistema com funcionalidades de gestão de estoque, cadastro de clientes, registro de vendas e retiradas. Sincronização em tempo real com o banco de dados Firebase.",
-    icon: Package,
   },
 ];
 
