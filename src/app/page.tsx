@@ -47,6 +47,7 @@ import type { ClientFormValues } from "@/components/add-client-form";
 import { Settings as SettingsComponent } from "@/components/settings";
 import { ReportPinDialog } from "@/components/report-pin-dialog";
 import { ContractsPage } from "@/components/contracts-page";
+import { UpdatesPage } from "@/components/updates-page";
 
 export type Page =
   | "caixa"
@@ -56,7 +57,8 @@ export type Page =
   | "contratos"
   | "fechamento"
   | "relatorios"
-  | "configuracoes";
+  | "configuracoes"
+  | "atualizacoes";
 
 
 const getStartOfToday = () => {
@@ -66,6 +68,8 @@ const getStartOfToday = () => {
 };
 
 const STATUS_DOC_ID = "main";
+const NOTICE_BOARD_DOC_ID = "noticeBoard";
+const APP_CONFIG_COLLECTION_ID = "appConfig";
 
 export default function Home() {
   const router = useRouter();
@@ -83,6 +87,7 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [shiftStart, setShiftStart] = useState<Date | null>(null);
   const [isReportsUnlocked, setIsReportsUnlocked] = useState(false);
+  const [noticeMessage, setNoticeMessage] = useState("");
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -114,9 +119,20 @@ export default function Home() {
         console.error("Error fetching app status: ", error);
         toast({ variant: "destructive", title: "Erro ao sincronizar turno" });
     });
+    
+    // Fetch and listen to notice board
+    const noticeRef = doc(db, APP_CONFIG_COLLECTION_ID, NOTICE_BOARD_DOC_ID);
+    const unsubscribeNotice = onSnapshot(noticeRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setNoticeMessage(docSnap.data().message || "");
+        } else {
+            setNoticeMessage(""); // Or a default message
+        }
+    });
 
     return () => {
         unsubscribeStatus();
+        unsubscribeNotice();
     }
   }, [isClient, toast]);
 
@@ -743,6 +759,8 @@ export default function Home() {
         );
       case "configuracoes":
         return <SettingsComponent/>;
+      case "atualizacoes":
+        return <UpdatesPage notice={noticeMessage} />;
       default:
         return null;
     }
@@ -762,5 +780,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

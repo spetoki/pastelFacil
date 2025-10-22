@@ -1,8 +1,9 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/icons";
-import { LogOut, Menu, Home } from "lucide-react";
+import { LogOut, Menu, Home, Megaphone } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +37,7 @@ const navItems: { page: Page; label: string; icon: React.ElementType }[] = [
   { page: "contratos", label: "Contratos", icon: FileSignature },
   { page: "fechamento", label: "Fechamento", icon: ClipboardList },
   { page: "relatorios", label: "Relatórios", icon: FileText },
+  { page: "atualizacoes", label: "Atualizações", icon: Megaphone },
   { page: "configuracoes", label: "Configurações", icon: Settings },
 ];
 
