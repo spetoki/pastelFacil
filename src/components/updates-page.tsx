@@ -105,16 +105,26 @@ export function UpdatesPage({ notice }: UpdatesPageProps) {
 
 Informamos que uma nova atualização está programada para o dia 25 de outubro de 2025. Nesta data, implementaremos melhorias e novas funcionalidades no menu de Contratos.
 
-Agradecemos a compreensão.
-
 ---
 
-Sandra, por favor, teste o app: crie usuários, faça vendas, feche o caixa, exclua relatórios, teste todas as funções. Descreva todas as funções do app.
+A/C Sandra:
 
-No final, pule duas linhas e escreva:
-Senha para deletar e entrar nos relatórios é 2209
-Senha para iniciar o app 8352
-Quando você estiver usando o app e pedir uma senha, é a 2209`;
+Solicitamos, por gentileza, a realização de testes abrangentes no aplicativo. O escopo dos testes deve incluir:
+
+- Criação de clientes (Pessoa Física e Jurídica).
+- Realização de vendas com diferentes formas de pagamento.
+- Fechamento de caixa, registrando despesas e entradas.
+- Exclusão de relatórios de fechamento.
+- Testes de todas as demais funcionalidades disponíveis.
+
+Ao final, pedimos a elaboração de uma descrição detalhada de todas as funções do aplicativo para documentação.
+
+Agradecemos a colaboração.
+
+
+**Informações de Acesso:**
+Senha para acesso aos relatórios e exclusão: **2209**
+Senha para acesso inicial ao aplicativo: **8352**`;
 
   const finalNotice = notice || defaultNotice;
 
