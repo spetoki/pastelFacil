@@ -92,8 +92,19 @@ const transactionSchema = z.object({
   amount: z.coerce
     .number()
     .positive({ message: "O valor deve ser positivo." }),
+  transactionType: z.enum(["cashEntry", "expense"]),
   paymentMethod: z.string().optional(),
+}).refine(data => {
+    // If it's a cash entry, a payment method is required
+    if (data.transactionType === "cashEntry") {
+        return !!data.paymentMethod;
+    }
+    return true;
+}, {
+    message: "Selecione uma forma de pagamento para entradas.",
+    path: ["paymentMethod"],
 });
+
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
@@ -117,8 +128,15 @@ export function CashClosing({
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: { description: "", amount: 0, paymentMethod: "Dinheiro" },
+    defaultValues: { 
+        description: "", 
+        amount: 0, 
+        transactionType: "cashEntry",
+        paymentMethod: "Dinheiro",
+    },
   });
+  
+  const transactionType = form.watch("transactionType");
 
   const dailyData = useMemo(() => {
     // Totals for the current shift (Dinheiro, Pix, Cartão) from Sales
@@ -178,12 +196,13 @@ export function CashClosing({
     };
   }, [sales, expenses, cashEntries]);
 
-  const handleFormSubmit = async (type: "expense" | "cashEntry", values: TransactionFormValues) => {
+  const handleFormSubmit = async (values: TransactionFormValues) => {
       setIsSubmitting(true);
+      const { transactionType, ...rest } = values;
       try {
-        await onAddTransaction(type, {
-            ...values,
-            paymentMethod: values.paymentMethod as PaymentMethod | undefined,
+        await onAddTransaction(transactionType, {
+            ...rest,
+            paymentMethod: transactionType === 'expense' ? undefined : rest.paymentMethod as PaymentMethod | undefined,
         });
         form.reset();
       } catch (error) {
@@ -360,7 +379,7 @@ export function CashClosing({
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+              <form className="space-y-4" onSubmit={form.handleSubmit(handleFormSubmit)}>
                 <FormField
                   control={form.control}
                   name="description"
@@ -389,56 +408,82 @@ export function CashClosing({
                 />
                  <FormField
                   control={form.control}
-                  name="paymentMethod"
+                  name="transactionType"
                   render={({ field }) => (
                      <FormItem>
-                      <FormLabel>Forma de Pagamento (para Entradas/Vendas)</FormLabel>
+                      <FormLabel>Tipo de Transação</FormLabel>
                        <FormControl>
                         <RadioGroup
                             onValueChange={field.onChange}
                             defaultValue={field.value}
-                            className="grid grid-cols-3 gap-2"
+                            className="grid grid-cols-2 gap-4"
                         >
-                            {paymentOptions.map(opt => (
-                                <FormItem key={opt.value}>
-                                    <FormControl>
-                                        <RadioGroupItem value={opt.value} id={`manual-${opt.value}`} className="sr-only" />
-                                    </FormControl>
-                                    <Label htmlFor={`manual-${opt.value}`} className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground", field.value === opt.value && "border-primary")}>
-                                        <opt.icon className="mb-1" />
-                                        {opt.label}
-                                    </Label>
-                                </FormItem>
-                            ))}
+                            <FormItem>
+                                <FormControl>
+                                    <RadioGroupItem value="cashEntry" id="type-entry" className="sr-only" />
+                                </FormControl>
+                                <Label htmlFor="type-entry" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'cashEntry' && "border-primary")}>
+                                    <ArrowUpCircle className="mb-3 h-6 w-6" />
+                                    Entrada / Venda
+                                </Label>
+                            </FormItem>
+                             <FormItem>
+                                <FormControl>
+                                    <RadioGroupItem value="expense" id="type-expense" className="sr-only" />
+                                </FormControl>
+                                <Label htmlFor="type-expense" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' && "border-primary")}>
+                                    <ArrowDownCircle className="mb-3 h-6 w-6" />
+                                    Despesa / Retirada
+                                </Label>
+                            </FormItem>
                         </RadioGroup>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                 {transactionType === 'cashEntry' && (
+                    <FormField
+                    control={form.control}
+                    name="paymentMethod"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Forma de Pagamento (para Entradas/Vendas)</FormLabel>
+                        <FormControl>
+                            <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="grid grid-cols-3 gap-2"
+                            >
+                                {paymentOptions.map(opt => (
+                                    <FormItem key={opt.value}>
+                                        <FormControl>
+                                            <RadioGroupItem value={opt.value} id={`manual-${opt.value}`} className="sr-only" />
+                                        </FormControl>
+                                        <Label htmlFor={`manual-${opt.value}`} className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground", field.value === opt.value && "border-primary")}>
+                                            <opt.icon className="mb-1" />
+                                            {opt.label}
+                                        </Label>
+                                    </FormItem>
+                                ))}
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                 )}
+                 <Button
+                    type="submit"
+                    disabled={!form.formState.isValid || isSubmitting}
+                    className="w-full"
+                    variant={transactionType === 'expense' ? 'destructive' : 'secondary'}
+                >
+                    {isSubmitting ? 'Salvando...' : (transactionType === 'expense' ? 'Registrar Despesa' : 'Registrar Entrada')}
+                </Button>
               </form>
             </Form>
           </CardContent>
-          <CardFooter className="flex gap-2">
-            <Button
-              onClick={form.handleSubmit((values) => handleFormSubmit("cashEntry", values))}
-              disabled={!form.formState.isValid || isSubmitting}
-              className="flex-1"
-              variant="secondary"
-            >
-              <ArrowUpCircle className="mr-2" />
-              Registrar Entrada
-            </Button>
-            <Button
-              onClick={form.handleSubmit((values) => handleFormSubmit("expense", {...values, paymentMethod: undefined}))}
-              disabled={!form.formState.isValid || isSubmitting}
-              className="flex-1"
-              variant="destructive"
-            >
-              <ArrowDownCircle className="mr-2" />
-              Registrar Despesa
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     </div>
